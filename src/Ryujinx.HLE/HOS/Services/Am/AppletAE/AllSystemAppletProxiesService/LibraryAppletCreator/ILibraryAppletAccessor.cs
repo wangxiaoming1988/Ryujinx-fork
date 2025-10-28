@@ -1,4 +1,5 @@
 using Ryujinx.Common.Logging;
+using Ryujinx.HLE.Exceptions;
 using Ryujinx.HLE.HOS.Applets;
 using Ryujinx.HLE.HOS.Ipc;
 using Ryujinx.HLE.HOS.Kernel;
@@ -129,9 +130,9 @@ namespace Ryujinx.HLE.HOS.Services.Am.AppletAE.AllSystemAppletProxiesService.Lib
             if (context.RequestData.ReadUInt64() != 0 || context.RequestData.ReadUInt64() != 0 ||
                 context.RequestData.ReadUInt64() != 0 || context.RequestData.ReadUInt64() != 0)
             {
-                throw new ArgumentException("Invalid data: values are not 0");
+                throw new ServiceNotImplementedException(this, context, $"{GetType().FullName}: 90");
             }
-            
+
             Logger.Stub?.PrintStub(LogClass.ServiceAm);
             return ResultCode.Success;
         }
