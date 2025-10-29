@@ -48,11 +48,21 @@ namespace Ryujinx.Ava
         public static int Main(string[] args)
         {
             Version = ReleaseInformation.Version;
-
-            if (OperatingSystem.IsWindows() && !OperatingSystem.IsWindowsVersionAtLeast(10, 0, 19041))
+            
+            if (OperatingSystem.IsWindows())
             {
-                _ = MessageBoxA(nint.Zero, "You are running an outdated version of Windows.\n\nRyujinx supports Windows 10 version 20H1 and newer.\n", $"Ryujinx {Version}", MbIconwarning);
-                return 0;
+                if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 19041))
+                {
+                    _ = MessageBoxA(nint.Zero, "You are running an outdated version of Windows.\n\nRyujinx supports Windows 10 version 20H1 and newer.\n", $"Ryujinx {Version}", MbIconwarning);
+                    return 0;
+                }
+
+                if (Environment.CurrentDirectory.StartsWithIgnoreCase("C:\\Program Files") || 
+                    Environment.CurrentDirectory.StartsWithIgnoreCase("C:\\Program Files (x86)"))
+                {
+                    _ = MessageBoxA(nint.Zero, "Ryujinx is not intended to be run from the Program Files folder. Please move it out and relaunch.", $"Ryujinx {Version}", MbIconwarning);
+                    return 0;
+                }
             }
 
             PreviewerDetached = true;
