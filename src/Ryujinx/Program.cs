@@ -24,11 +24,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Threading.Tasks;
 
 namespace Ryujinx.Ava
 {
-    internal partial class Program
+    internal static class Program
     {
         public static double WindowScaleFactor { get; set; }
         public static double DesktopScaleFactor { get; set; } = 1.0;
@@ -40,9 +41,6 @@ namespace Ryujinx.Ava
         public static bool UseHardwareAcceleration { get; private set; }
         public static string BackendThreadingArg { get; private set; }
 
-        [LibraryImport("user32.dll", SetLastError = true)]
-        public static partial int MessageBoxA(nint hWnd, [MarshalAs(UnmanagedType.LPStr)] string text, [MarshalAs(UnmanagedType.LPStr)] string caption, uint type);
-
         private const uint MbIconwarning = 0x30;
 
         public static int Main(string[] args)
@@ -53,14 +51,24 @@ namespace Ryujinx.Ava
             {
                 if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 19041))
                 {
-                    _ = MessageBoxA(nint.Zero, "You are running an outdated version of Windows.\n\nRyujinx supports Windows 10 version 20H1 and newer.\n", $"Ryujinx {Version}", MbIconwarning);
+                    _ = Win32NativeInterop.MessageBoxA(nint.Zero, "You are running an outdated version of Windows.\n\nRyujinx supports Windows 10 version 20H1 and newer.\n", $"Ryujinx {Version}", MbIconwarning);
                     return 0;
                 }
 
                 if (Environment.CurrentDirectory.StartsWithIgnoreCase("C:\\Program Files") || 
                     Environment.CurrentDirectory.StartsWithIgnoreCase("C:\\Program Files (x86)"))
                 {
-                    _ = MessageBoxA(nint.Zero, "Ryujinx is not intended to be run from the Program Files folder. Please move it out and relaunch.", $"Ryujinx {Version}", MbIconwarning);
+                    _ = Win32NativeInterop.MessageBoxA(nint.Zero, "Ryujinx is not intended to be run from the Program Files folder. Please move it out and relaunch.", $"Ryujinx {Version}", MbIconwarning);
+                    return 0;
+                }
+
+                // The names of everything here makes no sense for what this actually checks for. Thanks, Microsoft.
+                // If you can't tell by the error string,
+                // this actually checks if the current process was run with "Run as Administrator"
+                // ...but this reads like it checks if the current is in/has the Windows admin role? lol
+                if (new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator))
+                {
+                    _ = Win32NativeInterop.MessageBoxA(nint.Zero, "Ryujinx is not intended to be run as administrator.", $"Ryujinx {Version}", MbIconwarning);
                     return 0;
                 }
             }
