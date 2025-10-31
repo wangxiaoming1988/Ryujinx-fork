@@ -5,6 +5,7 @@ using Ryujinx.Common.Configuration.Hid.Controller.Motion;
 using Ryujinx.Common.Logging;
 using Ryujinx.HLE.HOS.Services.Hid;
 using System;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -291,7 +292,7 @@ namespace Ryujinx.Input.HLE
                 {
                     if (controllerConfig.Motion.MotionBackend == MotionInputBackendType.GamepadDriver)
                     {
-                        if (gamepad.Features.HasFlag(GamepadFeaturesFlag.Motion))
+                        if ((gamepad.Features & GamepadFeaturesFlag.Motion) != 0)
                         {
                             Vector3 accelerometer = gamepad.GetMotionData(MotionInputId.Accelerometer);
                             Vector3 gyroscope = gamepad.GetMotionData(MotionInputId.Gyroscope);
@@ -531,6 +532,8 @@ namespace Ryujinx.Input.HLE
 
                 hidKeyboard.Modifier |= value << entry.Target;
             }
+            
+            ArrayPool<bool>.Shared.Return(keyboardState.KeysState);
 
             return hidKeyboard;
 

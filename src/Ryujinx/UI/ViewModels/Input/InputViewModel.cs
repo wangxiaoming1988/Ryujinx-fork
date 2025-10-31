@@ -95,7 +95,7 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
         public bool IsRight { get; set; }
         public bool IsLeft { get; set; }
         public string RevertDeviceId { get; set; }
-        public bool HasLed => SelectedGamepad.Features.HasFlag(GamepadFeaturesFlag.Led);
+        public bool HasLed => (SelectedGamepad.Features & GamepadFeaturesFlag.Led) != 0;
         public bool CanClearLed => SelectedGamepad.Name.ContainsIgnoreCase("DualSense");
 
         public event Action NotifyChangesEvent;

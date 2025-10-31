@@ -1,11 +1,12 @@
 using Ryujinx.Graphics.GAL.Multithreading.Model;
 using Ryujinx.Graphics.GAL.Multithreading.Resources;
-using System.Linq;
+using System.Buffers;
 
 namespace Ryujinx.Graphics.GAL.Multithreading.Commands
 {
     struct SetRenderTargetsCommand : IGALCommand, IGALCommand<SetRenderTargetsCommand>
     {
+        public static readonly ArrayPool<ITexture> ArrayPool = ArrayPool<ITexture>.Create(512, 50);
         public readonly CommandType CommandType => CommandType.SetRenderTargets;
         private TableRef<ITexture[]> _colors;
         private TableRef<ITexture> _depthStencil;
@@ -18,7 +19,18 @@ namespace Ryujinx.Graphics.GAL.Multithreading.Commands
 
         public static void Run(ref SetRenderTargetsCommand command, ThreadedRenderer threaded, IRenderer renderer)
         {
-            renderer.Pipeline.SetRenderTargets(command._colors.Get(threaded).Select(color => ((ThreadedTexture)color)?.Base).ToArray(), command._depthStencil.GetAs<ThreadedTexture>(threaded)?.Base);
+            ITexture[] colors = command._colors.Get(threaded);
+            ITexture[] colorsCopy = ArrayPool.Rent(colors.Length);
+
+            for (int i = 0; i < colors.Length; i++)
+            {
+                colorsCopy[i] = ((ThreadedTexture)colors[i])?.Base;
+            }
+            
+            renderer.Pipeline.SetRenderTargets(colorsCopy, command._depthStencil.GetAs<ThreadedTexture>(threaded)?.Base);
+            
+            ArrayPool.Return(colorsCopy);
+            ArrayPool.Return(colors);
         }
     }
 }

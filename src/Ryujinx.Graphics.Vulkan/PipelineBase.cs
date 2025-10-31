@@ -1453,7 +1453,7 @@ namespace Ryujinx.Graphics.Vulkan
                 FramebufferParams?.ClearBindings();
             }
 
-            FramebufferParams = new FramebufferParams(Device, colors, depthStencil);
+            FramebufferParams = FramebufferParams?.Update(colors, depthStencil) ?? new FramebufferParams(Device, colors, depthStencil);
 
             if (IsMainPipeline)
             {
@@ -1471,18 +1471,18 @@ namespace Ryujinx.Graphics.Vulkan
         protected void UpdatePipelineAttachmentFormats()
         {
             Span<Silk.NET.Vulkan.Format> dstAttachmentFormats = _newState.Internal.AttachmentFormats.AsSpan();
-            FramebufferParams.AttachmentFormats.CopyTo(dstAttachmentFormats);
+            FramebufferParams.AttachmentFormats.AsSpan(..FramebufferParams.AttachmentsCount).CopyTo(dstAttachmentFormats);
             _newState.Internal.AttachmentIntegerFormatMask = FramebufferParams.AttachmentIntegerFormatMask;
             _newState.Internal.LogicOpsAllowed = FramebufferParams.LogicOpsAllowed;
 
-            for (int i = FramebufferParams.AttachmentFormats.Length; i < dstAttachmentFormats.Length; i++)
+            for (int i = FramebufferParams.AttachmentsCount; i < dstAttachmentFormats.Length; i++)
             {
                 dstAttachmentFormats[i] = 0;
             }
 
             _newState.ColorBlendAttachmentStateCount = (uint)(FramebufferParams.MaxColorAttachmentIndex + 1);
             _newState.HasDepthStencil = FramebufferParams.HasDepthStencil;
-            _newState.SamplesCount = FramebufferParams.AttachmentSamples.Length != 0 ? FramebufferParams.AttachmentSamples[0] : 1;
+            _newState.SamplesCount = FramebufferParams.AttachmentsCount != 0 ? FramebufferParams.AttachmentSamples[0] : 1;
         }
 
         protected unsafe void CreateRenderPass()

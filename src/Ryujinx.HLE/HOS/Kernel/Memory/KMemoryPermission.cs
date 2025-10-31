@@ -25,17 +25,17 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
         {
             MemoryPermission output = MemoryPermission.None;
 
-            if (permission.HasFlag(KMemoryPermission.Read))
+            if ((permission & KMemoryPermission.Read) == KMemoryPermission.Read)
             {
                 output = MemoryPermission.Read;
             }
 
-            if (permission.HasFlag(KMemoryPermission.Write))
+            if ((permission & KMemoryPermission.Write) == KMemoryPermission.Write)
             {
                 output |= MemoryPermission.Write;
             }
 
-            if (permission.HasFlag(KMemoryPermission.Execute))
+            if ((permission & KMemoryPermission.Execute) == KMemoryPermission.Execute)
             {
                 output |= MemoryPermission.Execute;
             }

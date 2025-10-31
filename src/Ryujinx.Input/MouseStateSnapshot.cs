@@ -8,7 +8,7 @@ namespace Ryujinx.Input
     /// </summary>
     public class MouseStateSnapshot
     {
-        private readonly bool[] _buttonState;
+        public readonly bool[] ButtonState;
 
         /// <summary>
         /// The position of the mouse cursor
@@ -28,7 +28,7 @@ namespace Ryujinx.Input
         /// <param name="scroll">The scroll delta</param>
         public MouseStateSnapshot(bool[] buttonState, Vector2 position, Vector2 scroll)
         {
-            _buttonState = buttonState;
+            ButtonState = buttonState;
 
             Position = position;
             Scroll = scroll;
@@ -40,6 +40,6 @@ namespace Ryujinx.Input
         /// <param name="button">The button</param>
         /// <returns>True if the given button is pressed</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IsPressed(MouseButton button) => _buttonState[(int)button];
+        public bool IsPressed(MouseButton button) => ButtonState[(int)button];
     }
 }

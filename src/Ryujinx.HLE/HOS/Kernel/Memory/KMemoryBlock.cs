@@ -110,7 +110,22 @@ namespace Ryujinx.HLE.HOS.Kernel.Memory
         {
             ulong size = PagesCount * KPageTableBase.PageSize;
 
-            return new KMemoryInfo(
+            return KMemoryInfo.Pool.Allocate().Set(
+                BaseAddress,
+                size,
+                State,
+                Permission,
+                Attribute,
+                SourcePermission,
+                IpcRefCount,
+                DeviceRefCount);
+        }
+        
+        public KMemoryInfo GetInfo(KMemoryInfo oldInfo)
+        {
+            ulong size = PagesCount * KPageTableBase.PageSize;
+
+            return oldInfo.Set(
                 BaseAddress,
                 size,
                 State,

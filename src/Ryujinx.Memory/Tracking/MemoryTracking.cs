@@ -1,5 +1,6 @@
 using Ryujinx.Memory.Range;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 
 namespace Ryujinx.Memory.Tracking
@@ -300,10 +301,10 @@ namespace Ryujinx.Memory.Tracking
                 
                 // We use the non-span method here because keeping the lock will cause a deadlock.
                 regions.Lock.EnterReadLock();
-                RangeItem<VirtualRegion>[] overlaps = regions.FindOverlapsAsArray(address, size);
+                RangeItem<VirtualRegion>[] overlaps = regions.FindOverlapsAsArray(address, size, out int length);
                 regions.Lock.ExitReadLock();
 
-                if (overlaps.Length == 0 && !precise)
+                if (length == 0 && !precise)
                 {
                     if (_memoryManager.IsRangeMapped(address, size))
                     {
@@ -323,8 +324,8 @@ namespace Ryujinx.Memory.Tracking
                         // Increase the access size to trigger handles with misaligned accesses.
                         size += (ulong)_pageSize;
                     }
-
-                    for (int i = 0; i < overlaps.Length; i++)
+                    
+                    for (int i = 0; i < length; i++)
                     {
                         VirtualRegion region = overlaps[i].Value;
 
@@ -336,6 +337,11 @@ namespace Ryujinx.Memory.Tracking
                         {
                             region.Signal(address, size, write, exemptId);
                         }
+                    }
+
+                    if (length != 0)
+                    {
+                        ArrayPool<RangeItem<VirtualRegion>>.Shared.Return(overlaps);
                     }
                 }
             }

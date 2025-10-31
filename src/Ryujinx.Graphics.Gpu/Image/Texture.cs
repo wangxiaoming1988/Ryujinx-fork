@@ -1628,7 +1628,15 @@ namespace Ryujinx.Graphics.Gpu.Image
         {
             lock (_poolOwners)
             {
-                int references = _poolOwners.RemoveAll(entry => entry.Pool == pool && entry.ID == id || id == -1);
+                int references = 0;
+                for (int i = 0; i < _poolOwners.Count; i++)
+                {
+                    if (_poolOwners[i].Pool == pool && _poolOwners[i].ID == id || id == -1)
+                    {
+                        _poolOwners.RemoveAt(i--);
+                        references++;
+                    }
+                }
 
                 if (references == 0)
                 {

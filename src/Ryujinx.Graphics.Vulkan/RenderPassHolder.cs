@@ -178,17 +178,16 @@ namespace Ryujinx.Graphics.Vulkan
         {
             if (_forcedFences.Count > 0)
             {
-                _forcedFences.RemoveAll((entry) =>
+                for (int i = 0; i < _forcedFences.Count; i++)
                 {
-                    if (entry.Texture.Disposed)
+                    if (_forcedFences[i].Texture.Disposed)
                     {
-                        return true;
+                        _forcedFences.RemoveAt(i--);
+                        continue;
                     }
-
-                    entry.Texture.QueueWriteToReadBarrier(cbs, AccessFlags.ShaderReadBit, entry.StageFlags);
-
-                    return false;
-                });
+                    
+                    _forcedFences[i].Texture.QueueWriteToReadBarrier(cbs, AccessFlags.ShaderReadBit, _forcedFences[i].StageFlags);
+                }
             }
         }
 

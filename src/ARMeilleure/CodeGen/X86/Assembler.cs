@@ -1107,17 +1107,17 @@ namespace ARMeilleure.CodeGen.X86
             }
             else
             {
-                if (flags.HasFlag(InstructionFlags.Prefix66))
+                if ((flags & InstructionFlags.Prefix66) != 0)
                 {
                     WriteByte(0x66);
                 }
 
-                if (flags.HasFlag(InstructionFlags.PrefixF2))
+                if ((flags & InstructionFlags.PrefixF2) != 0f)
                 {
                     WriteByte(0xf2);
                 }
 
-                if (flags.HasFlag(InstructionFlags.PrefixF3))
+                if ((flags & InstructionFlags.PrefixF3) != 0f)
                 {
                     WriteByte(0xf3);
                 }

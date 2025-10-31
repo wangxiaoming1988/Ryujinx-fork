@@ -1,6 +1,7 @@
 using Ryujinx.Audio.Integration;
 using Ryujinx.Audio.Renderer.Server.Sink;
 using System;
+using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -35,7 +36,9 @@ namespace Ryujinx.Audio.Renderer.Dsp.Command
             Enabled = true;
             NodeId = nodeId;
 
-            DeviceName = Encoding.ASCII.GetString(sink.Parameter.DeviceName).TrimEnd('\0');
+            // Unused and wasting time and memory, re-add if needed
+            // DeviceName = Encoding.ASCII.GetString(sink.Parameter.DeviceName).TrimEnd('\0');
+            
             SessionId = sessionId;
             InputCount = sink.Parameter.InputCount;
             InputBufferIndices = new ushort[InputCount];
@@ -88,7 +91,7 @@ namespace Ryujinx.Audio.Renderer.Dsp.Command
                     inputCount = bufferCount;
                 }
 
-                short[] outputBuffer = new short[inputCount * SampleCount];
+                short[] outputBuffer = ArrayPool<short>.Shared.Rent((int)inputCount * SampleCount);
 
                 for (int i = 0; i < bufferCount; i++)
                 {
@@ -100,7 +103,9 @@ namespace Ryujinx.Audio.Renderer.Dsp.Command
                     }
                 }
 
-                device.AppendBuffer(outputBuffer, inputCount);
+                device.AppendBuffer(outputBuffer.AsSpan(..((int)inputCount * SampleCount)), inputCount);
+                
+                ArrayPool<short>.Shared.Return(outputBuffer);
             }
             else
             {

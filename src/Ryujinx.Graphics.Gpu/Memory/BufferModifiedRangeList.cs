@@ -1,5 +1,6 @@
 using Ryujinx.Memory.Range;
 using System;
+using System.Buffers;
 using System.Linq;
 
 namespace Ryujinx.Graphics.Gpu.Memory
@@ -276,13 +277,18 @@ namespace Ryujinx.Graphics.Gpu.Memory
         {
             // We use the non-span method here because keeping the lock will cause a deadlock.
             Lock.EnterReadLock();
-            RangeItem<BufferModifiedRange>[] overlaps = FindOverlapsAsArray(address, size);
+            RangeItem<BufferModifiedRange>[] overlaps = FindOverlapsAsArray(address, size, out int length);
             Lock.ExitReadLock();
 
-            for (int i = 0; i < overlaps.Length; i++)
+            if (length != 0)
             {
-                BufferModifiedRange overlap = overlaps[i].Value;
-                rangeAction(overlap.Address, overlap.Size);
+                for (int i = 0; i < length; i++)
+                {
+                    BufferModifiedRange overlap = overlaps[i].Value;
+                    rangeAction(overlap.Address, overlap.Size);
+                }
+                
+                ArrayPool<RangeItem<BufferModifiedRange>>.Shared.Return(overlaps);
             }
         }
 
@@ -392,9 +398,7 @@ namespace Ryujinx.Graphics.Gpu.Memory
             
             Lock.EnterWriteLock();
             // We use the non-span method here because the array is partially modified by the code, which would invalidate a span.
-            RangeItem<BufferModifiedRange>[] overlaps = FindOverlapsAsArray(address, size);
-                
-            int rangeCount = overlaps.Length;
+            RangeItem<BufferModifiedRange>[] overlaps = FindOverlapsAsArray(address, size, out int rangeCount);
 
             if (rangeCount == 0)
             {
@@ -410,7 +414,7 @@ namespace Ryujinx.Graphics.Gpu.Memory
 
             for (int i = 0; i < rangeCount; i++)
             {
-                BufferModifiedRange overlap = overlaps[i].Value;
+                BufferModifiedRange overlap = overlaps![i].Value;
 
                 long diff = (long)(overlap.SyncNumber - currentSync);
 
@@ -430,7 +434,9 @@ namespace Ryujinx.Graphics.Gpu.Memory
             // Wait for the syncpoint.
             _context.Renderer.WaitSync(currentSync + (ulong)highestDiff);
 
-            RemoveRangesAndFlush(overlaps.ToArray(), rangeCount, highestDiff, currentSync, address, endAddress);
+            RemoveRangesAndFlush(overlaps, rangeCount, highestDiff, currentSync, address, endAddress);
+            
+            ArrayPool<RangeItem<BufferModifiedRange>>.Shared.Return(overlaps!);
             
             Lock.ExitWriteLock();
         }

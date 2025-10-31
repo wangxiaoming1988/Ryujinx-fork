@@ -1,3 +1,4 @@
+using Ryujinx.Common;
 using Ryujinx.HLE.HOS.Kernel.Common;
 using Ryujinx.HLE.HOS.Kernel.Process;
 using Ryujinx.Horizon.Common;
@@ -11,6 +12,7 @@ namespace Ryujinx.HLE.HOS.Kernel.Threading
     class KAddressArbiter
     {
         private const int HasListenersMask = 0x40000000;
+        private static readonly ObjectPool<KThread[]> _threadArrayPool = new(() => []);
 
         private readonly KernelContext _context;
 
@@ -198,9 +200,14 @@ namespace Ryujinx.HLE.HOS.Kernel.Threading
         {
             _context.CriticalSection.Enter();
 
-            WakeThreads(_condVarThreads, count, TryAcquireMutex, x => x.CondVarAddress == address);
+            static bool SignalProcessWideKeyPredicate(KThread thread, ulong address)
+            {
+                return thread.CondVarAddress == address;
+            }
 
-            if (!_condVarThreads.Any(x => x.CondVarAddress == address))
+            int validThreads = WakeThreads(_condVarThreads, count, TryAcquireMutex, SignalProcessWideKeyPredicate, address);
+
+            if (validThreads == 0)
             {
                 KernelTransfer.KernelToUser(address, 0);
             }
@@ -480,9 +487,10 @@ namespace Ryujinx.HLE.HOS.Kernel.Threading
             // or negative. It is incremented if there are no threads waiting.
             int waitingCount = 0;
 
-            foreach (KThread thread in _arbiterThreads.Where(x => x.MutexAddress == address))
+            foreach (KThread thread in _arbiterThreads)
             {
-                if (++waitingCount >= count)
+                if (thread.MutexAddress == address && 
+                    ++waitingCount >= count)
                 {
                     break;
                 }
@@ -553,23 +561,55 @@ namespace Ryujinx.HLE.HOS.Kernel.Threading
                 thread.WaitingInArbitration = false;
             }
 
-            WakeThreads(_arbiterThreads, count, RemoveArbiterThread, x => x.MutexAddress == address);
+            static bool ArbiterThreadPredecate(KThread thread, ulong address)
+            {
+                return thread.MutexAddress == address;
+            }
+
+            WakeThreads(_arbiterThreads, count, RemoveArbiterThread, ArbiterThreadPredecate, address);
         }
 
-        private static void WakeThreads(
+        private static int WakeThreads(
             List<KThread> threads,
             int count,
             Action<KThread> removeCallback,
-            Func<KThread, bool> predicate)
+            Func<KThread, ulong, bool> predicate,
+            ulong address = 0)
         {
-            IOrderedEnumerable<KThread> candidates = threads.Where(predicate).OrderBy(x => x.DynamicPriority);
-            KThread[] toSignal = (count > 0 ? candidates.Take(count) : candidates).ToArray();
+            KThread[] candidates = _threadArrayPool.Allocate();
+            if (candidates.Length < threads.Count)
+            {
+                Array.Resize(ref candidates, threads.Count);
+            }
+            
+            int validCount = 0;
+            
+            for (int i = 0; i < threads.Count; i++)
+            {
+                if (predicate(threads[i], address))
+                {
+                    candidates[validCount++] = threads[i];
+                }
+            }
+            
+            Span<KThread> candidatesSpan = candidates.AsSpan(..validCount);
+            
+            candidatesSpan.Sort((x, y) => (x.DynamicPriority.CompareTo(y.DynamicPriority)));
 
-            foreach (KThread thread in toSignal)
+            if (count > 0)
+            {
+                candidatesSpan = candidatesSpan[..Math.Min(count, candidatesSpan.Length)];
+            }
+
+            foreach (KThread thread in candidatesSpan)
             {
                 removeCallback(thread);
                 threads.Remove(thread);
             }
+            
+            _threadArrayPool.Release(candidates);
+            
+            return validCount;
         }
     }
 }

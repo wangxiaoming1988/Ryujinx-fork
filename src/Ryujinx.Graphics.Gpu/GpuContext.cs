@@ -381,9 +381,9 @@ namespace Ryujinx.Graphics.Gpu
         /// <param name="flags">Modifiers for how host sync should be created</param>
         internal void CreateHostSyncIfNeeded(HostSyncFlags flags)
         {
-            bool syncpoint = flags.HasFlag(HostSyncFlags.Syncpoint);
-            bool strict = flags.HasFlag(HostSyncFlags.Strict);
-            bool force = flags.HasFlag(HostSyncFlags.Force);
+            bool syncPoint = (flags & HostSyncFlags.Syncpoint) == HostSyncFlags.Syncpoint;
+            bool strict = (flags & HostSyncFlags.Strict) == HostSyncFlags.Strict;
+            bool force = (flags & HostSyncFlags.Force) == HostSyncFlags.Force;
 
             if (BufferMigrations.Count > 0)
             {
@@ -402,24 +402,37 @@ namespace Ryujinx.Graphics.Gpu
                 }
             }
 
-            if (force || _pendingSync || (syncpoint && SyncpointActions.Count > 0))
+            if (force || _pendingSync || (syncPoint && SyncpointActions.Count > 0))
             {
                 foreach (ISyncActionHandler action in SyncActions)
                 {
-                    action.SyncPreAction(syncpoint);
+                    action.SyncPreAction(syncPoint);
                 }
 
                 foreach (ISyncActionHandler action in SyncpointActions)
                 {
-                    action.SyncPreAction(syncpoint);
+                    action.SyncPreAction(syncPoint);
                 }
 
                 Renderer.CreateSync(SyncNumber, strict);
 
                 SyncNumber++;
 
-                SyncActions.RemoveAll(action => action.SyncAction(syncpoint));
-                SyncpointActions.RemoveAll(action => action.SyncAction(syncpoint));
+                for (int i = 0; i < SyncActions.Count; i++)
+                {
+                    if (SyncActions[i].SyncAction(syncPoint))
+                    {
+                        SyncActions.RemoveAt(i--);
+                    }
+                }
+                
+                for (int i = 0; i < SyncpointActions.Count; i++)
+                {
+                    if (SyncpointActions[i].SyncAction(syncPoint))
+                    {
+                        SyncpointActions.RemoveAt(i--);
+                    }
+                }
             }
 
             _pendingSync = false;

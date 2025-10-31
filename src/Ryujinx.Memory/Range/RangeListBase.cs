@@ -1,20 +1,42 @@
-﻿using System.Collections;
+﻿using Ryujinx.Common;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Ryujinx.Memory.Range
 {
-    public class RangeItem<TValue>(TValue value) where TValue : IRange
+    public class RangeItem<TValue> where TValue : IRange
     {
         public RangeItem<TValue> Next;
         public RangeItem<TValue> Previous;
         
-        public readonly ulong Address = value.Address;
-        public readonly ulong EndAddress = value.Address + value.Size;
+        public ulong Address;
+        public ulong EndAddress;
 
-        public readonly TValue Value = value;
+        public TValue Value;
+        
+        public RangeItem()
+        {
+            
+        }
+        
+        public RangeItem(TValue value)
+        {
+            Address = value.Address;
+            EndAddress = value.Address + value.Size;
+            Value = value;
+        }
 
-        public readonly List<ulong> QuickAccessAddresses = [];
+        public RangeItem<TValue> Set(TValue value)
+        {
+            Next = null;
+            Previous = null;
+            Address = value.Address;
+            EndAddress = value.Address + value.Size;
+            Value = value;
+            
+            return this;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool OverlapsWith(ulong address, ulong endAddress)
@@ -23,20 +45,9 @@ namespace Ryujinx.Memory.Range
         }
     }
     
-    class AddressEqualityComparer : IEqualityComparer<ulong>
-    {
-        public bool Equals(ulong u1, ulong u2)
-        {
-            return u1 == u2;
-        }
-
-        public int GetHashCode(ulong value) => (int)(value << 5);
-        
-        public static readonly AddressEqualityComparer Comparer = new();
-    }
-    
     public unsafe abstract class RangeListBase<T> : IEnumerable<T> where T : IRange
     {
+        protected static readonly ObjectPool<RangeItem<T>> _rangeItemPool = new(() => new RangeItem<T>());
         private const int BackingInitialSize = 1024;
 
         protected RangeItem<T>[] Items;

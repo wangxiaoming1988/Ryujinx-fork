@@ -82,7 +82,7 @@ namespace Ryujinx.Input.SDL2
             Features = GetFeaturesFlag();
 
             // Enable motion tracking
-            if (Features.HasFlag(GamepadFeaturesFlag.Motion))
+            if ((Features & GamepadFeaturesFlag.Motion) != 0)
             {
                 if (SDL_GameControllerSetSensorEnabled(_gamepadHandle, SDL_SensorType.SDL_SENSOR_ACCEL,
                         SDL_bool.SDL_TRUE) != 0)
@@ -162,7 +162,7 @@ namespace Ryujinx.Input.SDL2
 
         public void Rumble(float lowFrequency, float highFrequency, uint durationMs)
         {
-            if (!Features.HasFlag(GamepadFeaturesFlag.Rumble))
+            if ((Features & GamepadFeaturesFlag.Rumble) == 0)
                 return;
 
             ushort lowFrequencyRaw = (ushort)(lowFrequency * ushort.MaxValue);
@@ -194,7 +194,7 @@ namespace Ryujinx.Input.SDL2
                 _ => SDL_SensorType.SDL_SENSOR_INVALID
             };
 
-            if (!Features.HasFlag(GamepadFeaturesFlag.Motion) || sensorType is SDL_SensorType.SDL_SENSOR_INVALID)
+            if ((Features & GamepadFeaturesFlag.Motion) == 0 || sensorType is SDL_SensorType.SDL_SENSOR_INVALID)
                 return Vector3.Zero;
 
             const int ElementCount = 3;

@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -38,7 +39,7 @@ namespace Ryujinx.Memory.Range
                 index = ~index;
             }
 
-            RangeItem<T> rangeItem = new(item);
+            RangeItem<T> rangeItem = _rangeItemPool.Allocate().Set(item);
             
             Insert(index, rangeItem);
         }
@@ -144,6 +145,8 @@ namespace Ryujinx.Memory.Range
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RemoveAt(int index)
         {
+            _rangeItemPool.Release(Items[index]);
+            
             if (index < Count - 1)
             {
                 Items[index + 1].Previous = index > 0 ? Items[index - 1] : null;
@@ -433,7 +436,7 @@ namespace Ryujinx.Memory.Range
             return (Items[index], Items[endIndex - 1]);
         }
         
-        public RangeItem<T>[] FindOverlapsAsArray(ulong address, ulong size)
+        public RangeItem<T>[] FindOverlapsAsArray(ulong address, ulong size, out int length)
         {
             (int index, int endIndex) = BinarySearchEdges(address, address + size);
 
@@ -441,11 +444,13 @@ namespace Ryujinx.Memory.Range
             
             if (index < 0)
             {
-                result = [];
+                result = null;
+                length = 0;
             }
             else
             {
-                result = new RangeItem<T>[endIndex - index];
+                result = ArrayPool<RangeItem<T>>.Shared.Rent(endIndex - index);
+                length = endIndex - index;
                 
                 Array.Copy(Items, index, result, 0, endIndex - index);
             }

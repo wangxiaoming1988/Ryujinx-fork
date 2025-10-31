@@ -48,8 +48,8 @@ namespace Ryujinx.HLE.HOS.Kernel.Threading
 
         public KThreadContext ThreadContext { get; private set; }
 
-        public int DynamicPriority { get; set; }
-        public ulong AffinityMask { get; set; }
+        public int DynamicPriority { get; private set; }
+        public ulong AffinityMask { get; private set; }
 
         public ulong ThreadUid { get; private set; }
         
@@ -83,18 +83,18 @@ namespace Ryujinx.HLE.HOS.Kernel.Threading
 
         public long LastScheduledTime { get; set; }
 
-        public LinkedListNode<KThread>[] SiblingsPerCore { get; private set; }
+        public readonly LinkedListNode<KThread>[] SiblingsPerCore;
 
         public LinkedList<KThread> Withholder { get; set; }
-        public LinkedListNode<KThread> WithholderNode { get; set; }
+        public readonly LinkedListNode<KThread> WithholderNode;
 
-        public LinkedListNode<KThread> ProcessListNode { get; set; }
+        public readonly LinkedListNode<KThread> ProcessListNode;
 
         private readonly LinkedList<KThread> _mutexWaiters;
-        private LinkedListNode<KThread> _mutexWaiterNode;
+        private readonly LinkedListNode<KThread> _mutexWaiterNode;
 
         private readonly LinkedList<KThread> _pinnedWaiters;
-        private LinkedListNode<KThread> _pinnedWaiterNode;
+        private readonly LinkedListNode<KThread> _pinnedWaiterNode;
 
         public KThread MutexOwner { get; private set; }
 
@@ -1070,11 +1070,11 @@ namespace Ryujinx.HLE.HOS.Kernel.Threading
 
             if (nextPrio != null)
             {
-                thread._mutexWaiterNode = _mutexWaiters.AddBefore(nextPrio, thread);
+                _mutexWaiters.AddBefore(nextPrio, thread._mutexWaiterNode);
             }
             else
             {
-                thread._mutexWaiterNode = _mutexWaiters.AddLast(thread);
+                _mutexWaiters.AddLast(thread._mutexWaiterNode);
             }
         }
 

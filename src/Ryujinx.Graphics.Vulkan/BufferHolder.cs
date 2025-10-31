@@ -58,6 +58,8 @@ namespace Ryujinx.Graphics.Vulkan
         private Dictionary<ulong, StagingBufferReserved> _mirrors;
         private bool _useMirrors;
 
+        private Action _decrementReferenceCount;
+
         public BufferHolder(VulkanRenderer gd, Device device, VkBuffer buffer, MemoryAllocation allocation, int size, BufferAllocationType type, BufferAllocationType currentType)
         {
             _gd = gd;
@@ -75,6 +77,8 @@ namespace Ryujinx.Graphics.Vulkan
 
             _flushLock = new ReaderWriterLockSlim();
             _useMirrors = gd.IsTBDR;
+            
+            _decrementReferenceCount = _buffer.DecrementReferenceCount;
         }
 
         public BufferHolder(VulkanRenderer gd, Device device, VkBuffer buffer, Auto<MemoryAllocation> allocation, int size, BufferAllocationType type, BufferAllocationType currentType, int offset)
@@ -444,7 +448,7 @@ namespace Ryujinx.Graphics.Vulkan
 
                 _flushLock.ExitReadLock();
 
-                return PinnedSpan<byte>.UnsafeFromSpan(result, _buffer.DecrementReferenceCount);
+                return PinnedSpan<byte>.UnsafeFromSpan(result, _decrementReferenceCount);
             }
 
             BackgroundResource resource = _gd.BackgroundResources.Get();

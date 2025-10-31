@@ -88,7 +88,7 @@ namespace Ryujinx.Input.SDL2
             _triggerThreshold = 0.0f;
 
             // Enable motion tracking
-            if (Features.HasFlag(GamepadFeaturesFlag.Motion))
+            if ((Features & GamepadFeaturesFlag.Motion) != 0)
             {
                 if (SDL_GameControllerSetSensorEnabled(_gamepadHandle, SDL_SensorType.SDL_SENSOR_ACCEL, SDL_bool.SDL_TRUE) != 0)
                 {
@@ -104,7 +104,7 @@ namespace Ryujinx.Input.SDL2
 
         public void SetLed(uint packedRgb)
         {
-            if (!Features.HasFlag(GamepadFeaturesFlag.Led))
+            if ((Features & GamepadFeaturesFlag.Led) == 0)
                 return;
 
             byte red = packedRgb > 0 ? (byte)(packedRgb >> 16) : (byte)0;
@@ -166,7 +166,7 @@ namespace Ryujinx.Input.SDL2
 
         public void Rumble(float lowFrequency, float highFrequency, uint durationMs)
         {
-            if (!Features.HasFlag(GamepadFeaturesFlag.Rumble))
+            if ((Features & GamepadFeaturesFlag.Rumble) == 0)
                 return;
 
             ushort lowFrequencyRaw = (ushort)(lowFrequency * ushort.MaxValue);
@@ -197,7 +197,7 @@ namespace Ryujinx.Input.SDL2
                 _ => SDL_SensorType.SDL_SENSOR_INVALID
             };
 
-            if (!Features.HasFlag(GamepadFeaturesFlag.Motion) || sensorType is SDL_SensorType.SDL_SENSOR_INVALID)
+            if ((Features & GamepadFeaturesFlag.Motion) == 0 || sensorType is SDL_SensorType.SDL_SENSOR_INVALID)
                 return Vector3.Zero;
 
             const int ElementCount = 3;
@@ -232,7 +232,7 @@ namespace Ryujinx.Input.SDL2
             {
                 _configuration = (StandardControllerInputConfig)configuration;
 
-                if (Features.HasFlag(GamepadFeaturesFlag.Led) && _configuration.Led.EnableLed)
+                if ((Features & GamepadFeaturesFlag.Led) != 0 && _configuration.Led.EnableLed)
                 {
                     if (_configuration.Led.TurnOffLed)
                         (this as IGamepad).ClearLed();

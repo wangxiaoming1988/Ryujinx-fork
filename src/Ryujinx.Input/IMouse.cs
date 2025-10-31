@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Drawing;
 using System.Numerics;
 
@@ -47,7 +48,7 @@ namespace Ryujinx.Input
         /// <returns>A snaphost of the state of the mouse.</returns>
         public static MouseStateSnapshot GetMouseStateSnapshot(IMouse mouse)
         {
-            bool[] buttons = new bool[(int)MouseButton.Count];
+            bool[] buttons = ArrayPool<bool>.Shared.Rent((int)MouseButton.Count);
 
             mouse.Buttons.CopyTo(buttons, 0);
 

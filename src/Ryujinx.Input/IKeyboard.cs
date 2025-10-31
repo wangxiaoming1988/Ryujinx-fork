@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Runtime.CompilerServices;
 
 namespace Ryujinx.Input
@@ -28,7 +29,8 @@ namespace Ryujinx.Input
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static KeyboardStateSnapshot GetStateSnapshot(IKeyboard keyboard)
         {
-            bool[] keysState = new bool[(int)Key.Count];
+            
+            bool[] keysState = ArrayPool<bool>.Shared.Rent((int)Key.Count);
 
             for (Key key = 0; key < Key.Count; key++)
             {

@@ -36,8 +36,6 @@ namespace Ryujinx.Memory.Range
     public class RangeList<T> : RangeListBase<T> where T : IRange
     {
         public readonly ReaderWriterLockSlim Lock = new();
-        
-        private readonly Dictionary<ulong, RangeItem<T>> _quickAccess = new(AddressEqualityComparer.Comparer);
 
         /// <summary>
         /// Creates a new range list.
@@ -93,11 +91,6 @@ namespace Ryujinx.Memory.Range
                             Items[index + 1].Previous = rangeItem;
                         }
                         
-                        foreach (ulong address in Items[index].QuickAccessAddresses)
-                        {
-                            _quickAccess.Remove(address);
-                        }
-                        
                         Items[index] = rangeItem;
 
                         return true;
@@ -140,11 +133,6 @@ namespace Ryujinx.Memory.Range
                         if (index < Count - 1)
                         {
                             Items[index + 1].Previous = rangeItem;
-                        }
-                        
-                        foreach (ulong address in item.QuickAccessAddresses)
-                        {
-                            _quickAccess.Remove(address);
                         }
                         
                         Items[index] = rangeItem;
@@ -210,11 +198,6 @@ namespace Ryujinx.Memory.Range
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RemoveAt(int index)
         {
-            foreach (ulong address in Items[index].QuickAccessAddresses)
-            {
-                _quickAccess.Remove(address);
-            }
-
             if (index < Count - 1)
             {
                 Items[index + 1].Previous = index > 0 ? Items[index - 1] : null;
@@ -252,15 +235,6 @@ namespace Ryujinx.Memory.Range
             
             int startIndex = BinarySearch(startItem.Address);
             int endIndex = BinarySearch(endItem.Address);
-            
-            for (int i = startIndex; i <= endIndex; i++)
-            {
-                _quickAccess.Remove(Items[i].Address);
-                foreach (ulong addr in Items[i].QuickAccessAddresses)
-                {
-                    _quickAccess.Remove(addr);
-                }
-            }
             
             if (endIndex < Count - 1)
             {
@@ -349,22 +323,11 @@ namespace Ryujinx.Memory.Range
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override RangeItem<T> FindOverlapFast(ulong address, ulong size)
         {
-            if (_quickAccess.TryGetValue(address, out RangeItem<T> quickResult))
-            {
-                return quickResult;
-            }
-            
             int index = BinarySearch(address, address + size);
 
             if (index < 0)
             {
                 return null;
-            }
-
-            if (Items[index].OverlapsWith(address, address + 1))
-            {
-                _quickAccess.Add(address, Items[index]);
-                Items[index].QuickAccessAddresses.Add(address);
             }
 
             return Items[index];

@@ -24,7 +24,10 @@ namespace Ryujinx.Common.Collections
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is null</exception>
         public int Get(TKey key, ref TValue[] overlaps)
         {
-            ArgumentNullException.ThrowIfNull(key);
+            if (!typeof(TKey).IsValueType)
+            {
+                ArgumentNullException.ThrowIfNull(key);
+            }
 
             IntervalTreeNode<TKey, TValue> node = GetNode(key);
 
@@ -91,7 +94,10 @@ namespace Ryujinx.Common.Collections
         /// <returns>Number of deleted values</returns>
         public int Remove(TKey key, TValue value)
         {
-            ArgumentNullException.ThrowIfNull(key);
+            if (!typeof(TKey).IsValueType)
+            {
+                ArgumentNullException.ThrowIfNull(key);
+            }
 
             int removed = Delete(key, value);
 
@@ -144,7 +150,10 @@ namespace Ryujinx.Common.Collections
         /// <exception cref="ArgumentNullException"><paramref name="key"/> is null</exception>
         private IntervalTreeNode<TKey, TValue> GetNode(TKey key)
         {
-            ArgumentNullException.ThrowIfNull(key);
+            if (!typeof(TKey).IsValueType)
+            {
+                ArgumentNullException.ThrowIfNull(key);
+            }
 
             IntervalTreeNode<TKey, TValue> node = Root;
             while (node != null)

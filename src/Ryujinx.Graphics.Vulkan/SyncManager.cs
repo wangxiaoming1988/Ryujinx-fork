@@ -1,5 +1,6 @@
 using Ryujinx.Common.Logging;
 using Silk.NET.Vulkan;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -192,6 +193,7 @@ namespace Ryujinx.Graphics.Vulkan
                         {
                             _firstHandle = first.ID + 1;
                             _handles.RemoveAt(0);
+                            ArrayPool<FenceHolder>.Shared.Return(first.Waitable.Fences);
                             first.Waitable = null;
                         }
                     }
