@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace Ryujinx.HLE.HOS.Services.Sockets.Bsd
 {
-    class BsdContext
+    class BsdContext : IDisposable
     {
         private static readonly ConcurrentDictionary<ulong, BsdContext> _registry = new();
 
@@ -158,6 +158,20 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Bsd
             return LinuxError.SUCCESS;
         }
 
+        public void Dispose()
+        {
+            int count;
+
+            lock (_lock)
+            {
+                count = _fds.Count;
+            }
+
+            for (int fd = 0; fd < count; fd++) {
+                CloseFileDescriptor(fd);
+            }
+        }
+
         public static BsdContext GetOrRegister(ulong processId)
         {
             BsdContext context = GetContext(processId);
@@ -174,12 +188,15 @@ namespace Ryujinx.HLE.HOS.Services.Sockets.Bsd
 
         public static BsdContext GetContext(ulong processId)
         {
-            if (!_registry.TryGetValue(processId, out BsdContext processContext))
-            {
-                return null;
-            }
+            return _registry.GetValueOrDefault(processId);
+        }
 
-            return processContext;
+        public static void DeleteContext(ulong processId)
+        {
+            if (_registry.Remove(processId, out BsdContext context))
+            {
+                context.Dispose();
+            }
         }
     }
 }
