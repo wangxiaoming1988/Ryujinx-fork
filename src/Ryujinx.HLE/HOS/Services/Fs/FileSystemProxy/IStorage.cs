@@ -1,8 +1,10 @@
 using LibHac;
 using LibHac.Common;
+using LibHac.Fs;
 using LibHac.Sf;
 using Ryujinx.Common;
 using Ryujinx.Common.Configuration;
+using Ryujinx.Common.Logging;
 using Ryujinx.Memory;
 using System.Threading;
 
@@ -40,7 +42,19 @@ namespace Ryujinx.HLE.HOS.Services.Fs.FileSystemProxy
                 }
 
                 using WritableRegion region = context.Memory.GetWritableRegion(bufferAddress, (int)bufferLen, true);
-                Result result = _baseStorage.Get.Read((long)offset, new OutBuffer(region.Memory.Span), (long)size);
+                Result result;
+
+                try
+                {
+                    result = _baseStorage.Get.Read((long)offset, new OutBuffer(region.Memory.Span), (long)size);
+                }
+                catch (HorizonResultException hre) when (hre.IsOfResultType(ResultFs.NonRealDataVerificationFailed))
+                {
+                    Logger.Error?.Print(LogClass.ServiceFs, 
+                        $"Encountered corrupted data in filesystem storage @ offset 0x{offset:X8}, size 0x{size:X8}. " +
+                        "Please redump the current game and/or update from your console.");
+                    result = ResultFs.NonRealDataVerificationFailed;
+                }
 
                 if (context.Device.DirtyHacks.IsEnabled(DirtyHack.Xc2MenuSoftlockFix) && IsXc2)
                 {
