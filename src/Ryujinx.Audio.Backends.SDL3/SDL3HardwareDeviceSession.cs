@@ -6,36 +6,43 @@ using Ryujinx.Memory;
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
+using SDL;
+using static SDL.SDL3;
+using System.Runtime.InteropServices;
 
-using static SDL2.SDL;
-
-namespace Ryujinx.Audio.Backends.SDL2
+namespace Ryujinx.Audio.Backends.SDL3
 {
-    class SDL2HardwareDeviceSession : HardwareDeviceSessionOutputBase
+
+
+
+    unsafe class SDL3HardwareDeviceSession : HardwareDeviceSessionOutputBase
     {
-        private readonly SDL2HardwareDeviceDriver _driver;
-        private readonly ConcurrentQueue<SDL2AudioBuffer> _queuedBuffers;
+        private readonly SDL3HardwareDeviceDriver _driver;
+        private readonly ConcurrentQueue<SDL3AudioBuffer> _queuedBuffers;
         private readonly DynamicRingBuffer _ringBuffer;
         private ulong _playedSampleCount;
         private readonly ManualResetEvent _updateRequiredEvent;
-        private uint _outputStream;
+        private SDL_AudioStream* _outputStream;
         private bool _hasSetupError;
-        private readonly SDL_AudioCallback _callbackDelegate;
+        private readonly SDL_AudioStreamCallback _callbackDelegate;
         private readonly int _bytesPerFrame;
         private uint _sampleCount;
         private bool _started;
         private float _volume;
-        private readonly ushort _nativeSampleFormat;
+        private readonly SDL_AudioFormat _nativeSampleFormat;
 
-        public SDL2HardwareDeviceSession(SDL2HardwareDeviceDriver driver, IVirtualMemoryManager memoryManager, SampleFormat requestedSampleFormat, uint requestedSampleRate, uint requestedChannelCount) : base(memoryManager, requestedSampleFormat, requestedSampleRate, requestedChannelCount)
+        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+        internal delegate void SDL_AudioStreamCallback(nint session, SDL_AudioStream* stream, int stream_count, int device_count);
+
+        public SDL3HardwareDeviceSession(SDL3HardwareDeviceDriver driver, IVirtualMemoryManager memoryManager, SampleFormat requestedSampleFormat, uint requestedSampleRate, uint requestedChannelCount) : base(memoryManager, requestedSampleFormat, requestedSampleRate, requestedChannelCount)
         {
             _driver = driver;
             _updateRequiredEvent = _driver.GetUpdateRequiredEvent();
-            _queuedBuffers = new ConcurrentQueue<SDL2AudioBuffer>();
+            _queuedBuffers = new ConcurrentQueue<SDL3AudioBuffer>();
             _ringBuffer = new DynamicRingBuffer();
             _callbackDelegate = Update;
             _bytesPerFrame = BackendHelper.GetSampleSize(RequestedSampleFormat) * (int)RequestedChannelCount;
-            _nativeSampleFormat = SDL2HardwareDeviceDriver.GetSDL2Format(RequestedSampleFormat);
+            _nativeSampleFormat = SDL3HardwareDeviceDriver.GetSDL3Format(RequestedSampleFormat);
             _sampleCount = uint.MaxValue;
             _started = false;
             _volume = 1f;
@@ -44,45 +51,51 @@ namespace Ryujinx.Audio.Backends.SDL2
         private void EnsureAudioStreamSetup(AudioBuffer buffer)
         {
             uint bufferSampleCount = (uint)GetSampleCount(buffer);
-            bool needAudioSetup = (_outputStream == 0 && !_hasSetupError) ||
+            bool needAudioSetup = (_outputStream == null && !_hasSetupError) ||
                 (bufferSampleCount >= Constants.TargetSampleCount && bufferSampleCount < _sampleCount);
 
             if (needAudioSetup)
             {
                 _sampleCount = Math.Max(Constants.TargetSampleCount, bufferSampleCount);
 
-                uint newOutputStream = SDL2HardwareDeviceDriver.OpenStream(RequestedSampleFormat, RequestedSampleRate, RequestedChannelCount, _sampleCount, _callbackDelegate);
+                SDL_AudioStream* newOutputStream = SDL3HardwareDeviceDriver.OpenStream(RequestedSampleFormat, RequestedSampleRate, RequestedChannelCount, _sampleCount, _callbackDelegate);
 
-                _hasSetupError = newOutputStream == 0;
+                _hasSetupError = newOutputStream == null;
 
                 if (!_hasSetupError)
                 {
-                    if (_outputStream != 0)
+                    if (_outputStream != null)
                     {
-                        SDL_CloseAudioDevice(_outputStream);
+                        SDL_DestroyAudioStream(_outputStream);
                     }
 
                     _outputStream = newOutputStream;
 
-                    SDL_PauseAudioDevice(_outputStream, _started ? 0 : 1);
+                    if (_started) {
+                        SDL_ResumeAudioStreamDevice(_outputStream);
+                    } else {
+                        SDL_PauseAudioStreamDevice(_outputStream);
+                    }
 
                     Logger.Info?.Print(LogClass.Audio, $"New audio stream setup with a target sample count of {_sampleCount}");
                 }
             }
         }
 
-        private unsafe void Update(nint userdata, nint stream, int streamLength)
+        private unsafe void Update(nint userdata, SDL_AudioStream* streamDevice, int additionalAmount, int totalAmmount)
         {
-            Span<byte> streamSpan = new((void*)stream, streamLength);
+            using SpanOwner<byte> stream = SpanOwner<byte>.Rent(additionalAmount);
+            Span<byte> streamSpan = stream.Span;
 
-            int maxFrameCount = (int)GetSampleCount(streamLength);
+
+            int maxFrameCount = (int)GetSampleCount(additionalAmount);
             int bufferedFrames = _ringBuffer.Length / _bytesPerFrame;
 
             int frameCount = Math.Min(bufferedFrames, maxFrameCount);
 
             if (frameCount == 0)
             {
-                // SDL2 left the responsibility to the user to clear the buffer.
+                // SDL3 left the responsibility to the user to clear the buffer.
                 streamSpan.Clear();
 
                 return;
@@ -94,15 +107,17 @@ namespace Ryujinx.Audio.Backends.SDL2
 
             _ringBuffer.Read(samples, 0, samples.Length);
 
-            fixed (byte* p = samples)
-            {
-                nint pStreamSrc = (nint)p;
+            // Zero the dest buffer
+            streamSpan.Clear();
 
-                // Zero the dest buffer
-                streamSpan.Clear();
+            fixed (byte* pStreamDst = streamSpan) {
+                fixed (byte* pStreamSrc = samples)
+                {
 
-                // Apply volume to written data
-                SDL_MixAudioFormat(stream, pStreamSrc, _nativeSampleFormat, (uint)samples.Length, (int)(_driver.Volume * _volume * SDL_MIX_MAXVOLUME));
+                    // Apply volume to written data
+                    SDL_MixAudio(pStreamDst, pStreamSrc, _nativeSampleFormat, (uint)samples.Length, _driver.Volume * _volume);
+                    SDL_PutAudioStreamData(streamDevice, (nint)pStreamDst, additionalAmount);
+                }
             }
 
             ulong sampleCount = GetSampleCount(samples.Length);
@@ -111,7 +126,7 @@ namespace Ryujinx.Audio.Backends.SDL2
 
             bool needUpdate = false;
 
-            while (availaibleSampleCount > 0 && _queuedBuffers.TryPeek(out SDL2AudioBuffer driverBuffer))
+            while (availaibleSampleCount > 0 && _queuedBuffers.TryPeek(out SDL3AudioBuffer driverBuffer))
             {
                 ulong sampleStillNeeded = driverBuffer.SampleCount - Interlocked.Read(ref driverBuffer.SamplePlayed);
                 ulong playedAudioBufferSampleCount = Math.Min(sampleStillNeeded, availaibleSampleCount);
@@ -152,9 +167,9 @@ namespace Ryujinx.Audio.Backends.SDL2
         {
             EnsureAudioStreamSetup(buffer);
 
-            if (_outputStream != 0)
+            if (_outputStream != null)
             {
-                SDL2AudioBuffer driverBuffer = new(buffer.DataPointer, GetSampleCount(buffer));
+                SDL3AudioBuffer driverBuffer = new(buffer.DataPointer, GetSampleCount(buffer));
 
                 _ringBuffer.Write(buffer.Data, 0, buffer.Data.Length);
 
@@ -177,9 +192,9 @@ namespace Ryujinx.Audio.Backends.SDL2
         {
             if (!_started)
             {
-                if (_outputStream != 0)
+                if (_outputStream != null)
                 {
-                    SDL_PauseAudioDevice(_outputStream, 0);
+                    SDL_ResumeAudioStreamDevice(_outputStream);
                 }
 
                 _started = true;
@@ -190,9 +205,9 @@ namespace Ryujinx.Audio.Backends.SDL2
         {
             if (_started)
             {
-                if (_outputStream != 0)
+                if (_outputStream != null)
                 {
-                    SDL_PauseAudioDevice(_outputStream, 1);
+                    SDL_PauseAudioStreamDevice(_outputStream);
                 }
 
                 _started = false;
@@ -203,7 +218,7 @@ namespace Ryujinx.Audio.Backends.SDL2
 
         public override bool WasBufferFullyConsumed(AudioBuffer buffer)
         {
-            if (!_queuedBuffers.TryPeek(out SDL2AudioBuffer driverBuffer))
+            if (!_queuedBuffers.TryPeek(out SDL3AudioBuffer driverBuffer))
             {
                 return true;
             }
@@ -218,9 +233,9 @@ namespace Ryujinx.Audio.Backends.SDL2
                 PrepareToClose();
                 Stop();
 
-                if (_outputStream != 0)
+                if (_outputStream != null)
                 {
-                    SDL_CloseAudioDevice(_outputStream);
+                    SDL_DestroyAudioStream(_outputStream);
                 }
             }
         }

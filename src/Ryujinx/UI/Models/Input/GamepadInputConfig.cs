@@ -205,7 +205,7 @@ namespace Ryujinx.Ava.UI.Models.Input
             {
                 Id = Id,
                 Name = Name,
-                Backend = InputBackendType.GamepadSDL2,
+                Backend = InputBackendType.GamepadSDL3,
                 PlayerIndex = PlayerIndex,
                 ControllerType = ControllerType,
                 LeftJoycon = new LeftJoyconCommonConfig<GamepadInputId>

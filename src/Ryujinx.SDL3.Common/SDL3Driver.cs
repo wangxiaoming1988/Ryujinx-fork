@@ -5,19 +5,20 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using static SDL2.SDL;
+using SDL;
+using static SDL.SDL3;
 
-namespace Ryujinx.SDL2.Common
+namespace Ryujinx.SDL3.Common
 {
-    public class SDL2Driver : IDisposable
+    public class SDL3Driver : IDisposable
     {
-        private static SDL2Driver _instance;
+        private static SDL3Driver _instance;
 
-        public static SDL2Driver Instance
+        public static SDL3Driver Instance
         {
             get
             {
-                _instance ??= new SDL2Driver();
+                _instance ??= new SDL3Driver();
 
                 return _instance;
             }
@@ -25,26 +26,22 @@ namespace Ryujinx.SDL2.Common
 
         public static Action<Action> MainThreadDispatcher { get; set; }
 
-        private const uint SdlInitFlags = SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO | SDL_INIT_VIDEO;
+        private const SDL_InitFlags SdlInitFlags = SDL_InitFlags.SDL_INIT_EVENTS | SDL_InitFlags.SDL_INIT_GAMEPAD | SDL_InitFlags.SDL_INIT_JOYSTICK | SDL_InitFlags.SDL_INIT_AUDIO | SDL_InitFlags.SDL_INIT_VIDEO;
 
         private bool _isRunning;
         private uint _refereceCount;
         private Thread _worker;
 
-        private const uint SDL_JOYBATTERYUPDATED = 1543;
+        public event Action<SDL_JoystickID> OnJoyStickConnected;
+        public event Action<SDL_JoystickID> OnJoystickDisconnected;
 
-        public event Action<int, int> OnJoyStickConnected;
-        public event Action<int> OnJoystickDisconnected;
+        public event Action<SDL_JoystickID, SDL_PowerState> OnJoyBatteryUpdated;
 
-        public event Action<int, SDL_JoystickPowerLevel> OnJoyBatteryUpdated;
-
-        private ConcurrentDictionary<uint, Action<SDL_Event>> _registeredWindowHandlers;
+        private ConcurrentDictionary<SDL_WindowID, Action<SDL_Event>> _registeredWindowHandlers;
 
         private readonly Lock _lock = new();
 
-        private SDL2Driver() { }
-
-        private const string SDL_HINT_JOYSTICK_HIDAPI_COMBINE_JOY_CONS = "SDL_JOYSTICK_HIDAPI_COMBINE_JOY_CONS";
+        private SDL3Driver() { }
 
         public void Initialize()
         {
@@ -58,20 +55,19 @@ namespace Ryujinx.SDL2.Common
                 }
 
                 SDL_SetHint(SDL_HINT_APP_NAME, "Ryujinx");
-                SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS4_RUMBLE, "1");
-                SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5_RUMBLE, "1");
+                SDL_SetHint(SDL_HINT_JOYSTICK_ENHANCED_REPORTS , "1");
                 SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
                 SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_SWITCH_HOME_LED, "0");
                 SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_JOY_CONS, "1");
                 SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
 
-                // NOTE: As of SDL2 2.24.0, joycons are combined by default but the motion source only come from one of them.
+                // NOTE: As of SDL3 2.24.0, joycons are combined by default but the motion source only come from one of them.
                 // We disable this behavior for now.
                 SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_COMBINE_JOY_CONS, "0");
 
-                if (SDL_Init(SdlInitFlags) != 0)
+                if (!SDL_Init(SdlInitFlags))
                 {
-                    string errorMessage = $"SDL2 initialization failed with error \"{SDL_GetError()}\"";
+                    string errorMessage = $"SDL3 initialization failed with error \"{SDL_GetError()}\"";
 
                     Logger.Error?.Print(LogClass.Application, errorMessage);
 
@@ -79,78 +75,77 @@ namespace Ryujinx.SDL2.Common
                 }
 
                 // First ensure that we only enable joystick events (for connected/disconnected).
-                if (SDL_GameControllerEventState(SDL_IGNORE) != SDL_IGNORE)
+                SDL_SetGamepadEventsEnabled(false);
+                SDL_SetJoystickEventsEnabled(true);
+                if (SDL_GamepadEventsEnabled())
                 {
                     Logger.Error?.PrintMsg(LogClass.Application, "Couldn't change the state of game controller events.");
                 }
 
-                if (SDL_JoystickEventState(SDL_ENABLE) < 0)
+                if (!SDL_JoystickEventsEnabled())
                 {
                     Logger.Error?.PrintMsg(LogClass.Application, $"Failed to enable joystick event polling: {SDL_GetError()}");
                 }
 
                 // Disable all joysticks information, we don't need them no need to flood the event queue for that.
-                SDL_EventState(SDL_EventType.SDL_JOYAXISMOTION, SDL_DISABLE);
-                SDL_EventState(SDL_EventType.SDL_JOYBALLMOTION, SDL_DISABLE);
-                SDL_EventState(SDL_EventType.SDL_JOYHATMOTION, SDL_DISABLE);
-                SDL_EventState(SDL_EventType.SDL_JOYBUTTONDOWN, SDL_DISABLE);
-                SDL_EventState(SDL_EventType.SDL_JOYBUTTONUP, SDL_DISABLE);
+                SDL_SetEventEnabled((uint)SDL_EventType.SDL_EVENT_JOYSTICK_AXIS_MOTION, false);
+                SDL_SetEventEnabled((uint)SDL_EventType.SDL_EVENT_JOYSTICK_BALL_MOTION, false);
+                SDL_SetEventEnabled((uint)SDL_EventType.SDL_EVENT_JOYSTICK_HAT_MOTION, false);
+                SDL_SetEventEnabled((uint)SDL_EventType.SDL_EVENT_JOYSTICK_BUTTON_DOWN, false);
+                SDL_SetEventEnabled((uint)SDL_EventType.SDL_EVENT_JOYSTICK_BUTTON_UP, false);
 
-                SDL_EventState(SDL_EventType.SDL_CONTROLLERSENSORUPDATE, SDL_DISABLE);
+                SDL_SetEventEnabled((uint)SDL_EventType.SDL_EVENT_GAMEPAD_SENSOR_UPDATE, false);
 
                 string gamepadDbPath = Path.Combine(AppDataManager.BaseDirPath, "SDL_GameControllerDB.txt");
 
                 if (File.Exists(gamepadDbPath))
                 {
-                    SDL_GameControllerAddMappingsFromFile(gamepadDbPath);
+                    SDL_AddGamepadMappingsFromFile(gamepadDbPath);
                 }
 
-                _registeredWindowHandlers = new ConcurrentDictionary<uint, Action<SDL_Event>>();
+                _registeredWindowHandlers = new ConcurrentDictionary<SDL_WindowID, Action<SDL_Event>>();
                 _worker = new Thread(EventWorker);
                 _isRunning = true;
                 _worker.Start();
             }
         }
 
-        public bool RegisterWindow(uint windowId, Action<SDL_Event> windowEventHandler)
+        public bool RegisterWindow(SDL_WindowID windowId, Action<SDL_Event> windowEventHandler)
         {
             return _registeredWindowHandlers.TryAdd(windowId, windowEventHandler);
         }
 
-        public void UnregisterWindow(uint windowId)
+        public void UnregisterWindow(SDL_WindowID windowId)
         {
             _registeredWindowHandlers.Remove(windowId, out _);
         }
 
         private void HandleSDLEvent(ref SDL_Event evnt)
         {
-            if (evnt.type == SDL_EventType.SDL_JOYDEVICEADDED)
+            SDL_EventType type = evnt.Type;
+            if (type == SDL_EventType.SDL_EVENT_JOYSTICK_ADDED)
             {
-                int deviceId = evnt.cbutton.which;
+                SDL_JoystickID instanceId = evnt.jbutton.which;
 
-                // SDL2 loves to be inconsistent here by providing the device id instead of the instance id (like on removed event), as such we just grab it and send it inside our system.
-                int instanceId = SDL_JoystickGetDeviceInstanceID(deviceId);
-
-                if (instanceId == -1)
-                {
-                    return;
-                }
-
+                // SDL3 loves to be inconsistent here by providing the device id instead of the instance id (like on removed event), as such we just grab it and send it inside our system.
                 Logger.Debug?.Print(LogClass.Application, $"Added joystick instance id {instanceId}");
 
-                OnJoyStickConnected?.Invoke(deviceId, instanceId);
+                OnJoyStickConnected?.Invoke(instanceId);
             }
-            else if (evnt.type == SDL_EventType.SDL_JOYDEVICEREMOVED)
+            else if (type == SDL_EventType.SDL_EVENT_JOYSTICK_REMOVED)
             {
-                Logger.Debug?.Print(LogClass.Application, $"Removed joystick instance id {evnt.cbutton.which}");
+                Logger.Debug?.Print(LogClass.Application, $"Removed joystick instance id {evnt.jbutton.which}");
 
-                OnJoystickDisconnected?.Invoke(evnt.cbutton.which);
+                OnJoystickDisconnected?.Invoke(evnt.jbutton.which);
             }
-            else if ((uint)evnt.type == SDL_JOYBATTERYUPDATED)
+            else if (type == SDL_EventType.SDL_EVENT_JOYSTICK_BATTERY_UPDATED)
             {
-                OnJoyBatteryUpdated?.Invoke(evnt.cbutton.which, (SDL_JoystickPowerLevel)evnt.user.code);
+                OnJoyBatteryUpdated?.Invoke(evnt.jbutton.which, evnt.jbattery.state);
             }
-            else if (evnt.type is SDL_EventType.SDL_WINDOWEVENT or SDL_EventType.SDL_MOUSEBUTTONDOWN or SDL_EventType.SDL_MOUSEBUTTONUP)
+            else if (
+                ((uint)type >= (uint)SDL_EventType.SDL_EVENT_WINDOW_FIRST && (uint)type <= (uint)SDL_EventType.SDL_EVENT_WINDOW_LAST) ||
+                type is SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN or SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP
+            )
             {
                 if (_registeredWindowHandlers.TryGetValue(evnt.window.windowID, out Action<SDL_Event> handler))
                 {
@@ -159,7 +154,7 @@ namespace Ryujinx.SDL2.Common
             }
         }
 
-        private void EventWorker()
+        private unsafe void EventWorker()
         {
             const int WaitTimeMs = 10;
 
@@ -169,7 +164,8 @@ namespace Ryujinx.SDL2.Common
             {
                 MainThreadDispatcher?.Invoke(() =>
                 {
-                    while (SDL_PollEvent(out SDL_Event evnt) != 0)
+                    SDL_Event evnt = new();
+                    while (SDL_PollEvent(&evnt))
                     {
                         HandleSDLEvent(ref evnt);
                     }

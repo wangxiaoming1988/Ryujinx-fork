@@ -2,11 +2,12 @@ using Ryujinx.Common.Configuration.Hid;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using static SDL2.SDL;
+using SDL;
+using static SDL.SDL3;
 
-namespace Ryujinx.Input.SDL2
+namespace Ryujinx.Input.SDL3
 {
-    internal class SDL2JoyConPair(IGamepad left, IGamepad right) : IGamepad
+    internal class SDL3JoyConPair(IGamepad left, IGamepad right) : IGamepad
     {
         public GamepadFeaturesFlag Features => (left?.Features ?? GamepadFeaturesFlag.None) |
                                                (right?.Features ?? GamepadFeaturesFlag.None);
@@ -95,40 +96,44 @@ namespace Ryujinx.Input.SDL2
             right.SetTriggerThreshold(triggerThreshold);
         }
 
-        public static bool IsCombinable(List<string> gamepadsIds)
+        public static bool IsCombinable(Dictionary<SDL_JoystickID, string> gamepadsIds)
         {
             (int leftIndex, int rightIndex) = DetectJoyConPair(gamepadsIds);
             return leftIndex >= 0 && rightIndex >= 0;
         }
 
-        private static (int leftIndex, int rightIndex) DetectJoyConPair(List<string> gamepadsIds)
+        private static (int leftIndex, int rightIndex) DetectJoyConPair(Dictionary<SDL_JoystickID, string> gamepadsIds)
         {
-            List<string> gamepadNames = gamepadsIds.Where(gamepadId => gamepadId != Id)
-                .Select((_, index) => SDL_GameControllerNameForIndex(index)).ToList();
-            int leftIndex = gamepadNames.IndexOf(SDL2JoyCon.LeftName);
-            int rightIndex = gamepadNames.IndexOf(SDL2JoyCon.RightName);
+            Dictionary<string, SDL_JoystickID> gamepadNames = gamepadsIds
+                .Where(gamepadId => gamepadId.Value != Id && SDL_GetGamepadNameForID(gamepadId.Key) is SDL3JoyCon.LeftName or SDL3JoyCon.RightName)
+                .Select(gamepad => (SDL_GetGamepadNameForID(gamepad.Key), gamepad.Key))
+                .ToDictionary();
+            SDL_JoystickID idx;
+            int leftIndex = gamepadNames.TryGetValue(SDL3JoyCon.LeftName, out idx) ? (int)idx : -1;
+            int rightIndex = gamepadNames.TryGetValue(SDL3JoyCon.LeftName, out idx) ? (int)idx : -1;
 
             return (leftIndex, rightIndex);
         }
 
-        public static IGamepad GetGamepad(List<string> gamepadsIds)
+        public unsafe static IGamepad GetGamepad(Dictionary<SDL_JoystickID, string> gamepadsIds)
         {
             (int leftIndex, int rightIndex) = DetectJoyConPair(gamepadsIds);
-            if (leftIndex == -1 || rightIndex == -1)
+
+            if (leftIndex <= 0 || rightIndex <= 0)
             {
                 return null;
             }
 
-            nint leftGamepadHandle = SDL_GameControllerOpen(leftIndex);
-            nint rightGamepadHandle = SDL_GameControllerOpen(rightIndex);
+            SDL_Gamepad* leftGamepadHandle = SDL_OpenGamepad((SDL_JoystickID)leftIndex);
+            SDL_Gamepad* rightGamepadHandle = SDL_OpenGamepad((SDL_JoystickID)rightIndex);
 
-            if (leftGamepadHandle == nint.Zero || rightGamepadHandle == nint.Zero)
+            if (leftGamepadHandle == null || rightGamepadHandle == null)
             {
                 return null;
             }
 
-            return new SDL2JoyConPair(new SDL2JoyCon(leftGamepadHandle, gamepadsIds[leftIndex]),
-                new SDL2JoyCon(rightGamepadHandle, gamepadsIds[rightIndex]));
+            return new SDL3JoyConPair(new SDL3JoyCon(leftGamepadHandle, gamepadsIds[(SDL_JoystickID)leftIndex]),
+                new SDL3JoyCon(rightGamepadHandle, gamepadsIds[(SDL_JoystickID)rightIndex]));
         }
     }
 }

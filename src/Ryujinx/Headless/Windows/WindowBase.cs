@@ -15,36 +15,33 @@ using Ryujinx.HLE.Loaders.Processes;
 using Ryujinx.HLE.UI;
 using Ryujinx.Input;
 using Ryujinx.Input.HLE;
-using Ryujinx.Input.SDL2;
-using Ryujinx.SDL2.Common;
+using Ryujinx.Input.SDL3;
+using Ryujinx.SDL3.Common;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Threading;
-using static SDL2.SDL;
+using SDL;
+using static SDL.SDL3;
 using AntiAliasing = Ryujinx.Common.Configuration.AntiAliasing;
 using ScalingFilter = Ryujinx.Common.Configuration.ScalingFilter;
 using Switch = Ryujinx.HLE.Switch;
 using UserProfile = Ryujinx.HLE.HOS.Services.Account.Acc.UserProfile;
+using LibHac.Util;
 
 namespace Ryujinx.Headless
 {
-    abstract partial class WindowBase : IHostUIHandler, IDisposable
+    abstract unsafe partial class WindowBase : IHostUIHandler, IDisposable
     {
         protected const int DefaultWidth = 1280;
         protected const int DefaultHeight = 720;
         private const int TargetFps = 60;
-        private SDL_WindowFlags DefaultFlags = SDL_WindowFlags.SDL_WINDOW_ALLOW_HIGHDPI | SDL_WindowFlags.SDL_WINDOW_RESIZABLE | SDL_WindowFlags.SDL_WINDOW_INPUT_FOCUS | SDL_WindowFlags.SDL_WINDOW_SHOWN;
+        private SDL_WindowFlags DefaultFlags = SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WindowFlags.SDL_WINDOW_RESIZABLE | SDL_WindowFlags.SDL_WINDOW_INPUT_FOCUS;
         private SDL_WindowFlags FullscreenFlag = 0;
 
         private static readonly ConcurrentQueue<Action> _mainThreadActions = new();
-
-        [LibraryImport("SDL2")]
-        // TODO: Remove this as soon as SDL2-CS was updated to expose this method publicly
-        private static partial nint SDL_LoadBMP_RW(nint src, int freesrc);
 
         public static void QueueMainThreadAction(Action action)
         {
@@ -56,12 +53,12 @@ namespace Ryujinx.Headless
         public Switch Device { get; private set; }
         public IRenderer Renderer { get; private set; }
 
-        protected nint WindowHandle { get; set; }
+        protected SDL_Window* WindowHandle { get; set; }
 
         public IHostUITheme HostUITheme { get; }
         public int Width { get; private set; }
         public int Height { get; private set; }
-        public int DisplayId { get; set; }
+        public SDL_DisplayID DisplayId { get; set; }
         public bool IsFullscreen { get; set; }
         public bool IsExclusiveFullscreen { get; set; }
         public int ExclusiveFullscreenWidth { get; set; }
@@ -70,7 +67,7 @@ namespace Ryujinx.Headless
         public ScalingFilter ScalingFilter { get; set; }
         public int ScalingFilterLevel { get; set; }
 
-        protected SDL2MouseDriver MouseDriver;
+        protected SDL3MouseDriver MouseDriver;
         private readonly InputManager _inputManager;
         private readonly IKeyboard _keyboardInterface;
         protected readonly GraphicsDebugLevel GlLogLevel;
@@ -83,7 +80,7 @@ namespace Ryujinx.Headless
         private long _ticks;
         private bool _isActive;
         private bool _isStopped;
-        private uint _windowId;
+        private SDL_WindowID _windowId;
 
         private string _gpuDriverName;
 
@@ -99,7 +96,7 @@ namespace Ryujinx.Headless
             HideCursorMode hideCursorMode,
             bool ignoreControllerApplet)
         {
-            MouseDriver = new SDL2MouseDriver(hideCursorMode);
+            MouseDriver = new SDL3MouseDriver(hideCursorMode);
             _inputManager = inputManager;
             _inputManager.SetMouseDriver(MouseDriver);
             NpadManager = _inputManager.CreateNpadManager();
@@ -116,7 +113,7 @@ namespace Ryujinx.Headless
             _ignoreControllerApplet = ignoreControllerApplet;
             HostUITheme = new HeadlessHostUiTheme();
 
-            SDL2Driver.Instance.Initialize();
+            SDL3Driver.Instance.Initialize();
         }
 
         public void Initialize(Switch device, List<InputConfig> inputConfigs, bool enableKeyboard, bool enableMouse)
@@ -155,11 +152,11 @@ namespace Ryujinx.Headless
             {
                 fixed (byte* iconPtr = iconBytes)
                 {
-                    nint rwOpsStruct = SDL_RWFromConstMem((nint)iconPtr, iconBytes.Length);
-                    nint iconHandle = SDL_LoadBMP_RW(rwOpsStruct, 1);
+                    SDL_IOStream* rwOpsStruct = SDL_IOFromConstMem((nint)iconPtr, (nuint)iconBytes.Length);
+                    SDL_Surface* iconHandle = SDL_LoadBMP_IO(rwOpsStruct, true);
 
                     SDL_SetWindowIcon(WindowHandle, iconHandle);
-                    SDL_FreeSurface(iconHandle);
+                    SDL_DestroySurface(iconHandle);
                 }
             }
         }
@@ -183,18 +180,27 @@ namespace Ryujinx.Headless
                 Width = ExclusiveFullscreenWidth;
                 Height = ExclusiveFullscreenHeight;
 
-                DefaultFlags = SDL_WindowFlags.SDL_WINDOW_ALLOW_HIGHDPI;
+                DefaultFlags = SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY;
                 FullscreenFlag = SDL_WindowFlags.SDL_WINDOW_FULLSCREEN;
             }
             else if (IsFullscreen)
             {
-                DefaultFlags = SDL_WindowFlags.SDL_WINDOW_ALLOW_HIGHDPI;
-                FullscreenFlag = SDL_WindowFlags.SDL_WINDOW_FULLSCREEN_DESKTOP;
+                DefaultFlags = SDL_WindowFlags.SDL_WINDOW_HIGH_PIXEL_DENSITY;
+                FullscreenFlag = SDL_WindowFlags.SDL_WINDOW_BORDERLESS;
             }
 
-            WindowHandle = SDL_CreateWindow($"Ryujinx {Program.Version}{titleNameSection}{titleVersionSection}{titleIdSection}{titleArchSection}", SDL_WINDOWPOS_CENTERED_DISPLAY(DisplayId), SDL_WINDOWPOS_CENTERED_DISPLAY(DisplayId), Width, Height, DefaultFlags | FullscreenFlag | WindowFlags);
+            SDL_PropertiesID props = SDL_CreateProperties();
+            SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, $"Ryujinx {Program.Version}{titleNameSection}{titleVersionSection}{titleIdSection}{titleArchSection}");
+            SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, SDL_WINDOWPOS_CENTERED_DISPLAY(DisplayId));
+            SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, SDL_WINDOWPOS_CENTERED_DISPLAY(DisplayId));
+            SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, Width);
+            SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, Height);
+            SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_FLAGS_NUMBER, (long)(DefaultFlags | FullscreenFlag | WindowFlags));
 
-            if (WindowHandle == nint.Zero)
+            WindowHandle = SDL_CreateWindowWithProperties(props);
+            SDL_DestroyProperties(props);
+
+            if (WindowHandle == null)
             {
                 string errorMessage = $"SDL_CreateWindow failed with error \"{SDL_GetError()}\"";
 
@@ -206,16 +212,16 @@ namespace Ryujinx.Headless
             SetWindowIcon();
 
             _windowId = SDL_GetWindowID(WindowHandle);
-            SDL2Driver.Instance.RegisterWindow(_windowId, HandleWindowEvent);
+            SDL3Driver.Instance.RegisterWindow(_windowId, HandleWindowEvent);
         }
 
         private void HandleWindowEvent(SDL_Event evnt)
         {
-            if (evnt.type == SDL_EventType.SDL_WINDOWEVENT)
+            if ((uint)evnt.Type >= (uint)SDL_EventType.SDL_EVENT_WINDOW_FIRST && (uint)evnt.Type <= (uint)SDL_EventType.SDL_EVENT_WINDOW_LAST)
             {
-                switch (evnt.window.windowEvent)
+                switch (evnt.Type)
                 {
-                    case SDL_WindowEventID.SDL_WINDOWEVENT_SIZE_CHANGED:
+                    case SDL_EventType.SDL_EVENT_WINDOW_RESIZED:
                         // Unlike on Windows, this event fires on macOS when triggering fullscreen mode.
                         // And promptly crashes the process because `Renderer?.window.SetSize` is undefined.
                         // As we don't need this to fire in either case we can test for fullscreen.
@@ -229,7 +235,7 @@ namespace Ryujinx.Headless
 
                         break;
 
-                    case SDL_WindowEventID.SDL_WINDOWEVENT_CLOSE:
+                    case SDL_EventType.SDL_EVENT_WINDOW_CLOSE_REQUESTED:
                         Exit();
                         break;
                 }
@@ -409,7 +415,7 @@ namespace Ryujinx.Headless
             // Get screen touch position
             if (!_enableMouse)
             {
-                hasTouch = TouchScreenManager.Update(true, (_inputManager.MouseDriver as SDL2MouseDriver).IsButtonPressed(MouseButton.Button1), _aspectRatio.ToFloat());
+                hasTouch = TouchScreenManager.Update(true, (_inputManager.MouseDriver as SDL3MouseDriver).IsButtonPressed(MouseButton.Button1), _aspectRatio.ToFloat());
             }
 
             if (!hasTouch)
@@ -461,7 +467,7 @@ namespace Ryujinx.Headless
 
         public bool DisplayInputDialog(SoftwareKeyboardUIArgs args, out string userText)
         {
-            // SDL2 doesn't support input dialogs
+            // SDL3 doesn't support input dialogs
             userText = "Ryujinx";
 
             return true;
@@ -476,7 +482,7 @@ namespace Ryujinx.Headless
 
         public bool DisplayCabinetDialog(out string userText)
         {
-            // SDL2 doesn't support input dialogs
+            // SDL3 doesn't support input dialogs
             userText = "Ryujinx";
 
             return true;
@@ -515,27 +521,36 @@ namespace Ryujinx.Headless
             Exit();
         }
 
-        public bool DisplayErrorAppletDialog(string title, string message, string[] buttonsText, (uint Module, uint Description)? errorCode = null)
+        public unsafe bool DisplayErrorAppletDialog(string title, string message, string[] buttonsText, (uint Module, uint Description)? errorCode = null)
         {
-            SDL_MessageBoxData data = new()
-            {
-                title = title,
-                message = message,
-                buttons = new SDL_MessageBoxButtonData[buttonsText.Length],
-                numbuttons = buttonsText.Length,
-                window = WindowHandle
-            };
+            SDL_MessageBoxButtonData[] buttons = new SDL_MessageBoxButtonData[buttonsText.Length];
 
             for (int i = 0; i < buttonsText.Length; i++)
             {
-                data.buttons[i] = new SDL_MessageBoxButtonData
+                string buttonText = buttonsText[i];
+                fixed (byte* pButtonText = &buttonText.ToBytes()[0])
+                buttons[i] = new SDL_MessageBoxButtonData
                 {
-                    buttonid = i,
-                    text = buttonsText[i],
+                    buttonID = i,
+                    text = pButtonText,
                 };
             }
 
-            SDL_ShowMessageBox(ref data, out int _);
+            fixed (byte* pTitle = &title.ToBytes()[0])
+            fixed (byte* pMessage = &message.ToBytes()[0])
+            fixed (SDL_MessageBoxButtonData* p = &buttons[0]) {
+                SDL_MessageBoxData data = new()
+                {
+                    title = pTitle,
+                    message = pMessage,
+                    buttons = p,
+                    numbuttons = buttonsText.Length,
+                    window = WindowHandle
+                };
+
+
+                SDL_ShowMessageBox(&data, null);
+            }
 
             return true;
         }
@@ -553,11 +568,11 @@ namespace Ryujinx.Headless
                 TouchScreenManager?.Dispose();
                 NpadManager.Dispose();
 
-                SDL2Driver.Instance.UnregisterWindow(_windowId);
+                SDL3Driver.Instance.UnregisterWindow(_windowId);
 
                 SDL_DestroyWindow(WindowHandle);
 
-                SDL2Driver.Instance.Dispose();
+                SDL3Driver.Instance.Dispose();
             }
         }
 

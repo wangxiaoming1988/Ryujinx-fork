@@ -2,8 +2,8 @@
 
 SCRIPT_DIR=$(dirname "$(realpath "$0")")
 
-if [ -f "$SCRIPT_DIR/Ryujinx.Headless.SDL2" ]; then
-    RYUJINX_BIN="Ryujinx.Headless.SDL2"
+if [ -f "$SCRIPT_DIR/Ryujinx.Headless.SDL3" ]; then
+    RYUJINX_BIN="Ryujinx.Headless.SDL3"
 fi
 
 if [ -f "$SCRIPT_DIR/Ryujinx" ]; then

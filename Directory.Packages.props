@@ -16,6 +16,7 @@
     <PackageVersion Include="Projektanker.Icons.Avalonia" Version="9.6.2" />
     <PackageVersion Include="Projektanker.Icons.Avalonia.FontAwesome" Version="9.6.2" />
     <PackageVersion Include="Projektanker.Icons.Avalonia.MaterialDesign" Version="9.6.2" />
+    <PackageVersion Include="ppy.SDL3-CS" Version="2025.920.0" />
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageVersion Include="Concentus" Version="2.2.2" />
@@ -41,7 +42,6 @@
     <PackageVersion Include="Ryujinx.Graphics.Nvdec.Dependencies.AllArch" Version="6.1.2-build3" />
     <PackageVersion Include="Ryujinx.Graphics.Vulkan.Dependencies.MoltenVK" Version="1.2.0" />
     <PackageVersion Include="Ryujinx.LibHac" Version="0.21.0-alpha.126" />
-    <PackageVersion Include="Ryujinx.SDL2-CS" Version="2.30.0-build32" />
     <PackageVersion Include="Ryujinx.UpdateClient" Version="1.0.44" />
     <PackageVersion Include="Ryujinx.Systems.Update.Common" Version="1.0.44" />
     <PackageVersion Include="Gommon" Version="2.8.0.1" />

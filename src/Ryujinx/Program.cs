@@ -19,7 +19,7 @@ using Ryujinx.Common.Logging;
 using Ryujinx.Common.SystemInterop;
 using Ryujinx.Graphics.Vulkan.MoltenVK;
 using Ryujinx.Headless;
-using Ryujinx.SDL2.Common;
+using Ryujinx.SDL3.Common;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -149,8 +149,8 @@ namespace Ryujinx.Ava
             // Initialize Discord integration.
             DiscordIntegrationModule.Initialize();
 
-            // Initialize SDL2 driver
-            SDL2Driver.MainThreadDispatcher = action => Dispatcher.UIThread.InvokeAsync(action, DispatcherPriority.Input);
+            // Initialize SDL3 driver
+            SDL3Driver.MainThreadDispatcher = action => Dispatcher.UIThread.InvokeAsync(action, DispatcherPriority.Input);
 
             ReloadConfig();
 

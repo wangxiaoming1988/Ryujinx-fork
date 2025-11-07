@@ -6,11 +6,12 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using static SDL2.SDL;
+using SDL;
+using static SDL.SDL3;
 
-namespace Ryujinx.Input.SDL2
+namespace Ryujinx.Input.SDL3
 {
-    public class SDL2MouseDriver : IGamepadDriver
+    public class SDL3MouseDriver : IGamepadDriver
     {
         private const int CursorHideIdleTime = 5; // seconds
 
@@ -25,14 +26,14 @@ namespace Ryujinx.Input.SDL2
         public Vector2 Scroll { get; private set; }
         public Size ClientSize;
 
-        public SDL2MouseDriver(HideCursorMode hideCursorMode)
+        public SDL3MouseDriver(HideCursorMode hideCursorMode)
         {
             PressedButtons = new bool[(int)MouseButton.Count];
             _hideCursorMode = hideCursorMode;
 
             if (_hideCursorMode == HideCursorMode.Always)
             {
-                if (SDL_ShowCursor(SDL_DISABLE) != SDL_DISABLE)
+                if (!SDL_HideCursor())
                 {
                     Logger.Error?.PrintMsg(LogClass.Application, "Failed to disable the cursor.");
                 }
@@ -49,9 +50,11 @@ namespace Ryujinx.Input.SDL2
             return (MouseButton)(rawButton - 1);
         }
 
-        public void UpdatePosition()
+        public unsafe void UpdatePosition()
         {
-            _ = SDL_GetMouseState(out int posX, out int posY);
+            float posX = 0;
+            float posY = 0;
+            _ = SDL_GetMouseState(&posX, &posY);
             Vector2 position = new(posX, posY);
 
             if (CurrentPosition != position)
@@ -76,7 +79,7 @@ namespace Ryujinx.Input.SDL2
             {
                 if (!_isHidden)
                 {
-                    if (SDL_ShowCursor(SDL_DISABLE) != SDL_DISABLE)
+                    if (!SDL_HideCursor())
                     {
                         Logger.Error?.PrintMsg(LogClass.Application, "Failed to disable the cursor.");
                     }
@@ -88,7 +91,7 @@ namespace Ryujinx.Input.SDL2
             {
                 if (_isHidden)
                 {
-                    if (SDL_ShowCursor(SDL_ENABLE) != SDL_ENABLE)
+                    if (!SDL_ShowCursor())
                     {
                         Logger.Error?.PrintMsg(LogClass.Application, "Failed to enable the cursor.");
                     }
@@ -100,15 +103,15 @@ namespace Ryujinx.Input.SDL2
 
         public void Update(SDL_Event evnt)
         {
-            switch (evnt.type)
+            switch (evnt.Type)
             {
-                case SDL_EventType.SDL_MOUSEBUTTONDOWN:
-                case SDL_EventType.SDL_MOUSEBUTTONUP:
-                    uint rawButton = evnt.button.button;
+                case SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN:
+                case SDL_EventType.SDL_EVENT_MOUSE_BUTTON_UP:
+                    uint rawButton = (uint)evnt.button.Button;
 
                     if (rawButton is > 0 and <= ((int)MouseButton.Count))
                     {
-                        PressedButtons[(int)DriverButtonToMouseButton(rawButton)] = evnt.type == SDL_EventType.SDL_MOUSEBUTTONDOWN;
+                        PressedButtons[(int)DriverButtonToMouseButton(rawButton)] = evnt.Type == SDL_EventType.SDL_EVENT_MOUSE_BUTTON_DOWN;
 
                         CurrentPosition = new Vector2(evnt.button.x, evnt.button.y);
                     }
@@ -116,13 +119,13 @@ namespace Ryujinx.Input.SDL2
                     break;
 
                 // NOTE: On Linux using Wayland mouse motion events won't be received at all.
-                case SDL_EventType.SDL_MOUSEMOTION:
+                case SDL_EventType.SDL_EVENT_MOUSE_MOTION:
                     CurrentPosition = new Vector2(evnt.motion.x, evnt.motion.y);
                     _lastCursorMoveTime = Stopwatch.GetTimestamp();
 
                     break;
 
-                case SDL_EventType.SDL_MOUSEWHEEL:
+                case SDL_EventType.SDL_EVENT_MOUSE_WHEEL:
                     Scroll = new Vector2(evnt.wheel.x, evnt.wheel.y);
 
                     break;
@@ -144,7 +147,7 @@ namespace Ryujinx.Input.SDL2
             return ClientSize;
         }
 
-        public string DriverName => "SDL2";
+        public string DriverName => "SDL3";
 
         public event Action<string> OnGamepadConnected
         {
@@ -162,7 +165,7 @@ namespace Ryujinx.Input.SDL2
 
         public IGamepad GetGamepad(string id)
         {
-            return new SDL2Mouse(this);
+            return new SDL3Mouse(this);
         }
 
         public IEnumerable<IGamepad> GetGamepads() => [GetGamepad("0")];

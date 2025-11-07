@@ -2,42 +2,41 @@ using Ryujinx.Audio.Common;
 using Ryujinx.Audio.Integration;
 using Ryujinx.Common.Logging;
 using Ryujinx.Memory;
-using Ryujinx.SDL2.Common;
+using Ryujinx.SDL3.Common;
 using System;
 using System.Collections.Concurrent;
-using System.Runtime.InteropServices;
 using System.Threading;
 using static Ryujinx.Audio.Integration.IHardwareDeviceDriver;
-using static SDL2.SDL;
+using SDL;
+using static SDL.SDL3;
+using System.Runtime.InteropServices;
 
-namespace Ryujinx.Audio.Backends.SDL2
+
+namespace Ryujinx.Audio.Backends.SDL3
 {
-    public class SDL2HardwareDeviceDriver : IHardwareDeviceDriver
+
+    using unsafe SDL_AudioStreamCallbackPointer = delegate* unmanaged[Cdecl]<nint, SDL_AudioStream*, int, int, void>;
+
+    public class SDL3HardwareDeviceDriver : IHardwareDeviceDriver
     {
         private readonly ManualResetEvent _updateRequiredEvent;
         private readonly ManualResetEvent _pauseEvent;
-        private readonly ConcurrentDictionary<SDL2HardwareDeviceSession, byte> _sessions;
+        private readonly ConcurrentDictionary<SDL3HardwareDeviceSession, byte> _sessions;
 
         private readonly bool _supportSurroundConfiguration;
 
         public float Volume { get; set; }
 
-        // TODO: Add this to SDL2-CS
-        // NOTE: We use a DllImport here because of marshaling issue for spec.
-        [DllImport("SDL2")]
-        private static extern int SDL_GetDefaultAudioInfo(nint name, out SDL_AudioSpec spec, int isCapture);
-
-        public SDL2HardwareDeviceDriver()
+        public unsafe SDL3HardwareDeviceDriver()
         {
             _updateRequiredEvent = new ManualResetEvent(false);
             _pauseEvent = new ManualResetEvent(true);
-            _sessions = new ConcurrentDictionary<SDL2HardwareDeviceSession, byte>();
+            _sessions = new ConcurrentDictionary<SDL3HardwareDeviceSession, byte>();
 
-            SDL2Driver.Instance.Initialize();
+            SDL3Driver.Instance.Initialize();
 
-            int res = SDL_GetDefaultAudioInfo(nint.Zero, out SDL_AudioSpec spec, 0);
-
-            if (res != 0)
+            SDL_AudioSpec spec;
+            if (!SDL_GetAudioDeviceFormat(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, null))
             {
                 Logger.Error?.Print(LogClass.Application,
                     $"SDL_GetDefaultAudioInfo failed with error \"{SDL_GetError()}\"");
@@ -54,16 +53,16 @@ namespace Ryujinx.Audio.Backends.SDL2
 
         public static bool IsSupported => IsSupportedInternal();
 
-        private static bool IsSupportedInternal()
+        private unsafe static bool IsSupportedInternal()
         {
-            uint device = OpenStream(SampleFormat.PcmInt16, Constants.TargetSampleRate, Constants.ChannelCountMax, Constants.TargetSampleCount, null);
+            SDL_AudioStream* device = OpenStream(SampleFormat.PcmInt16, Constants.TargetSampleRate, Constants.ChannelCountMax, Constants.TargetSampleCount, null);
 
-            if (device != 0)
+            if (device != null)
             {
-                SDL_CloseAudioDevice(device);
+                SDL_DestroyAudioStream(device);
             }
 
-            return device != 0;
+            return device != null;
         }
 
         public ManualResetEvent GetUpdateRequiredEvent()
@@ -90,67 +89,69 @@ namespace Ryujinx.Audio.Backends.SDL2
 
             if (direction != Direction.Output)
             {
-                throw new NotImplementedException("Input direction is currently not implemented on SDL2 backend!");
+                throw new NotImplementedException("Input direction is currently not implemented on SDL3 backend!");
             }
 
-            SDL2HardwareDeviceSession session = new(this, memoryManager, sampleFormat, sampleRate, channelCount);
+            SDL3HardwareDeviceSession session = new(this, memoryManager, sampleFormat, sampleRate, channelCount);
 
             _sessions.TryAdd(session, 0);
 
             return session;
         }
 
-        internal bool Unregister(SDL2HardwareDeviceSession session)
+        internal bool Unregister(SDL3HardwareDeviceSession session)
         {
             return _sessions.TryRemove(session, out _);
         }
 
-        private static SDL_AudioSpec GetSDL2Spec(SampleFormat requestedSampleFormat, uint requestedSampleRate, uint requestedChannelCount, uint sampleCount)
+        private static SDL_AudioSpec GetSDL3Spec(SampleFormat requestedSampleFormat, uint requestedSampleRate, uint requestedChannelCount)
         {
             return new SDL_AudioSpec
             {
                 channels = (byte)requestedChannelCount,
-                format = GetSDL2Format(requestedSampleFormat),
+                format = GetSDL3Format(requestedSampleFormat),
                 freq = (int)requestedSampleRate,
-                samples = (ushort)sampleCount,
             };
         }
 
-        internal static ushort GetSDL2Format(SampleFormat format)
+        internal static SDL_AudioFormat GetSDL3Format(SampleFormat format)
         {
             return format switch
             {
-                SampleFormat.PcmInt8 => AUDIO_S8,
-                SampleFormat.PcmInt16 => AUDIO_S16,
-                SampleFormat.PcmInt32 => AUDIO_S32,
-                SampleFormat.PcmFloat => AUDIO_F32,
+                SampleFormat.PcmInt8 => SDL_AudioFormat.SDL_AUDIO_S8,
+                SampleFormat.PcmInt16 => SDL_AudioFormat.SDL_AUDIO_S16LE,
+                SampleFormat.PcmInt32 => SDL_AudioFormat.SDL_AUDIO_S32LE,
+                SampleFormat.PcmFloat => SDL_AudioFormat.SDL_AUDIO_F32LE,
                 _ => throw new ArgumentException($"Unsupported sample format {format}"),
             };
         }
 
-        internal static uint OpenStream(SampleFormat requestedSampleFormat, uint requestedSampleRate, uint requestedChannelCount, uint sampleCount, SDL_AudioCallback callback)
+        internal unsafe static SDL_AudioStream* OpenStream(SampleFormat requestedSampleFormat, uint requestedSampleRate, uint requestedChannelCount, uint sampleCount, SDL3HardwareDeviceSession.SDL_AudioStreamCallback callback)
         {
-            SDL_AudioSpec desired = GetSDL2Spec(requestedSampleFormat, requestedSampleRate, requestedChannelCount, sampleCount);
+            SDL_AudioSpec desired = GetSDL3Spec(requestedSampleFormat, requestedSampleRate, requestedChannelCount);
+            SDL_AudioSpec got = desired;
+            var pCallback = callback != null ? (SDL_AudioStreamCallbackPointer)Marshal.GetFunctionPointerForDelegate(callback) : null;
 
-            desired.callback = callback;
+            // From SDL 3 and on, SDL requires us to set this as a hint
+            SDL_SetHint(SDL_HINT_AUDIO_DEVICE_SAMPLE_FRAMES, $"{sampleCount}");
+            SDL_AudioStream* device = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &got, pCallback, 0);
+            Console.WriteLine(got.freq);
 
-            uint device = SDL_OpenAudioDevice(nint.Zero, 0, ref desired, out SDL_AudioSpec got, 0);
-
-            if (device == 0)
+            if (device == null)
             {
-                Logger.Error?.Print(LogClass.Application, $"SDL2 open audio device initialization failed with error \"{SDL_GetError()}\"");
+                Logger.Error?.Print(LogClass.Application, $"SDL3 open audio device initialization failed with error \"{SDL_GetError()}\"");
 
-                return 0;
+                return null;
             }
 
             bool isValid = got.format == desired.format && got.freq == desired.freq && got.channels == desired.channels;
 
             if (!isValid)
             {
-                Logger.Error?.Print(LogClass.Application, "SDL2 open audio device is not valid");
-                SDL_CloseAudioDevice(device);
+                Logger.Error?.Print(LogClass.Application, "SDL3 open audio device is not valid");
+                SDL_DestroyAudioStream(device);
 
-                return 0;
+                return null;
             }
 
             return device;
@@ -166,12 +167,12 @@ namespace Ryujinx.Audio.Backends.SDL2
         {
             if (disposing)
             {
-                foreach (SDL2HardwareDeviceSession session in _sessions.Keys)
+                foreach (SDL3HardwareDeviceSession session in _sessions.Keys)
                 {
                     session.Dispose();
                 }
 
-                SDL2Driver.Instance.Dispose();
+                SDL3Driver.Instance.Dispose();
 
                 _pauseEvent.Dispose();
             }

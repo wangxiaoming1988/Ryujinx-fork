@@ -1,15 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DefaultItemExcludes>$(DefaultItemExcludes);._*</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ryujinx.SDL2-CS" />
+    <ProjectReference Include="..\Ryujinx.Common\Ryujinx.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Ryujinx.Common\Ryujinx.Common.csproj" />
+    <PackageReference Include="ppy.SDL3-CS" />
   </ItemGroup>
 
 </Project>
