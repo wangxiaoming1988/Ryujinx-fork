@@ -102,11 +102,13 @@ namespace Ryujinx.HLE.Loaders.Processes.Extensions
                     return (false, ProcessResult.Failed);
                 }
 
-                (Nca updatePatchNca, Nca updateControlNca) = mainNca.GetUpdateData(device.FileSystem, device.System.FsIntegrityCheckLevel, device.Configuration.UserChannelPersistence.Index, out string _);
+                (Nca updatePatchNca, Nca updateControlNca) = mainNca.GetUpdateData(device.FileSystem, device.System.FsIntegrityCheckLevel, device.Configuration.UserChannelPersistence.Index, out string updatePath);
 
                 if (updatePatchNca != null)
                 {
                     patchNca = updatePatchNca;
+                    if (updatePath != null) 
+                        Logger.Notice.PrintMsg(LogClass.Application, $"Loading update NCA from '{updatePath}'.");
                 }
 
                 if (updateControlNca != null)

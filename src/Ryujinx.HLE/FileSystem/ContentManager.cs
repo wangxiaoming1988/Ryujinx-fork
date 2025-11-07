@@ -194,11 +194,11 @@ namespace Ryujinx.HLE.FileSystem
             // TODO: Check Aoc version.
             if (!AocData.TryAdd(titleId, new AocItem(containerPath, ncaPath)))
             {
-                Logger.Warning?.Print(LogClass.Application, $"Duplicate AddOnContent detected. TitleId {titleId:X16}");
+                Logger.Warning?.Print(LogClass.Application, $"Duplicate AddOnContent detected. TitleId {titleId:X16} @ '{containerPath}'");
             }
             else
             {
-                Logger.Info?.Print(LogClass.Application, $"Found AddOnContent with TitleId {titleId:X16}");
+                Logger.Notice.Print(LogClass.Application, $"Found AddOnContent with TitleId {titleId:X16} @ '{containerPath}'");
 
                 if (!mergedToContainer)
                 {
