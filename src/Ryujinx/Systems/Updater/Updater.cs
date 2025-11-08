@@ -104,7 +104,7 @@ namespace Ryujinx.Ava.Systems
                     ? $"Canary {currentVersion} → Canary {newVersion}"
                     : $"{currentVersion} → {newVersion}";
 
-                Logger.Info?.Print(LogClass.Application, $"Version found: {newVersionString}");
+                Logger.Info?.Print(LogClass.Application, $"Version found: {newVersionString.Replace("→", "->")}");
 
             RequestUserToUpdate:
                 // Show a message asking the user if they want to update
