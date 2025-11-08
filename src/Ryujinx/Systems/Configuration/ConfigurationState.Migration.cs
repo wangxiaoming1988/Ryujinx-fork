@@ -484,7 +484,13 @@ namespace Ryujinx.Ava.Systems.Configuration
                     };
                 }
         ),
-                (69, static cff => cff.SkipUserProfiles = false)
+                (69, static cff => cff.SkipUserProfiles = false),
+                // no migration needed for 70
+                (71, static cff =>
+                {
+                    if (cff.AudioBackend is AudioBackend.SDL2)
+                        cff.AudioBackend = AudioBackend.SDL3;
+                })
             );
     }
 }

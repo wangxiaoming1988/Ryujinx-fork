@@ -957,6 +957,9 @@ namespace Ryujinx.Ava.Systems
 
             AudioBackend preferredBackend = ConfigurationState.Instance.System.AudioBackend.Value;
 
+            if (preferredBackend is AudioBackend.SDL2)
+                preferredBackend = AudioBackend.SDL3;
+
             for (int i = 0; i < availableBackends.Count; i++)
             {
                 if (availableBackends[i] == preferredBackend)
