@@ -817,8 +817,6 @@ namespace Ryujinx.Ava.UI.ViewModels
             if (audioBackend != config.System.AudioBackend.Value)
             {
                 config.System.AudioBackend.Value = audioBackend;
-
-                Logger.Info?.Print(LogClass.Application, $"AudioBackend toggled to: {audioBackend}");
             }
 
             config.System.AudioVolume.Value = Volume / 100;
