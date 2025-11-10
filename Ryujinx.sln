@@ -45,11 +45,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ryujinx.Graphics.Vic", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ryujinx.Graphics.Video", "src\Ryujinx.Graphics.Video\Ryujinx.Graphics.Video.csproj", "{FD4A2C14-8E3D-4957-ABBE-3C38897B3E2D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ryujinx.Audio.Backends.SDL3", "src\Ryujinx.Audio.Backends.SDL3\Ryujinx.Audio.Backends.SDL3.csproj", "{988E6191-82E1-4E13-9DDB-CB9FA2FDAF29}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ryujinx.Audio.Backends.OpenAL", "src\Ryujinx.Audio.Backends.OpenAL\Ryujinx.Audio.Backends.OpenAL.csproj", "{0BE11899-DF2D-4BDE-B9EE-2489E8D35E7D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ryujinx.Audio.Backends.SoundIo", "src\Ryujinx.Audio.Backends.SoundIo\Ryujinx.Audio.Backends.SoundIo.csproj", "{716364DE-B988-41A6-BAB4-327964266ECC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ryujinx.Input", "src\Ryujinx.Input\Ryujinx.Input.csproj", "{C16F112F-38C3-40BC-9F5F-4791112063D6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ryujinx.Input.SDL3", "src\Ryujinx.Input.SDL3\Ryujinx.Input.SDL3.csproj", "{D728444C-3D1F-4A0E-B4C9-5C9375D47EA3}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ryujinx.Graphics.Nvdec.FFmpeg", "src\Ryujinx.Graphics.Nvdec.FFmpeg\Ryujinx.Graphics.Nvdec.FFmpeg.csproj", "{BEE1C184-C9A4-410B-8DFC-FB74D5C93AEB}"
 EndProject
@@ -73,6 +77,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ryujinx.HLE.Generators", "s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ryujinx.BuildValidationTasks", "src\Ryujinx.BuildValidationTasks\Ryujinx.BuildValidationTasks.csproj", "{4A89A234-4F19-497D-A576-DDE8CDFC5B22}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ryujinx.SDL3.Common", "src\Ryujinx.SDL3.Common\Ryujinx.SDL3.Common.csproj", "{F6F9826A-BC58-4D78-A700-F358A66B2B06}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{36F870C1-3E5F-485F-B426-F0645AF78751}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
@@ -82,14 +88,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.github\workflows\release.yml = .github\workflows\release.yml
 		nuget.config = nuget.config
 	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ryujinx.SDL3.Common", "src\Ryujinx.SDL3.Common\Ryujinx.SDL3.Common.csproj", "{F6F9826A-BC58-4D78-A700-F358A66B2B06}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ryujinx.Input.SDL3", "src\Ryujinx.Input.SDL3\Ryujinx.Input.SDL3.csproj", "{D728444C-3D1F-4A0E-B4C9-5C9375D47EA3}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ryujinx.Audio.Backends.SDL3", "src\Ryujinx.Audio.Backends.SDL3\Ryujinx.Audio.Backends.SDL3.csproj", "{988E6191-82E1-4E13-9DDB-CB9FA2FDAF29}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
