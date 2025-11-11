@@ -11,6 +11,7 @@ using Ryujinx.Common.Logging;
 using Ryujinx.HLE;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using RyuLogger = Ryujinx.Common.Logging.Logger;
 
@@ -28,6 +29,7 @@ namespace Ryujinx.Ava.Systems.Configuration
                 RyuLogger.Warning?.Print(LogClass.Application, $"Unsupported configuration version {cff.Version}, loading default.");
 
                 LoadDefault();
+                return;
             }
 
             foreach ((int newVersion, Action<ConfigurationFileFormat> migratorFunction)
@@ -167,14 +169,53 @@ namespace Ryujinx.Ava.Systems.Configuration
                 DirtyHacks hacks = new(cff.DirtyHacks ?? []);
 
                 Hacks.Xc2MenuSoftlockFix.Value = hacks.IsEnabled(DirtyHack.Xc2MenuSoftlockFix);
-
             }
 
-            if (configurationFileUpdated)
+            List<string> existingDirs = [];
+            bool didPathUpdate = false;
+
+            { // Game dirs
+                foreach (var gameDir in UI.GameDirs.Value)
+                {
+                    if (Directory.Exists(gameDir))
+                    {
+                        existingDirs.Add(gameDir);
+                    }
+                    else
+                    {
+                        RyuLogger.Warning?.Print(LogClass.Configuration, $"Path '{gameDir}' seems to no longer exist. Removing it from game directory configuration.");
+                        didPathUpdate = true;
+                    }
+                }
+
+                UI.GameDirs.Value = existingDirs.ToList();
+            }
+
+            existingDirs.Clear();
+
+            { // Autoload dirs
+                foreach (var autoloadDir in UI.AutoloadDirs.Value)
+                {
+                    if (Directory.Exists(autoloadDir))
+                    {
+                        existingDirs.Add(autoloadDir);
+                    }
+                    else
+                    {
+                        RyuLogger.Warning?.Print(LogClass.Configuration, $"Path '{autoloadDir}' seems to no longer exist. Removing it from auto load directory configuration.");
+                        didPathUpdate = true;
+                    }
+                }
+
+                UI.AutoloadDirs.Value = existingDirs.ToList();
+            }
+
+            if (configurationFileUpdated || didPathUpdate)
             {
                 ToFileFormat().SaveConfig(configurationFilePath);
 
-                RyuLogger.Notice.Print(LogClass.Application, $"Configuration file updated to version {ConfigurationFileFormat.CurrentVersion}");
+                if (configurationFileUpdated)
+                    RyuLogger.Notice.Print(LogClass.Application, $"Configuration file updated to version {ConfigurationFileFormat.CurrentVersion}");
             }
         }
 

@@ -481,7 +481,6 @@ namespace Ryujinx.Ava.UI.ViewModels
             if (Program.PreviewerDetached)
             {
                 Task.Run(LoadTimeZones);
-
             }
         }
 
