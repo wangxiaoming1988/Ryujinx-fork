@@ -364,7 +364,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm64.Target.Arm64
                     {
                         InstEmitMemory.RewriteSysInstruction(memoryManager.AddressSpaceBits, memoryManager.Type, writer, regAlloc, encoding);
                     }
-                    else if (instInfo.Name.IsSystem())
+                    else if (instInfo.Name.IsSystem)
                     {
                         bool needsContextStoreLoad = InstEmitSystem.NeedsContextStoreLoad(instInfo.Name);
 
@@ -405,7 +405,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm64.Target.Arm64
 
                     lastInstructionEncoding = RegisterUtils.RemapRegisters(regAlloc, lastInstructionFlags, lastInstructionEncoding);
 
-                    if (lastInstructionName.IsCall())
+                    if (lastInstructionName.IsCall)
                     {
                         context.StoreToContextBeforeCall(blockIndex, pc + 4UL);
 

@@ -18,7 +18,8 @@ namespace Ryujinx.Ava.UI.ViewModels
 {
     public class XciTrimmerViewModel : BaseModel
     {
-        private const long _bytesPerMB = 1024 * 1024;
+        private const long BytesPerMb = 1024 * 1024;
+
         private enum ProcessingMode
         {
             Trimming,
@@ -44,7 +45,6 @@ namespace Ryujinx.Ava.UI.ViewModels
         private string _search;
         private ProcessingMode _processingMode;
         private SortField _sortField = SortField.Name;
-        private bool _sortAscending = true;
 
         public XciTrimmerViewModel(MainWindowViewModel mainWindowViewModel)
         {
@@ -472,15 +472,16 @@ namespace Ryujinx.Ava.UI.ViewModels
                 };
             }
         }
+
         public bool SortingAscending
         {
-            get => _sortAscending;
+            get;
             set
             {
-                _sortAscending = value;
+                field = value;
                 SortingChanged();
             }
-        }
+        } = true;
 
         public bool IsSortedByName
         {
@@ -516,7 +517,7 @@ namespace Ryujinx.Ava.UI.ViewModels
         {
             get
             {
-                return string.Format(LocaleManager.Instance[LocaleKeys.XCITrimmerSavingsMb], AllXCIFiles.Sum(xci => xci.PotentialSavingsB / _bytesPerMB));
+                return string.Format(LocaleManager.Instance[LocaleKeys.XCITrimmerSavingsMb], AllXCIFiles.Sum(xci => xci.PotentialSavingsB / BytesPerMb));
             }
         }
 
@@ -524,7 +525,7 @@ namespace Ryujinx.Ava.UI.ViewModels
         {
             get
             {
-                return string.Format(LocaleManager.Instance[LocaleKeys.XCITrimmerSavingsMb], AllXCIFiles.Sum(xci => xci.CurrentSavingsB / _bytesPerMB));
+                return string.Format(LocaleManager.Instance[LocaleKeys.XCITrimmerSavingsMb], AllXCIFiles.Sum(xci => xci.CurrentSavingsB / BytesPerMb));
             }
         }
 

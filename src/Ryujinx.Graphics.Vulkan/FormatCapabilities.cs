@@ -158,16 +158,16 @@ namespace Ryujinx.Graphics.Vulkan
                                                   FormatFeatureFlags.TransferSrcBit |
                                                   FormatFeatureFlags.TransferDstBit;
 
-            if (srcFormat.IsDepthOrStencil())
+            if (srcFormat.IsDepthOrStencil)
             {
                 requiredFeatures |= FormatFeatureFlags.DepthStencilAttachmentBit;
             }
-            else if (srcFormat.IsRtColorCompatible())
+            else if (srcFormat.IsRtColorCompatible)
             {
                 requiredFeatures |= FormatFeatureFlags.ColorAttachmentBit;
             }
 
-            if (srcFormat.IsImageCompatible() && storageFeatureFlagRequired)
+            if (srcFormat.IsImageCompatible && storageFeatureFlagRequired)
             {
                 requiredFeatures |= FormatFeatureFlags.StorageImageBit;
             }

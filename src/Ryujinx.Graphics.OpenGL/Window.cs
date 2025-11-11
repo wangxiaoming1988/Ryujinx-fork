@@ -70,7 +70,7 @@ namespace Ryujinx.Graphics.OpenGL
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, drawFramebuffer);
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, readFramebuffer);
 
-            TextureView viewConverted = view.Format.IsBgr() ? _renderer.TextureCopy.BgraSwap(view) : view;
+            TextureView viewConverted = view.Format.IsBgr ? _renderer.TextureCopy.BgraSwap(view) : view;
 
             UpdateEffect();
 
@@ -80,7 +80,7 @@ namespace Ryujinx.Graphics.OpenGL
 
                 viewConverted = _antiAliasing.Run(viewConverted, _width, _height);
 
-                if (viewConverted.Format.IsBgr())
+                if (viewConverted.Format.IsBgr)
                 {
                     TextureView swappedView = _renderer.TextureCopy.BgraSwap(viewConverted);
 
@@ -152,14 +152,14 @@ namespace Ryujinx.Graphics.OpenGL
 
             if (ScreenCaptureRequested)
             {
-                CaptureFrame(srcX0, srcY0, srcX1, srcY1, view.Format.IsBgr(), crop.FlipX, crop.FlipY);
+                CaptureFrame(srcX0, srcY0, srcX1, srcY1, view.Format.IsBgr, crop.FlipX, crop.FlipY);
 
                 ScreenCaptureRequested = false;
             }
 
             if (_scalingFilter != null)
             {
-                if (viewConverted.Format.IsBgr() && !_isBgra)
+                if (viewConverted.Format.IsBgr && !_isBgra)
                 {
                     RecreateUpscalingTexture(true);
                 }

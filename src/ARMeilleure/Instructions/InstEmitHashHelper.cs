@@ -16,7 +16,7 @@ namespace ARMeilleure.Instructions
 
         public static Operand EmitCrc32(ArmEmitterContext context, Operand crc, Operand value, int size, bool castagnoli)
         {
-            Debug.Assert(crc.Type.IsInteger() && value.Type.IsInteger());
+            Debug.Assert(crc.Type.IsInteger && value.Type.IsInteger);
             Debug.Assert(size is >= 0 and < 4);
             Debug.Assert((size < 3) || (value.Type == OperandType.I64));
 

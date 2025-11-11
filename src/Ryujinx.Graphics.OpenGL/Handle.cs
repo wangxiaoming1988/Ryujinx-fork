@@ -1,4 +1,3 @@
-using Ryujinx.Graphics.GAL;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
@@ -13,11 +12,6 @@ namespace Ryujinx.Graphics.OpenGL
             ulong handle64 = (uint)handle;
 
             return Unsafe.As<ulong, T>(ref handle64);
-        }
-
-        public static int ToInt32(this BufferHandle handle)
-        {
-            return (int)Unsafe.As<BufferHandle, ulong>(ref handle);
         }
     }
 }

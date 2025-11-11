@@ -178,7 +178,7 @@ namespace ARMeilleure.CodeGen.RegisterAllocators
                         }
                         else if (dest.Kind == OperandKind.Register)
                         {
-                            if (dest.Type.IsInteger())
+                            if (dest.Type.IsInteger)
                             {
                                 intFixedRegisters |= 1 << dest.GetRegister().Index;
                             }
@@ -236,7 +236,7 @@ namespace ARMeilleure.CodeGen.RegisterAllocators
                             {
                                 Register reg = info.Register.GetRegister();
 
-                                if (local.Type.IsInteger())
+                                if (local.Type.IsInteger)
                                 {
                                     intLocalFreeRegisters |= 1 << reg.Index;
                                 }
@@ -254,7 +254,7 @@ namespace ARMeilleure.CodeGen.RegisterAllocators
 
                             if (temp == default || info.Sequence != sequence)
                             {
-                                temp = local.Type.IsInteger()
+                                temp = local.Type.IsInteger
                                     ? GetSpillTemp(local, intSpillTempRegisters, ref intLocalUse)
                                     : GetSpillTemp(local, vecSpillTempRegisters, ref vecLocalUse);
 
@@ -335,7 +335,7 @@ namespace ARMeilleure.CodeGen.RegisterAllocators
 
                         if (info.UsesAllocated == 0)
                         {
-                            int mask = dest.Type.IsInteger()
+                            int mask = dest.Type.IsInteger
                                 ? intLocalFreeRegisters
                                 : vecLocalFreeRegisters;
 
@@ -343,9 +343,9 @@ namespace ARMeilleure.CodeGen.RegisterAllocators
                             {
                                 int selectedReg = BitOperations.TrailingZeroCount(mask);
 
-                                info.Register = Register(selectedReg, info.Type.ToRegisterType(), info.Type);
+                                info.Register = Register(selectedReg, info.Type.Register, info.Type);
 
-                                if (dest.Type.IsInteger())
+                                if (dest.Type.IsInteger)
                                 {
                                     intLocalFreeRegisters &= ~(1 << selectedReg);
                                     intUsedRegisters |= 1 << selectedReg;
@@ -359,7 +359,7 @@ namespace ARMeilleure.CodeGen.RegisterAllocators
                             else
                             {
                                 info.Register = default;
-                                info.SpillOffset = Const(stackAlloc.Allocate(dest.Type.GetSizeInBytes()));
+                                info.SpillOffset = Const(stackAlloc.Allocate(dest.Type.ByteSize));
                             }
                         }
 
@@ -377,7 +377,7 @@ namespace ARMeilleure.CodeGen.RegisterAllocators
 
                             if (temp == default || info.Sequence != sequence)
                             {
-                                temp = dest.Type.IsInteger()
+                                temp = dest.Type.IsInteger
                                     ? GetSpillTemp(dest, intSpillTempRegisters, ref intLocalAsg)
                                     : GetSpillTemp(dest, vecSpillTempRegisters, ref vecLocalAsg);
 
@@ -443,7 +443,7 @@ namespace ARMeilleure.CodeGen.RegisterAllocators
 
             useMask |= 1 << selectedReg;
 
-            return Register(selectedReg, local.Type.ToRegisterType(), local.Type);
+            return Register(selectedReg, local.Type.Register, local.Type);
         }
 
         private static int UsesCount(Operand local)

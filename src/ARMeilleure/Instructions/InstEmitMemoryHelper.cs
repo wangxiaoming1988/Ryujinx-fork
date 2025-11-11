@@ -157,7 +157,7 @@ namespace ARMeilleure.Instructions
 
             context.Copy(temp, value);
 
-            if (!context.Memory.Type.IsHostMappedOrTracked())
+            if (!context.Memory.Type.IsHostMappedOrTracked)
             {
                 context.Branch(lblEnd);
 
@@ -198,7 +198,7 @@ namespace ARMeilleure.Instructions
 
             SetInt(context, rt, value);
 
-            if (!context.Memory.Type.IsHostMappedOrTracked())
+            if (!context.Memory.Type.IsHostMappedOrTracked)
             {
                 context.Branch(lblEnd);
 
@@ -265,7 +265,7 @@ namespace ARMeilleure.Instructions
 
             context.Copy(GetVec(rt), value);
 
-            if (!context.Memory.Type.IsHostMappedOrTracked())
+            if (!context.Memory.Type.IsHostMappedOrTracked)
             {
                 context.Branch(lblEnd);
 
@@ -312,7 +312,7 @@ namespace ARMeilleure.Instructions
                     break;
             }
 
-            if (!context.Memory.Type.IsHostMappedOrTracked())
+            if (!context.Memory.Type.IsHostMappedOrTracked)
             {
                 context.Branch(lblEnd);
 
@@ -385,7 +385,7 @@ namespace ARMeilleure.Instructions
                     break;
             }
 
-            if (!context.Memory.Type.IsHostMappedOrTracked())
+            if (!context.Memory.Type.IsHostMappedOrTracked)
             {
                 context.Branch(lblEnd);
 
@@ -399,11 +399,11 @@ namespace ARMeilleure.Instructions
 
         public static Operand EmitPtPointerLoad(ArmEmitterContext context, Operand address, Operand lblSlowPath, bool write, int size)
         {
-            if (context.Memory.Type.IsHostMapped())
+            if (context.Memory.Type.IsHostMapped)
             {
                 return EmitHostMappedPointer(context, address);
             }
-            else if (context.Memory.Type.IsHostTracked())
+            else if (context.Memory.Type.IsHostTracked)
             {
                 if (address.Type == OperandType.I32)
                 {

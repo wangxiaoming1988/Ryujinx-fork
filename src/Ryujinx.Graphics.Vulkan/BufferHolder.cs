@@ -368,10 +368,13 @@ namespace Ryujinx.Graphics.Vulkan
             }
         }
 
-        public BufferHandle GetHandle()
+        public BufferHandle Handle
         {
-            ulong handle = _bufferHandle;
-            return Unsafe.As<ulong, BufferHandle>(ref handle);
+            get
+            {
+                ulong handle = _bufferHandle;
+                return Unsafe.As<ulong, BufferHandle>(ref handle);
+            }  
         }
 
         public nint Map(int offset, int mappingSize)

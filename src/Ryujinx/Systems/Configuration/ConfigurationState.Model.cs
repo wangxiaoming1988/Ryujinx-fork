@@ -916,8 +916,8 @@ namespace Ryujinx.Ava.Systems.Configuration
         public HleConfiguration CreateHleConfiguration() =>
             new(
                 System.DramSize,
-                System.Language.Value.ToHLE(),
-                System.Region.Value.ToHLE(),
+                System.Language.Value.Horizon,
+                System.Region.Value.Horizon,
                 Graphics.VSyncMode,
                 System.EnableDockedMode,
                 System.EnablePtc,

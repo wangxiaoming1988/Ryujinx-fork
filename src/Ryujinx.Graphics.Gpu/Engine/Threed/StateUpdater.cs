@@ -534,7 +534,7 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
 
                     if (!_context.Capabilities.SupportsBgraFormat)
                     {
-                        _context.SupportBufferUpdater.SetRenderTargetIsBgra(index, color.Format.IsBgr());
+                        _context.SupportBufferUpdater.SetRenderTargetIsBgra(index, color.Format.IsBgr);
                     }
                 }
             }
@@ -1317,10 +1317,10 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
                         FilterBlendFactor(blend.AlphaDstFactor, index));
 
                     if (enable &&
-                        (blend.ColorSrcFactor.IsDualSource() ||
-                        blend.ColorDstFactor.IsDualSource() ||
-                        blend.AlphaSrcFactor.IsDualSource() ||
-                        blend.AlphaDstFactor.IsDualSource()))
+                        (blend.ColorSrcFactor.IsDualSource ||
+                        blend.ColorDstFactor.IsDualSource ||
+                        blend.AlphaSrcFactor.IsDualSource ||
+                        blend.AlphaDstFactor.IsDualSource))
                     {
                         dualSourceBlendEnabled = true;
                     }
@@ -1345,10 +1345,10 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
                     FilterBlendFactor(blend.AlphaDstFactor, 0));
 
                 if (enable &&
-                    (blend.ColorSrcFactor.IsDualSource() ||
-                    blend.ColorDstFactor.IsDualSource() ||
-                    blend.AlphaSrcFactor.IsDualSource() ||
-                    blend.AlphaDstFactor.IsDualSource()))
+                    (blend.ColorSrcFactor.IsDualSource ||
+                    blend.ColorDstFactor.IsDualSource ||
+                    blend.AlphaSrcFactor.IsDualSource ||
+                    blend.AlphaDstFactor.IsDualSource))
                 {
                     dualSourceBlendEnabled = true;
                 }

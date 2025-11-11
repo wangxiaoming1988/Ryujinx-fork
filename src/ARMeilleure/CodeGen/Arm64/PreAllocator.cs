@@ -112,7 +112,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             if (src1.Kind == OperandKind.Constant)
             {
-                if (!src1.Type.IsInteger())
+                if (!src1.Type.IsInteger)
                 {
                     // Handle non-integer types (FP32, FP64 and V128).
                     // For instructions without an immediate operand, we do the following:
@@ -161,7 +161,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             if (src2.Kind == OperandKind.Constant)
             {
-                if (!src2.Type.IsInteger())
+                if (!src2.Type.IsInteger)
                 {
                     src2 = AddFloatConstantCopy(constants, nodes, node, src2);
 
@@ -191,7 +191,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
                 if (src.Kind == OperandKind.Constant)
                 {
-                    if (!src.Type.IsInteger())
+                    if (!src.Type.IsInteger)
                     {
                         src = AddFloatConstantCopy(constants, nodes, node, src);
 
@@ -282,7 +282,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
                 bool passOnReg;
 
-                if (source.Type.IsInteger())
+                if (source.Type.IsInteger)
                 {
                     passOnReg = intCount < intMax;
                 }
@@ -309,7 +309,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
                 if (passOnReg)
                 {
-                    Operand argReg = source.Type.IsInteger()
+                    Operand argReg = source.Type.IsInteger
                         ? Gpr(CallingConvention.GetIntArgumentRegister(intCount++), source.Type)
                         : Xmm(CallingConvention.GetVecArgumentRegister(vecCount++), source.Type);
 
@@ -327,7 +327,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
                     InsertConstantRegCopies(constants, nodes, nodes.AddBefore(node, spillOp));
 
-                    stackOffset += source.Type.GetSizeInBytes();
+                    stackOffset += source.Type.ByteSize;
                 }
             }
 
@@ -345,7 +345,7 @@ namespace ARMeilleure.CodeGen.Arm64
                 }
                 else
                 {
-                    Operand retReg = dest.Type.IsInteger()
+                    Operand retReg = dest.Type.IsInteger
                         ? Gpr(CallingConvention.GetIntReturnRegister(), dest.Type)
                         : Xmm(CallingConvention.GetVecReturnRegister(), dest.Type);
 
@@ -385,7 +385,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
                 bool passOnReg;
 
-                if (source.Type.IsInteger())
+                if (source.Type.IsInteger)
                 {
                     passOnReg = intCount + 1 < intMax;
                 }
@@ -408,7 +408,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
                 if (passOnReg)
                 {
-                    Operand argReg = source.Type.IsInteger()
+                    Operand argReg = source.Type.IsInteger
                         ? Gpr(CallingConvention.GetIntArgumentRegister(intCount++), source.Type)
                         : Xmm(CallingConvention.GetVecArgumentRegister(vecCount++), source.Type);
 
@@ -521,7 +521,7 @@ namespace ARMeilleure.CodeGen.Arm64
             }
             else
             {
-                Operand retReg = source.Type.IsInteger()
+                Operand retReg = source.Type.IsInteger
                     ? Gpr(CallingConvention.GetIntReturnRegister(), source.Type)
                     : Xmm(CallingConvention.GetVecReturnRegister(), source.Type);
 
@@ -551,7 +551,7 @@ namespace ARMeilleure.CodeGen.Arm64
             {
                 OperandType argType = cctx.FuncArgTypes[cIndex];
 
-                if (argType.IsInteger())
+                if (argType.IsInteger)
                 {
                     intCount++;
                 }
@@ -567,7 +567,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             bool passOnReg;
 
-            if (source.Type.IsInteger())
+            if (source.Type.IsInteger)
             {
                 passOnReg = intCount < CallingConvention.GetArgumentsOnRegsCount();
             }
@@ -606,7 +606,7 @@ namespace ARMeilleure.CodeGen.Arm64
                     {
                         Operand pArg = Local(dest.Type);
 
-                        Operand argReg = dest.Type.IsInteger()
+                        Operand argReg = dest.Type.IsInteger
                             ? Gpr(CallingConvention.GetIntArgumentRegister(intCount), dest.Type)
                             : Xmm(CallingConvention.GetVecArgumentRegister(vecCount), dest.Type);
 

@@ -1129,7 +1129,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
             // We don't need to mask the address for the safe mode, since it is already naturally limited to 32-bit
             // and can never reach out of the guest address space.
 
-            if (mmType.IsHostTracked())
+            if (mmType.IsHostTracked)
             {
                 int tempRegister = regAlloc.AllocateTempGprRegister();
 
@@ -1141,7 +1141,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
                 regAlloc.FreeTempGprRegister(tempRegister);
             }
-            else if (mmType.IsHostMapped())
+            else if (mmType.IsHostMapped)
             {
                 asm.Add(destination64, basePointer, guestAddress);
             }

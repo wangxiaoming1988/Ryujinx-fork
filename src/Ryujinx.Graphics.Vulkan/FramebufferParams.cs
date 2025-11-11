@@ -38,7 +38,7 @@ namespace Ryujinx.Graphics.Vulkan
         {
             Format format = view.Info.Format;
 
-            bool isDepthStencil = format.IsDepthOrStencil();
+            bool isDepthStencil = format.IsDepthOrStencil;
 
             _device = device;
             _attachments = [view.GetImageViewForAttachment()];
@@ -62,8 +62,8 @@ namespace Ryujinx.Graphics.Vulkan
             AttachmentSamples = [(uint)view.Info.Samples];
             AttachmentFormats = [view.VkFormat];
             AttachmentIndices = isDepthStencil ? [] : [0];
-            AttachmentIntegerFormatMask = format.IsInteger() ? 1u : 0u;
-            LogicOpsAllowed = !format.IsFloatOrSrgb();
+            AttachmentIntegerFormatMask = format.IsInt ? 1u : 0u;
+            LogicOpsAllowed = !format.IsFloatOrSrgb;
 
             AttachmentsCount = 1;
             _totalCount = 1;
@@ -113,12 +113,12 @@ namespace Ryujinx.Graphics.Vulkan
 
                     Format format = texture.Info.Format;
 
-                    if (format.IsInteger())
+                    if (format.IsInt)
                     {
                         attachmentIntegerFormatMask |= 1u << bindIndex;
                     }
 
-                    allFormatsFloatOrSrgb &= format.IsFloatOrSrgb();
+                    allFormatsFloatOrSrgb &= format.IsFloatOrSrgb;
 
                     width = Math.Min(width, (uint)texture.Width);
                     height = Math.Min(height, (uint)texture.Height);
@@ -250,12 +250,12 @@ namespace Ryujinx.Graphics.Vulkan
 
                     Format format = texture.Info.Format;
 
-                    if (format.IsInteger())
+                    if (format.IsInt)
                     {
                         attachmentIntegerFormatMask |= 1u << bindIndex;
                     }
 
-                    allFormatsFloatOrSrgb &= format.IsFloatOrSrgb();
+                    allFormatsFloatOrSrgb &= format.IsFloatOrSrgb;
 
                     width = Math.Min(width, (uint)texture.Width);
                     height = Math.Min(height, (uint)texture.Height);
@@ -330,12 +330,12 @@ namespace Ryujinx.Graphics.Vulkan
             {
                 Format format = _colors[index].Info.Format;
 
-                if (format.IsSint())
+                if (format.IsSignedInt)
                 {
                     return ComponentType.SignedInteger;
                 }
 
-                if (format.IsUint())
+                if (format.IsUnsignedInt)
                 {
                     return ComponentType.UnsignedInteger;
                 }

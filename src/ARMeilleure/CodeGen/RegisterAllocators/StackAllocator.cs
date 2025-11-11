@@ -10,7 +10,7 @@ namespace ARMeilleure.CodeGen.RegisterAllocators
 
         public int Allocate(OperandType type)
         {
-            return Allocate(type.GetSizeInBytes());
+            return Allocate(type.ByteSize);
         }
 
         public int Allocate(int sizeInBytes)

@@ -250,7 +250,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             // ValidateBinOp(dest, src1, src2);
 
-            if (dest.Type.IsInteger())
+            if (dest.Type.IsInteger)
             {
                 context.Assembler.Add(dest, src1, src2);
             }
@@ -268,7 +268,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             ValidateBinOp(dest, src1, src2);
 
-            Debug.Assert(dest.Type.IsInteger());
+            Debug.Assert(dest.Type.IsInteger);
 
             context.Assembler.And(dest, src1, src2);
         }
@@ -281,7 +281,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             ValidateBinOp(dest, src1, src2);
 
-            if (dest.Type.IsInteger())
+            if (dest.Type.IsInteger)
             {
                 context.Assembler.Eor(dest, src1, src2);
             }
@@ -298,7 +298,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             ValidateUnOp(dest, source);
 
-            Debug.Assert(dest.Type.IsInteger());
+            Debug.Assert(dest.Type.IsInteger);
 
             context.Assembler.Mvn(dest, source);
         }
@@ -311,7 +311,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             ValidateBinOp(dest, src1, src2);
 
-            Debug.Assert(dest.Type.IsInteger());
+            Debug.Assert(dest.Type.IsInteger);
 
             context.Assembler.Orr(dest, src1, src2);
         }
@@ -322,7 +322,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             Debug.Assert(comp.Kind == OperandKind.Constant);
 
-            ArmCondition cond = ((Comparison)comp.AsInt32()).ToArmCondition();
+            ArmCondition cond = ((Comparison)comp.AsInt32()).Arm;
 
             GenerateCompareCommon(context, operation);
 
@@ -336,7 +336,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             ValidateUnOp(dest, source);
 
-            Debug.Assert(dest.Type.IsInteger());
+            Debug.Assert(dest.Type.IsInteger);
 
             context.Assembler.Rev(dest, source);
         }
@@ -354,7 +354,7 @@ namespace ARMeilleure.CodeGen.Arm64
             Debug.Assert(dest.Type == OperandType.I32);
             Debug.Assert(comp.Kind == OperandKind.Constant);
 
-            ArmCondition cond = ((Comparison)comp.AsInt32()).ToArmCondition();
+            ArmCondition cond = ((Comparison)comp.AsInt32()).Arm;
 
             GenerateCompareCommon(context, operation);
 
@@ -428,7 +428,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             EnsureSameType(src1, src2);
 
-            Debug.Assert(src1.Type.IsInteger());
+            Debug.Assert(src1.Type.IsInteger);
 
             context.Assembler.Cmp(src1, src2);
         }
@@ -442,7 +442,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             EnsureSameType(dest, src2, src3);
 
-            Debug.Assert(dest.Type.IsInteger());
+            Debug.Assert(dest.Type.IsInteger);
             Debug.Assert(src1.Type == OperandType.I32);
 
             context.Assembler.Cmp(src1, Const(src1.Type, 0));
@@ -468,7 +468,7 @@ namespace ARMeilleure.CodeGen.Arm64
             Debug.Assert(dest.Type != source.Type);
             Debug.Assert(source.Type != OperandType.V128);
 
-            if (source.Type.IsInteger())
+            if (source.Type.IsInteger)
             {
                 context.Assembler.ScvtfScalar(dest, source);
             }
@@ -485,7 +485,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             Debug.Assert(dest.Type is OperandType.FP32 or OperandType.FP64);
             Debug.Assert(dest.Type != source.Type);
-            Debug.Assert(source.Type.IsInteger());
+            Debug.Assert(source.Type.IsInteger);
 
             context.Assembler.UcvtfScalar(dest, source);
         }
@@ -497,7 +497,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             EnsureSameType(dest, source);
 
-            Debug.Assert(dest.Type.IsInteger() || source.Kind != OperandKind.Constant);
+            Debug.Assert(dest.Type.IsInteger || source.Kind != OperandKind.Constant);
 
             // Moves to the same register are useless.
             if (dest.Kind == source.Kind && dest.Value == source.Value)
@@ -529,7 +529,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             EnsureSameType(dest, source);
 
-            Debug.Assert(dest.Type.IsInteger());
+            Debug.Assert(dest.Type.IsInteger);
 
             context.Assembler.Clz(dest, source);
         }
@@ -542,7 +542,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             ValidateBinOp(dest, dividend, divisor);
 
-            if (dest.Type.IsInteger())
+            if (dest.Type.IsInteger)
             {
                 context.Assembler.Sdiv(dest, dividend, divisor);
             }
@@ -576,7 +576,7 @@ namespace ARMeilleure.CodeGen.Arm64
             Operand value = operation.Destination;
             Operand address = operation.GetSource(0);
 
-            Debug.Assert(value.Type.IsInteger());
+            Debug.Assert(value.Type.IsInteger);
 
             context.Assembler.LdrhRiUn(value, address, 0);
         }
@@ -586,7 +586,7 @@ namespace ARMeilleure.CodeGen.Arm64
             Operand value = operation.Destination;
             Operand address = operation.GetSource(0);
 
-            Debug.Assert(value.Type.IsInteger());
+            Debug.Assert(value.Type.IsInteger);
 
             context.Assembler.LdrbRiUn(value, address, 0);
         }
@@ -604,7 +604,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             EnsureSameType(dest, src1, src2);
 
-            if (dest.Type.IsInteger())
+            if (dest.Type.IsInteger)
             {
                 context.Assembler.Mul(dest, src1, src2);
             }
@@ -647,7 +647,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             ValidateUnOp(dest, source);
 
-            if (dest.Type.IsInteger())
+            if (dest.Type.IsInteger)
             {
                 context.Assembler.Neg(dest, source);
             }
@@ -732,7 +732,7 @@ namespace ARMeilleure.CodeGen.Arm64
             Operand dest = operation.Destination;
             Operand source = operation.GetSource(0);
 
-            Debug.Assert(dest.Type.IsInteger() && source.Type.IsInteger());
+            Debug.Assert(dest.Type.IsInteger && source.Type.IsInteger);
 
             context.Assembler.Sxth(dest, source);
         }
@@ -742,7 +742,7 @@ namespace ARMeilleure.CodeGen.Arm64
             Operand dest = operation.Destination;
             Operand source = operation.GetSource(0);
 
-            Debug.Assert(dest.Type.IsInteger() && source.Type.IsInteger());
+            Debug.Assert(dest.Type.IsInteger && source.Type.IsInteger);
 
             context.Assembler.Sxtw(dest, source);
         }
@@ -752,7 +752,7 @@ namespace ARMeilleure.CodeGen.Arm64
             Operand dest = operation.Destination;
             Operand source = operation.GetSource(0);
 
-            Debug.Assert(dest.Type.IsInteger() && source.Type.IsInteger());
+            Debug.Assert(dest.Type.IsInteger && source.Type.IsInteger);
 
             context.Assembler.Sxtb(dest, source);
         }
@@ -823,7 +823,7 @@ namespace ARMeilleure.CodeGen.Arm64
             Operand value = operation.GetSource(1);
             Operand address = operation.GetSource(0);
 
-            Debug.Assert(value.Type.IsInteger());
+            Debug.Assert(value.Type.IsInteger);
 
             context.Assembler.StrhRiUn(value, address, 0);
         }
@@ -833,7 +833,7 @@ namespace ARMeilleure.CodeGen.Arm64
             Operand value = operation.GetSource(1);
             Operand address = operation.GetSource(0);
 
-            Debug.Assert(value.Type.IsInteger());
+            Debug.Assert(value.Type.IsInteger);
 
             context.Assembler.StrbRiUn(value, address, 0);
         }
@@ -858,7 +858,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             // ValidateBinOp(dest, src1, src2);
 
-            if (dest.Type.IsInteger())
+            if (dest.Type.IsInteger)
             {
                 context.Assembler.Sub(dest, src1, src2);
             }
@@ -882,7 +882,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             if (dest != default)
             {
-                Debug.Assert(!dest.Type.IsInteger() && source.Type.IsInteger());
+                Debug.Assert(!dest.Type.IsInteger && source.Type.IsInteger);
 
                 OperandType destType = source.Type == OperandType.I64 ? OperandType.FP64 : OperandType.FP32;
 
@@ -901,9 +901,9 @@ namespace ARMeilleure.CodeGen.Arm64
 
             byte index = src2.AsByte();
 
-            Debug.Assert(index < OperandType.V128.GetSizeInBytes() / dest.Type.GetSizeInBytes());
+            Debug.Assert(index < OperandType.V128.ByteSize / dest.Type.ByteSize);
 
-            if (dest.Type.IsInteger())
+            if (dest.Type.IsInteger)
             {
                 context.Assembler.Umov(dest, src1, index, dest.Type == OperandType.I64 ? 3 : 2);
             }
@@ -959,7 +959,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
             byte index = src3.AsByte();
 
-            if (src2.Type.IsInteger())
+            if (src2.Type.IsInteger)
             {
                 context.Assembler.Ins(dest, src2, index, src2.Type == OperandType.I64 ? 3 : 2);
             }
@@ -1007,7 +1007,7 @@ namespace ARMeilleure.CodeGen.Arm64
         {
             Operand dest = operation.Destination;
 
-            Debug.Assert(!dest.Type.IsInteger());
+            Debug.Assert(!dest.Type.IsInteger);
 
             context.Assembler.CmeqVector(dest, dest, dest, 2);
         }
@@ -1016,7 +1016,7 @@ namespace ARMeilleure.CodeGen.Arm64
         {
             Operand dest = operation.Destination;
 
-            Debug.Assert(!dest.Type.IsInteger());
+            Debug.Assert(!dest.Type.IsInteger);
 
             context.Assembler.EorVector(dest, dest, dest);
         }
@@ -1046,7 +1046,7 @@ namespace ARMeilleure.CodeGen.Arm64
             Operand dest = operation.Destination;
             Operand source = operation.GetSource(0);
 
-            Debug.Assert(dest.Type.IsInteger() && source.Type.IsInteger());
+            Debug.Assert(dest.Type.IsInteger && source.Type.IsInteger);
 
             context.Assembler.Uxth(dest, source);
         }
@@ -1056,7 +1056,7 @@ namespace ARMeilleure.CodeGen.Arm64
             Operand dest = operation.Destination;
             Operand source = operation.GetSource(0);
 
-            Debug.Assert(dest.Type.IsInteger() && source.Type.IsInteger());
+            Debug.Assert(dest.Type.IsInteger && source.Type.IsInteger);
 
             // We can eliminate the move if source is already 32-bit and the registers are the same.
             if (dest.Value == source.Value && source.Type == OperandType.I32)
@@ -1072,7 +1072,7 @@ namespace ARMeilleure.CodeGen.Arm64
             Operand dest = operation.Destination;
             Operand source = operation.GetSource(0);
 
-            Debug.Assert(dest.Type.IsInteger() && source.Type.IsInteger());
+            Debug.Assert(dest.Type.IsInteger && source.Type.IsInteger);
 
             context.Assembler.Uxtb(dest, source);
         }
@@ -1169,7 +1169,7 @@ namespace ARMeilleure.CodeGen.Arm64
                     context.Assembler.StrRiPre(Register(reg, type), Register(SpRegister), -calleeSaveRegionSize);
                 }
 
-                offset += type.GetSizeInBytes();
+                offset += type.ByteSize;
             }
 
             while (mask != 0)
@@ -1195,7 +1195,7 @@ namespace ARMeilleure.CodeGen.Arm64
                     context.Assembler.StpRiPre(Register(reg, type), Register(reg2, type), Register(SpRegister), -calleeSaveRegionSize);
                 }
 
-                offset += type.GetSizeInBytes() * 2;
+                offset += type.ByteSize * 2;
             }
         }
 
@@ -1273,7 +1273,7 @@ namespace ARMeilleure.CodeGen.Arm64
 
                     mask &= ~(1 << reg2);
 
-                    offset -= type.GetSizeInBytes() * 2;
+                    offset -= type.ByteSize * 2;
 
                     if (offset != 0)
                     {
@@ -1286,7 +1286,7 @@ namespace ARMeilleure.CodeGen.Arm64
                 }
                 else
                 {
-                    offset -= type.GetSizeInBytes();
+                    offset -= type.ByteSize;
 
                     if (offset != 0)
                     {
@@ -1435,12 +1435,12 @@ namespace ARMeilleure.CodeGen.Arm64
 
             OperandType valueType = GetMemOpValueType(currentOp);
 
-            if (valueType != GetMemOpValueType(nextOp) || op1Offset + valueType.GetSizeInBytes() != op2Offset)
+            if (valueType != GetMemOpValueType(nextOp) || op1Offset + valueType.ByteSize != op2Offset)
             {
                 return false;
             }
 
-            if (!CodeGenCommon.ConstFitsOnSImm7(op1Offset, valueType.GetSizeInBytesLog2()))
+            if (!CodeGenCommon.ConstFitsOnSImm7(op1Offset, valueType.ByteSizeLog2))
             {
                 return false;
             }
@@ -1549,7 +1549,7 @@ namespace ARMeilleure.CodeGen.Arm64
             // EnsureSameReg (dest, src1);
             EnsureSameType(dest, src1);
 
-            Debug.Assert(dest.Type.IsInteger() && src2.Type == OperandType.I32);
+            Debug.Assert(dest.Type.IsInteger && src2.Type == OperandType.I32);
         }
 
         private static void EnsureSameReg(Operand op1, Operand op2)

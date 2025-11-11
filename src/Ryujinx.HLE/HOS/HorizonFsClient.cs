@@ -33,7 +33,7 @@ namespace Ryujinx.HLE.HOS
 
         public Result GetFileSize(out long size, FileHandle handle)
         {
-            return _fsClient.GetFileSize(out size, (LibHac.Fs.FileHandle)handle.Value).ToHorizonResult();
+            return _fsClient.GetFileSize(out size, (LibHac.Fs.FileHandle)handle.Value).Horizon;
         }
 
         public Result MountSystemData(string mountName, ulong dataId)
@@ -58,7 +58,7 @@ namespace Ryujinx.HLE.HOS
                         using IFileSystem ncaFileSystem = nca.OpenFileSystem(NcaSectionType.Data, _system.FsIntegrityCheckLevel);
                         using UniqueRef<IFileSystem> ncaFsRef = new(ncaFileSystem);
 
-                        Result result = _fsClient.Register(mountName.ToU8Span(), ref ncaFsRef.Ref).ToHorizonResult();
+                        Result result = _fsClient.Register(mountName.ToU8Span(), ref ncaFsRef.Ref).Horizon;
                         if (result.IsFailure)
                         {
                             ncaStorage.Dispose();
@@ -74,14 +74,14 @@ namespace Ryujinx.HLE.HOS
                     {
                         ncaStorage?.Dispose();
 
-                        return ex.ResultValue.ToHorizonResult();
+                        return ex.ResultValue.Horizon;
                     }
                 }
             }
 
             // TODO: Return correct result here, this is likely wrong.
 
-            return LibHac.Fs.ResultFs.TargetNotFound.Handle().ToHorizonResult();
+            return LibHac.Fs.ResultFs.TargetNotFound.Handle().Horizon;
         }
 
         public Result OpenFile(out FileHandle handle, string path, OpenMode openMode)
@@ -89,7 +89,7 @@ namespace Ryujinx.HLE.HOS
             LibHac.Result result = _fsClient.OpenFile(out LibHac.Fs.FileHandle libhacHandle, path.ToU8Span(), (LibHac.Fs.OpenMode)openMode);
             handle = new(libhacHandle);
 
-            return result.ToHorizonResult();
+            return result.Horizon;
         }
 
         public Result QueryMountSystemDataCacheSize(out long size, ulong dataId)
@@ -103,7 +103,7 @@ namespace Ryujinx.HLE.HOS
 
         public Result ReadFile(FileHandle handle, long offset, Span<byte> destination)
         {
-            return _fsClient.ReadFile((LibHac.Fs.FileHandle)handle.Value, offset, destination).ToHorizonResult();
+            return _fsClient.ReadFile((LibHac.Fs.FileHandle)handle.Value, offset, destination).Horizon;
         }
 
         public void Unmount(string mountName)

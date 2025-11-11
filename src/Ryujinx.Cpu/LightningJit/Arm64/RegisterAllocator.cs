@@ -150,7 +150,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm64
 
         public static int CalculateMaxTemps(MemoryManagerType mmType)
         {
-            return mmType.IsHostMapped() ? 1 : 2;
+            return mmType.IsHostMapped ? 1 : 2;
         }
 
         public static int CalculateMaxTempsInclFixed(MemoryManagerType mmType)

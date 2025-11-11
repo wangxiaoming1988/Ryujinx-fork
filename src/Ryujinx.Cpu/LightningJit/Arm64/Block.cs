@@ -132,7 +132,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm64
 
             InstName lastInstructionName = Instructions[^1].Name;
 
-            return lastInstructionName.IsCall() || lastInstructionName.IsException();
+            return lastInstructionName.IsCall || lastInstructionName.IsException;
         }
     }
 }

@@ -21,10 +21,17 @@ namespace Ryujinx.Ava.UI.ViewModels
         private ApplicationLibrary ApplicationLibrary { get; }
         private ApplicationData ApplicationData { get; }
 
-        [ObservableProperty] private AvaloniaList<TitleUpdateModel> _titleUpdates = [];
-        [ObservableProperty] private AvaloniaList<object> _views = [];
-        [ObservableProperty] private object _selectedUpdate = new TitleUpdateViewModelNoUpdate();
-        [ObservableProperty] private bool _showBundledContentNotice;
+        [ObservableProperty]
+        public partial AvaloniaList<TitleUpdateModel> TitleUpdates { get; set; } = [];
+
+        [ObservableProperty]
+        public partial AvaloniaList<object> Views { get; set; } = [];
+
+        [ObservableProperty]
+        public partial object SelectedUpdate { get; set; } = new TitleUpdateViewModelNoUpdate();
+
+        [ObservableProperty]
+        public partial bool ShowBundledContentNotice { get; set; }
 
         private readonly IStorageProvider _storageProvider;
 

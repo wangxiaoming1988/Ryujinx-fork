@@ -11,13 +11,17 @@ namespace Ryujinx.Ava.UI.ViewModels
 {
     public partial class AboutWindowViewModel : BaseModel, IDisposable
     {
-        [ObservableProperty] private Bitmap _gitLabLogo;
-        [ObservableProperty] private Bitmap _discordLogo;
-        [ObservableProperty] private string _version;
+        [ObservableProperty] public partial Bitmap GitLabLogo { get; set; }
 
-        public string Developers => "GreemDev, LotP";
+        [ObservableProperty] public partial Bitmap DiscordLogo { get; set; }
 
-        public string FormerDevelopers => LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.AboutPageDeveloperListMore, "gdkchan, Ac_K, marysaka, rip in peri peri, LDj3SNuD, emmaus, Thealexbarney, GoffyDude, TSRBerry, IsaacMarovitz");
+        [ObservableProperty] public partial string Version { get; set; }
+
+        public static string Developers => "GreemDev, LotP";
+
+        public static string FormerDevelopers => LocaleManager.Instance.UpdateAndGetDynamicValue(
+            LocaleKeys.AboutPageDeveloperListMore,
+            "gdkchan, Ac_K, marysaka, rip in peri peri, LDj3SNuD, emmaus, Thealexbarney, GoffyDude, TSRBerry, IsaacMarovitz");
 
         public AboutWindowViewModel()
         {
@@ -36,7 +40,8 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         private void UpdateLogoTheme(string theme)
         {
-            bool isDarkTheme = theme == "Dark" || (theme == "Auto" && RyujinxApp.DetectSystemTheme() == ThemeVariant.Dark);
+            bool isDarkTheme = theme == "Dark" ||
+                               (theme == "Auto" && RyujinxApp.DetectSystemTheme() == ThemeVariant.Dark);
 
             string themeName = isDarkTheme ? "Dark" : "Light";
 

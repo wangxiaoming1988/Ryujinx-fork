@@ -22,19 +22,19 @@ namespace Ryujinx.Horizon.Bcat.Ipc
         [CmifCommand(0)]
         public Result Open(DirectoryName directoryName)
         {
-            return _libHacService.Get.Open(ref directoryName).ToHorizonResult();
+            return _libHacService.Get.Open(ref directoryName).Horizon;
         }
 
         [CmifCommand(1)]
         public Result Read(out int entriesRead, [Buffer(HipcBufferFlags.Out | HipcBufferFlags.MapAlias)] Span<DeliveryCacheDirectoryEntry> entriesBuffer)
         {
-            return _libHacService.Get.Read(out entriesRead, entriesBuffer).ToHorizonResult();
+            return _libHacService.Get.Read(out entriesRead, entriesBuffer).Horizon;
         }
 
         [CmifCommand(2)]
         public Result GetCount(out int count)
         {
-            return _libHacService.Get.GetCount(out count).ToHorizonResult();
+            return _libHacService.Get.GetCount(out count).Horizon;
         }
 
         public void Dispose()

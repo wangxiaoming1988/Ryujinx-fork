@@ -53,7 +53,7 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                 (intCoords || isImage) &&
                 !isBindless &&
                 !isIndexed &&
-                stage.SupportsRenderScale() &&
+                stage.SupportsRenderScale &&
                 TypeSupportsScale(texOp.Type))
             {
                 int functionId = hfm.GetOrCreateFunctionId(HelperFunctionName.TexelFetchScale);
@@ -61,7 +61,7 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                     ? resourceManager.GetTextureDescriptors(includeArrays: false).Length + resourceManager.FindImageDescriptorIndex(texOp.Binding)
                     : resourceManager.FindTextureDescriptorIndex(texOp.Binding);
 
-                int coordsCount = texOp.Type.GetDimensions();
+                int coordsCount = texOp.Type.Dimensions;
                 int coordsIndex = isBindless ? 1 : 0;
 
                 for (int index = 0; index < coordsCount; index++)
@@ -103,7 +103,7 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                 texOp.Index < 2 &&
                 !isBindless &&
                 !isIndexed &&
-                stage.SupportsRenderScale() &&
+                stage.SupportsRenderScale &&
                 TypeSupportsScale(texOp.Type))
             {
                 int functionId = hfm.GetOrCreateFunctionId(HelperFunctionName.TextureSizeUnscale);
@@ -168,7 +168,7 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                 return node;
             }
 
-            int coordsCount = texOp.Type.GetDimensions();
+            int coordsCount = texOp.Type.Dimensions;
 
             int normCoordsCount = (texOp.Type & SamplerType.Mask) == SamplerType.TextureCube ? 2 : coordsCount;
 
@@ -226,7 +226,7 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
 
             bool isIndexed = resourceManager.IsArrayOfTexturesOrImages(texOp.Binding, isImage: false);
 
-            int coordsCount = texOp.Type.GetDimensions();
+            int coordsCount = texOp.Type.Dimensions;
             int coordsIndex = isBindless || isIndexed ? 1 : 0;
 
             int normCoordsCount = (texOp.Type & SamplerType.Mask) == SamplerType.TextureCube ? 2 : coordsCount;
@@ -315,7 +315,7 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
             bool isMultisample = (texOp.Type & SamplerType.Multisample) != 0;
             bool isShadow = (texOp.Type & SamplerType.Shadow) != 0;
 
-            int coordsCount = texOp.Type.GetDimensions();
+            int coordsCount = texOp.Type.Dimensions;
 
             int offsetsCount;
 

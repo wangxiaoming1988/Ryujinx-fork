@@ -4,9 +4,9 @@ namespace Ryujinx.Horizon
 {
     public static class LibHacResultExtensions
     {
-        public static Result ToHorizonResult(this LibHac.Result result)
+        extension(LibHac.Result libHacResult)
         {
-            return new Result((int)result.Module, (int)result.Description);
+            public Result Horizon => new((int)libHacResult.Module, (int)libHacResult.Description);
         }
     }
 }

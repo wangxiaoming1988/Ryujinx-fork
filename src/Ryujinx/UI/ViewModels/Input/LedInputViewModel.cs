@@ -23,8 +23,11 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 ParentModel.SelectedGamepad.SetLed(LedColor.ToUInt32());
         });
 
-        [ObservableProperty] private bool _enableLedChanging;
-        [ObservableProperty] private Color _ledColor;
+        [ObservableProperty]
+        public partial bool EnableLedChanging { get; set; }
+
+        [ObservableProperty]
+        public partial Color LedColor { get; set; }
 
         public string RainbowSpeedText => RainbowSpeed.ToString(CultureInfo.CurrentCulture).Truncate(4, string.Empty);
 
@@ -41,27 +44,23 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 
         public bool ShowLedColorPicker => !TurnOffLed && !UseRainbowLed;
 
-        private bool _turnOffLed;
-
         public bool TurnOffLed
         {
-            get => _turnOffLed;
+            get;
             set
             {
-                _turnOffLed = value;
+                field = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(ShowLedColorPicker));
             }
         }
 
-        private bool _useRainbowLed;
-
         public bool UseRainbowLed
         {
-            get => _useRainbowLed;
+            get;
             set
             {
-                _useRainbowLed = value;
+                field = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(ShowLedColorPicker));
             }

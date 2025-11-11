@@ -98,7 +98,7 @@ namespace ARMeilleure.CodeGen.RegisterAllocators
                     {
                         OperandType type = types[copyDest];
 
-                        type = type.IsInteger() ? OperandType.I64 : OperandType.V128;
+                        type = type.IsInteger ? OperandType.I64 : OperandType.V128;
 
                         EmitXorSwap(sequence, GetRegister(copyDest, type), GetRegister(copySource, type));
 

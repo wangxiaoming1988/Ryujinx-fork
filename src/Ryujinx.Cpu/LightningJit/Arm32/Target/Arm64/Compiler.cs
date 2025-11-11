@@ -381,7 +381,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
                 if (currentCond != ArmCondition.Al)
                 {
                     instructionPointer = context.CodeWriter.InstructionPointer;
-                    context.Arm64Assembler.B(currentCond.Invert(), 0);
+                    context.Arm64Assembler.B(currentCond.Inverse, 0);
                 }
             }
         }

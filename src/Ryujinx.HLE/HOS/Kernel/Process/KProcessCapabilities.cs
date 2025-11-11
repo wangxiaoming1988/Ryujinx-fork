@@ -133,7 +133,7 @@ namespace Ryujinx.HLE.HOS.Kernel.Process
                 return Result.Success;
             }
 
-            int codeMask = 1 << (32 - BitOperations.LeadingZeroCount(code.GetFlag() + 1));
+            int codeMask = 1 << (32 - BitOperations.LeadingZeroCount(code.Flag + 1));
 
             // Check if the property was already set.
             if (((mask0 & codeMask) & 0x1e008) != 0)

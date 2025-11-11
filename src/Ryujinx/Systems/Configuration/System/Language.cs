@@ -1,4 +1,5 @@
 using Ryujinx.Common.Utilities;
+using Ryujinx.HLE.HOS.SystemState;
 using System.Text.Json.Serialization;
 
 namespace Ryujinx.Ava.Systems.Configuration.System
@@ -28,10 +29,14 @@ namespace Ryujinx.Ava.Systems.Configuration.System
 
     public static class LanguageEnumHelper
     {
-        public static Language ToUI(this HLE.HOS.SystemState.SystemLanguage hleLanguage)
-            => (Language)hleLanguage;
+        extension(SystemLanguage hle)
+        {
+            public Language Ui => (Language)hle;
+        }
 
-        public static HLE.HOS.SystemState.SystemLanguage ToHLE(this Language uiLanguage)
-            => (HLE.HOS.SystemState.SystemLanguage)uiLanguage;
+        extension(Language ui)
+        {
+            public SystemLanguage Horizon => (SystemLanguage)ui;
+        }
     }
 }

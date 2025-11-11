@@ -643,7 +643,7 @@ namespace Ryujinx.Graphics.Gpu.Image
             // The decompression is slow, so we want to avoid it as much as possible.
             // This does a byte-by-byte check and skips the update if the data is equal in this case.
             // This improves the speed on applications that overwrites ASTC data without changing anything.
-            if (Info.FormatInfo.Format.IsAstc() && !_context.Capabilities.SupportsAstcCompression)
+            if (Info.FormatInfo.Format.IsAstc && !_context.Capabilities.SupportsAstcCompression)
             {
                 if (_updateCount < ByteComparisonSwitchThreshold)
                 {
@@ -792,7 +792,7 @@ namespace Ryujinx.Graphics.Gpu.Image
             // Handle compressed cases not supported by the host:
             // - ASTC is usually not supported on desktop cards.
             // - BC4/BC5 is not supported on 3D textures.
-            if (!_context.Capabilities.SupportsAstcCompression && Format.IsAstc())
+            if (!_context.Capabilities.SupportsAstcCompression && Format.IsAstc)
             {
                 using (result)
                 {
@@ -823,7 +823,7 @@ namespace Ryujinx.Graphics.Gpu.Image
                     return decoded;
                 }
             }
-            else if (!_context.Capabilities.SupportsEtc2Compression && Format.IsEtc2())
+            else if (!_context.Capabilities.SupportsEtc2Compression && Format.IsEtc2)
             {
                 switch (Format)
                 {
@@ -924,7 +924,7 @@ namespace Ryujinx.Graphics.Gpu.Image
                     }
                 }
             }
-            else if (!_context.Capabilities.Supports5BitComponentFormat && Format.Is16BitPacked())
+            else if (!_context.Capabilities.Supports5BitComponentFormat && Format.Is16BitPacked)
             {
                 switch (Format)
                 {
@@ -1251,7 +1251,7 @@ namespace Ryujinx.Graphics.Gpu.Image
             {
                 result = TextureCompatibility.PropagateViewCompatibility(result, TextureCompatibility.ViewTargetCompatible(Info, info, ref caps));
 
-                bool bothMs = Info.Target.IsMultisample() && info.Target.IsMultisample();
+                bool bothMs = Info.Target.IsMultisample && info.Target.IsMultisample;
                 if (bothMs && (Info.SamplesInX != info.SamplesInX || Info.SamplesInY != info.SamplesInY))
                 {
                     result = TextureViewCompatibility.Incompatible;

@@ -22,9 +22,9 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
 
     static class ArmConditionExtensions
     {
-        public static ArmCondition Invert(this ArmCondition condition)
+        extension(ArmCondition condition)
         {
-            return (ArmCondition)((int)condition ^ 1);
+            public ArmCondition Inverse => (ArmCondition)((int)condition ^ 1);
         }
     }
 }

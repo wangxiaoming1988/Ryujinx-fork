@@ -29,9 +29,11 @@ namespace Ryujinx.Ava.UI.Helpers
                 return null;
             }
 
-            return app.PercentageProgress != null ? null :
-                app.ProcessingOutcome is not OperationOutcome.Successful and not OperationOutcome.Undetermined ? app.ProcessingOutcome.ToLocalisedText() :
-                null;
+            return app.PercentageProgress != null 
+                ? null 
+                : app.ProcessingOutcome is not OperationOutcome.Successful and not OperationOutcome.Undetermined 
+                    ? app.ProcessingOutcome.LocalizedText 
+                    : null;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

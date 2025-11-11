@@ -161,7 +161,7 @@ namespace ARMeilleure.CodeGen.Optimizations
                     }
                     else if (otherCompType == Comparison.Equal)
                     {
-                        propCompType = compType.Invert();
+                        propCompType = compType.Inverse;
                     }
                     else
                     {

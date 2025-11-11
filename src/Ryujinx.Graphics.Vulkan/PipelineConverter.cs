@@ -31,7 +31,7 @@ namespace Ryujinx.Graphics.Vulkan
             int maxColorAttachmentIndex = -1;
 
             bool isNotMsOrSupportsStorage = gd.Capabilities.SupportsShaderStorageImageMultisample ||
-                 !state.DepthStencilFormat.IsImageCompatible();
+                 !state.DepthStencilFormat.IsImageCompatible;
 
             Span<bool> attachmentEnableSpan = state.AttachmentEnable.AsSpan();
             Span<GALFormat> attachmentFormatsSpan = state.AttachmentFormats.AsSpan();
@@ -41,7 +41,7 @@ namespace Ryujinx.Graphics.Vulkan
                 if (attachmentEnableSpan[i])
                 {
                     bool isNotMsOrSupportsStorageAttachments = gd.Capabilities.SupportsShaderStorageImageMultisample ||
-                         !attachmentFormatsSpan[i].IsImageCompatible();
+                         !attachmentFormatsSpan[i].IsImageCompatible;
 
                     attachmentFormats[attachmentCount] = gd.FormatCapabilities.ConvertToVkFormat(attachmentFormatsSpan[i], isNotMsOrSupportsStorageAttachments);
 
@@ -62,7 +62,7 @@ namespace Ryujinx.Graphics.Vulkan
 
                 for (int i = 0; i < attachmentCount; i++)
                 {
-                    int bindIndex = attachmentIndices[i];
+                    //int bindIndex = attachmentIndices[i];
 
                     attachmentDescs[i] = new AttachmentDescription(
                         0,
@@ -242,7 +242,7 @@ namespace Ryujinx.Graphics.Vulkan
 
                 if (!attribute.IsZero && bufferIndex < vbCount)
                 {
-                    vbScalarSizes[bufferIndex - 1] = Math.Max(attribute.Format.GetScalarSize(), vbScalarSizes[bufferIndex - 1]);
+                    vbScalarSizes[bufferIndex - 1] = Math.Max(attribute.Format.ScalarSize, vbScalarSizes[bufferIndex - 1]);
                 }
             }
 
@@ -320,23 +320,23 @@ namespace Ryujinx.Graphics.Vulkan
                 if (attachmentEnableSpan[i])
                 {
                     bool isNotMsOrSupportsStorage = gd.Capabilities.SupportsShaderStorageImageMultisample ||
-                         !attachmentFormatsSpan[i].IsImageCompatible();
+                         !attachmentFormatsSpan[i].IsImageCompatible;
 
                     pAttachmentFormatsSpan[attachmentCount++] = gd.FormatCapabilities.ConvertToVkFormat(attachmentFormatsSpan[i], isNotMsOrSupportsStorage);
                     maxColorAttachmentIndex = i;
 
-                    if (attachmentFormatsSpan[i].IsInteger())
+                    if (attachmentFormatsSpan[i].IsInt)
                     {
                         attachmentIntegerFormatMask |= 1u << i;
                     }
 
-                    allFormatsFloatOrSrgb &= attachmentFormatsSpan[i].IsFloatOrSrgb();
+                    allFormatsFloatOrSrgb &= attachmentFormatsSpan[i].IsFloatOrSrgb;
                 }
             }
 
             if (state.DepthStencilEnable)
             {
-                bool isNotMsOrSupportsStorage = !state.DepthStencilFormat.IsImageCompatible() ||
+                bool isNotMsOrSupportsStorage = !state.DepthStencilFormat.IsImageCompatible ||
                      gd.Capabilities.SupportsShaderStorageImageMultisample;
 
                 pAttachmentFormatsSpan[attachmentCount++] = gd.FormatCapabilities.ConvertToVkFormat(state.DepthStencilFormat, isNotMsOrSupportsStorage);

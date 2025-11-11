@@ -8,21 +8,24 @@ namespace Ryujinx.Ava.Utilities
 {
     public static class StorageProviderExtensions
     {
-        public static async Task<Optional<IStorageFolder>> OpenSingleFolderPickerAsync(this IStorageProvider storageProvider, FolderPickerOpenOptions openOptions = null) =>
-            await storageProvider.OpenFolderPickerAsync(FixOpenOptions(openOptions, false))
-                .Then(folders => folders.FindFirst());
-
-        public static async Task<Optional<IStorageFile>> OpenSingleFilePickerAsync(this IStorageProvider storageProvider, FilePickerOpenOptions openOptions = null) =>
-            await storageProvider.OpenFilePickerAsync(FixOpenOptions(openOptions, false))
-                .Then(files => files.FindFirst());
-
-        public static async Task<Optional<IReadOnlyList<IStorageFolder>>> OpenMultiFolderPickerAsync(this IStorageProvider storageProvider, FolderPickerOpenOptions openOptions = null) =>
-            await storageProvider.OpenFolderPickerAsync(FixOpenOptions(openOptions, true))
-                .Then(folders => folders.Count > 0 ? Optional.Of(folders) : default);
-
-        public static async Task<Optional<IReadOnlyList<IStorageFile>>> OpenMultiFilePickerAsync(this IStorageProvider storageProvider, FilePickerOpenOptions openOptions = null) =>
-            await storageProvider.OpenFilePickerAsync(FixOpenOptions(openOptions, true))
-                .Then(files => files.Count > 0 ? Optional.Of(files) : default);
+        extension(IStorageProvider storageProvider)
+        {
+            public Task<Optional<IStorageFolder>> OpenSingleFolderPickerAsync(FolderPickerOpenOptions openOptions = null) =>
+                storageProvider.OpenFolderPickerAsync(FixOpenOptions(openOptions, false))
+                    .Then(folders => folders.FindFirst());
+            
+            public Task<Optional<IStorageFile>> OpenSingleFilePickerAsync(FilePickerOpenOptions openOptions = null) =>
+                storageProvider.OpenFilePickerAsync(FixOpenOptions(openOptions, false))
+                    .Then(files => files.FindFirst());
+            
+            public Task<Optional<IReadOnlyList<IStorageFolder>>> OpenMultiFolderPickerAsync(FolderPickerOpenOptions openOptions = null) =>
+                storageProvider.OpenFolderPickerAsync(FixOpenOptions(openOptions, true))
+                    .Then(folders => folders.Count > 0 ? Optional.Of(folders) : default);
+            
+            public Task<Optional<IReadOnlyList<IStorageFile>>> OpenMultiFilePickerAsync(FilePickerOpenOptions openOptions = null) =>
+                storageProvider.OpenFilePickerAsync(FixOpenOptions(openOptions, true))
+                    .Then(files => files.Count > 0 ? Optional.Of(files) : default);
+        }
 
         private static FilePickerOpenOptions FixOpenOptions(this FilePickerOpenOptions openOptions, bool allowMultiple)
         {

@@ -83,7 +83,7 @@ namespace Ryujinx.HLE
 #pragma warning disable IDE0055 // Disable formatting
             DirtyHacks        = new DirtyHacks(Configuration.Hacks);
             AudioDeviceDriver = new CompatLayerHardwareDeviceDriver(Configuration.AudioDeviceDriver);
-            Memory            = new MemoryBlock(Configuration.MemoryConfiguration.ToDramSize(), memoryAllocationFlags);
+            Memory            = new MemoryBlock(Configuration.MemoryConfiguration.DramSize, memoryAllocationFlags);
             Gpu               = new GpuContext(Configuration.GpuRenderer, DirtyHacks);
             Debugger          = Configuration.EnableGdbStub ? new Debugger.Debugger(this, Configuration.GdbStubPort) : null;
             System            = new HOS.Horizon(this);

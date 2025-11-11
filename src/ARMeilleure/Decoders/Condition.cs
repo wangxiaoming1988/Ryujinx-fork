@@ -22,11 +22,11 @@ namespace ARMeilleure.Decoders
 
     static class ConditionExtensions
     {
-        public static Condition Invert(this Condition cond)
+        extension(Condition condition)
         {
             // Bit 0 of all conditions is basically a negation bit, so
             // inverting this bit has the effect of inverting the condition.
-            return (Condition)((int)cond ^ 1);
+            public Condition Inverse => (Condition)((int)condition ^ 1);
         }
     }
 }

@@ -8,7 +8,7 @@ namespace Ryujinx.Graphics.OpenGL
     {
         public static void Clear(BufferHandle destination, int offset, int size, uint value)
         {
-            GL.BindBuffer(BufferTarget.CopyWriteBuffer, destination.ToInt32());
+            GL.BindBuffer(BufferTarget.CopyWriteBuffer, destination);
 
             unsafe
             {
@@ -58,8 +58,8 @@ namespace Ryujinx.Graphics.OpenGL
 
         public static void Copy(BufferHandle source, BufferHandle destination, int srcOffset, int dstOffset, int size)
         {
-            GL.BindBuffer(BufferTarget.CopyReadBuffer, source.ToInt32());
-            GL.BindBuffer(BufferTarget.CopyWriteBuffer, destination.ToInt32());
+            GL.BindBuffer(BufferTarget.CopyReadBuffer, source);
+            GL.BindBuffer(BufferTarget.CopyWriteBuffer, destination);
 
             GL.CopyBufferSubData(
                 BufferTarget.CopyReadBuffer,
@@ -86,7 +86,7 @@ namespace Ryujinx.Graphics.OpenGL
             {
                 nint target = renderer.PersistentBuffers.Default.GetHostArray(size);
 
-                GL.BindBuffer(BufferTarget.CopyReadBuffer, buffer.ToInt32());
+                GL.BindBuffer(BufferTarget.CopyReadBuffer, buffer);
 
                 GL.GetBufferSubData(BufferTarget.CopyReadBuffer, (nint)offset, size, target);
 
@@ -96,13 +96,13 @@ namespace Ryujinx.Graphics.OpenGL
 
         public static void Resize(BufferHandle handle, int size)
         {
-            GL.BindBuffer(BufferTarget.CopyWriteBuffer, handle.ToInt32());
+            GL.BindBuffer(BufferTarget.CopyWriteBuffer, handle);
             GL.BufferData(BufferTarget.CopyWriteBuffer, size, nint.Zero, BufferUsageHint.StreamCopy);
         }
 
         public static void SetData(BufferHandle buffer, int offset, ReadOnlySpan<byte> data)
         {
-            GL.BindBuffer(BufferTarget.CopyWriteBuffer, buffer.ToInt32());
+            GL.BindBuffer(BufferTarget.CopyWriteBuffer, buffer);
 
             unsafe
             {
@@ -115,7 +115,7 @@ namespace Ryujinx.Graphics.OpenGL
 
         public static void Delete(BufferHandle buffer)
         {
-            GL.DeleteBuffer(buffer.ToInt32());
+            GL.DeleteBuffer(buffer);
         }
     }
 }

@@ -61,7 +61,7 @@ namespace Ryujinx.Graphics.Vulkan
 
             gd.Textures.Add(this);
 
-            bool isMsImageStorageSupported = gd.Capabilities.SupportsShaderStorageImageMultisample || !info.Target.IsMultisample();
+            bool isMsImageStorageSupported = gd.Capabilities.SupportsShaderStorageImageMultisample || !info.Target.IsMultisample;
 
             VkFormat format = _gd.FormatCapabilities.ConvertToVkFormat(info.Format, isMsImageStorageSupported);
             ImageUsageFlags usage = TextureStorage.GetImageUsage(info.Format, gd.Capabilities, isMsImageStorageSupported, false);
@@ -128,7 +128,7 @@ namespace Ryujinx.Graphics.Vulkan
 
             ImageUsageFlags shaderUsage = ImageUsageFlags.SampledBit;
 
-            if (info.Format.IsImageCompatible() && (_gd.Capabilities.SupportsShaderStorageImageMultisample || !info.Target.IsMultisample()))
+            if (info.Format.IsImageCompatible && (_gd.Capabilities.SupportsShaderStorageImageMultisample || !info.Target.IsMultisample))
             {
                 shaderUsage |= ImageUsageFlags.StorageBit;
             }
@@ -150,7 +150,7 @@ namespace Ryujinx.Graphics.Vulkan
             {
                 if (gd.Capabilities.PortabilitySubset.HasFlag(PortabilitySubsetFlags.No3DImageView))
                 {
-                    if (levels == 1 && (info.Format.IsRtColorCompatible() || info.Format.IsDepthOrStencil()))
+                    if (levels == 1 && (info.Format.IsRtColorCompatible || info.Format.IsDepthOrStencil))
                     {
                         subresourceRange = new ImageSubresourceRange(aspectFlags, (uint)firstLevel, levels, (uint)firstLayer, 1);
 
@@ -225,12 +225,12 @@ namespace Ryujinx.Graphics.Vulkan
             Image srcImage = src.GetImage().Get(cbs).Value;
             Image dstImage = dst.GetImage().Get(cbs).Value;
 
-            if (!dst.Info.Target.IsMultisample() && Info.Target.IsMultisample())
+            if (!dst.Info.Target.IsMultisample && Info.Target.IsMultisample)
             {
                 int layers = Math.Min(Info.GetLayers(), dst.Info.GetLayers() - firstLayer);
                 _gd.HelperShader.CopyMSToNonMS(_gd, cbs, src, dst, 0, firstLayer, layers);
             }
-            else if (dst.Info.Target.IsMultisample() && !Info.Target.IsMultisample())
+            else if (dst.Info.Target.IsMultisample && !Info.Target.IsMultisample)
             {
                 int layers = Math.Min(Info.GetLayers(), dst.Info.GetLayers() - firstLayer);
                 _gd.HelperShader.CopyNonMSToMS(_gd, cbs, src, dst, 0, firstLayer, layers);
@@ -241,7 +241,7 @@ namespace Ryujinx.Graphics.Vulkan
                 int levels = Math.Min(Info.Levels, dst.Info.Levels - firstLevel);
                 _gd.HelperShader.CopyIncompatibleFormats(_gd, cbs, src, dst, 0, firstLayer, 0, firstLevel, layers, levels);
             }
-            else if (src.Info.Format.IsDepthOrStencil() != dst.Info.Format.IsDepthOrStencil())
+            else if (src.Info.Format.IsDepthOrStencil != dst.Info.Format.IsDepthOrStencil)
             {
                 int layers = Math.Min(Info.GetLayers(), dst.Info.GetLayers() - firstLayer);
                 int levels = Math.Min(Info.Levels, dst.Info.Levels - firstLevel);
@@ -285,11 +285,11 @@ namespace Ryujinx.Graphics.Vulkan
             Image srcImage = src.GetImage().Get(cbs).Value;
             Image dstImage = dst.GetImage().Get(cbs).Value;
 
-            if (!dst.Info.Target.IsMultisample() && Info.Target.IsMultisample())
+            if (!dst.Info.Target.IsMultisample && Info.Target.IsMultisample)
             {
                 _gd.HelperShader.CopyMSToNonMS(_gd, cbs, src, dst, srcLayer, dstLayer, 1);
             }
-            else if (dst.Info.Target.IsMultisample() && !Info.Target.IsMultisample())
+            else if (dst.Info.Target.IsMultisample && !Info.Target.IsMultisample)
             {
                 _gd.HelperShader.CopyNonMSToMS(_gd, cbs, src, dst, srcLayer, dstLayer, 1);
             }
@@ -297,7 +297,7 @@ namespace Ryujinx.Graphics.Vulkan
             {
                 _gd.HelperShader.CopyIncompatibleFormats(_gd, cbs, src, dst, srcLayer, dstLayer, srcLevel, dstLevel, 1, 1);
             }
-            else if (src.Info.Format.IsDepthOrStencil() != dst.Info.Format.IsDepthOrStencil())
+            else if (src.Info.Format.IsDepthOrStencil != dst.Info.Format.IsDepthOrStencil)
             {
                 _gd.HelperShader.CopyColor(_gd, cbs, src, dst, srcLayer, dstLayer, srcLevel, dstLevel, 1, 1);
             }
@@ -370,7 +370,7 @@ namespace Ryujinx.Graphics.Vulkan
                     src.Height == dst.Height &&
                     src.VkFormat == dst.VkFormat)
                 {
-                    if (src.Info.Samples > 1 && src.Info.Samples != dst.Info.Samples && src.Info.Format.IsDepthOrStencil())
+                    if (src.Info.Samples > 1 && src.Info.Samples != dst.Info.Samples && src.Info.Format.IsDepthOrStencil)
                     {
                         // CmdResolveImage does not support depth-stencil resolve, so we need to use an alternative path
                         // for those textures.
@@ -424,7 +424,7 @@ namespace Ryujinx.Graphics.Vulkan
                 }
             }
 
-            bool isDepthOrStencil = dst.Info.Format.IsDepthOrStencil();
+            bool isDepthOrStencil = dst.Info.Format.IsDepthOrStencil;
 
             if (!VulkanConfiguration.UseUnsafeBlit || (_gd.Vendor != Vendor.Nvidia && _gd.Vendor != Vendor.Intel))
             {

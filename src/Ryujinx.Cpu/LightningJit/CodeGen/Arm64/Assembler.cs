@@ -673,7 +673,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
 
         public readonly void Mov(Operand rd, Operand rn)
         {
-            Debug.Assert(rd.Type.IsInteger());
+            Debug.Assert(rd.Type.IsInteger);
             Orr(rd, new Operand(ZrRegister, RegisterType.Integer, rd.Type), rn);
         }
 
@@ -4544,7 +4544,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             uint instruction;
             int scale;
 
-            if (type.IsInteger())
+            if (type.IsInteger)
             {
                 instruction = intInst;
 
@@ -4580,7 +4580,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
         {
             uint instruction;
 
-            if (type.IsInteger())
+            if (type.IsInteger)
             {
                 instruction = intInst;
 
@@ -4610,7 +4610,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
         {
             uint instruction;
 
-            if (type.IsInteger())
+            if (type.IsInteger)
             {
                 instruction = intInst;
 

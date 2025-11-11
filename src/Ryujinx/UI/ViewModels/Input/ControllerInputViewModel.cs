@@ -4,55 +4,50 @@ using Ryujinx.Ava.UI.Models.Input;
 using Ryujinx.Ava.UI.Views.Input;
 using Ryujinx.Common.Utilities;
 using Ryujinx.UI.Views.Input;
-using System.Drawing;
 
 namespace Ryujinx.Ava.UI.ViewModels.Input
 {
     public partial class ControllerInputViewModel : BaseModel
     {
-        private GamepadInputConfig _config;
         public GamepadInputConfig Config
         {
-            get => _config;
+            get;
             set
             {
-                _config = value;
+                field = value;
 
                 OnPropertyChanged();
             }
         }
 
-        private StickVisualizer _visualizer;
         public StickVisualizer Visualizer
         {
-            get => _visualizer;
+            get;
             set
             {
-                _visualizer = value;
+                field = value;
 
                 OnPropertyChanged();
             }
         }
 
-        private bool _isLeft;
         public bool IsLeft
         {
-            get => _isLeft;
+            get;
             set
             {
-                _isLeft = value;
+                field = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasSides));
             }
         }
 
-        private bool _isRight;
         public bool IsRight
         {
-            get => _isRight;
+            get;
             set
             {
-                _isRight = value;
+                field = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(HasSides));
             }
@@ -60,8 +55,8 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 
         public bool HasSides => IsLeft ^ IsRight;
 
-        [ObservableProperty] private SvgImage _image;
-
+        [ObservableProperty]
+        public partial SvgImage Image { get; set; }
         public InputViewModel ParentModel { get; }
 
         public ControllerInputViewModel(InputViewModel model, GamepadInputConfig config, StickVisualizer visualizer)
@@ -75,7 +70,7 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 if (args.PropertyName is nameof(Config.UseRainbowLed))
                 {
                     if (Config is { UseRainbowLed: true, TurnOffLed: false, EnableLedChanging: true })
-                        Rainbow.Updated += (ref Color color) => ParentModel.SelectedGamepad.SetLed((uint)color.ToArgb());
+                        Rainbow.Updated += (ref color) => ParentModel.SelectedGamepad.SetLed((uint)color.ToArgb());
                     else
                     {
                         Rainbow.Reset();

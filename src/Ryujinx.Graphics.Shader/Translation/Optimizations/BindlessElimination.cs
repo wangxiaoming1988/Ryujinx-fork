@@ -39,8 +39,8 @@ namespace Ryujinx.Graphics.Shader.Translation.Optimizations
                     // Set any destination variables to zero.
 
                     string typeName = texOp.Inst.IsImage()
-                        ? texOp.Type.ToGlslImageType(texOp.Format.GetComponentType())
-                        : texOp.Type.ToGlslTextureType();
+                        ? texOp.Type.GetGlslImageTypeName(texOp.Format.GetComponentType())
+                        : texOp.Type.GlslTextureTypeName;
 
                     gpuAccessor.Log($"Failed to find handle source for bindless access of type \"{typeName}\".");
 

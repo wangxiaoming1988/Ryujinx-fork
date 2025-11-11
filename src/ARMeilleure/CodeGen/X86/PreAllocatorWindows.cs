@@ -40,7 +40,7 @@ namespace ARMeilleure.CodeGen.X86
 
             if (dest != default && dest.Type == OperandType.V128)
             {
-                int stackOffset = AllocateOnStack(dest.Type.GetSizeInBytes());
+                int stackOffset = AllocateOnStack(dest.Type.ByteSize);
 
                 arg0Reg = Gpr(CallingConvention.GetIntArgumentRegister(0), OperandType.I64);
 
@@ -76,7 +76,7 @@ namespace ARMeilleure.CodeGen.X86
                 {
                     Operand stackAddr = Local(OperandType.I64);
 
-                    int stackOffset = AllocateOnStack(source.Type.GetSizeInBytes());
+                    int stackOffset = AllocateOnStack(source.Type.ByteSize);
 
                     nodes.AddBefore(node, Operation(Instruction.StackAlloc, stackAddr, Const(stackOffset)));
 
@@ -96,7 +96,7 @@ namespace ARMeilleure.CodeGen.X86
 
                 int argIndex = index + retArgs;
 
-                if (source.Type.IsInteger())
+                if (source.Type.IsInteger)
                 {
                     argReg = Gpr(CallingConvention.GetIntArgumentRegister(argIndex), source.Type);
                 }
@@ -140,7 +140,7 @@ namespace ARMeilleure.CodeGen.X86
                 }
                 else
                 {
-                    Operand retReg = dest.Type.IsInteger()
+                    Operand retReg = dest.Type.IsInteger
                         ? Gpr(CallingConvention.GetIntReturnRegister(), dest.Type)
                         : Xmm(CallingConvention.GetVecReturnRegister(), dest.Type);
 
@@ -171,7 +171,7 @@ namespace ARMeilleure.CodeGen.X86
             for (int index = 0; index < argsCount; index++)
             {
                 Operand source = node.GetSource(1 + index);
-                Operand argReg = source.Type.IsInteger()
+                Operand argReg = source.Type.IsInteger
                     ? Gpr(CallingConvention.GetIntArgumentRegister(index), source.Type)
                     : Xmm(CallingConvention.GetVecArgumentRegister(index), source.Type);
 
@@ -219,7 +219,7 @@ namespace ARMeilleure.CodeGen.X86
                 {
                     Operand argReg, pArg;
 
-                    if (dest.Type.IsInteger())
+                    if (dest.Type.IsInteger)
                     {
                         argReg = Gpr(CallingConvention.GetIntArgumentRegister(index), dest.Type);
                         pArg = Local(dest.Type);
@@ -283,7 +283,7 @@ namespace ARMeilleure.CodeGen.X86
             Operand source = node.GetSource(0);
             Operand retReg;
 
-            if (source.Type.IsInteger())
+            if (source.Type.IsInteger)
             {
                 retReg = Gpr(CallingConvention.GetIntReturnRegister(), source.Type);
             }

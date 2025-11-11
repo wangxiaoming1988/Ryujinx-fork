@@ -135,7 +135,7 @@ namespace Ryujinx.Graphics.Shader.Translation
                 }
                 else if (TranslatorContext.Stage == ShaderStage.Geometry)
                 {
-                    int inputVertices = TranslatorContext.Definitions.InputTopology.ToInputVertices();
+                    int inputVertices = TranslatorContext.Definitions.InputTopology.InputVertexCount;
 
                     Operand baseVertex = this.IMultiply(outputVertexOffset, Const(inputVertices));
 
@@ -404,7 +404,7 @@ namespace Ryujinx.Graphics.Shader.Translation
                     else
                     {
                         inputStart = 0;
-                        inputEnd = topology.ToInputVerticesNoAdjacency();
+                        inputEnd = topology.InputVertexCountNoAdjacency;
                         inputStep = 1;
                     }
 

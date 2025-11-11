@@ -849,8 +849,8 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
 
                     FormatInfo dsFormat = _state.State.RtDepthStencilState.Format.Convert();
 
-                    bool hasDepth = dsFormat.Format.HasDepth();
-                    bool hasStencil = dsFormat.Format.HasStencil();
+                    bool hasDepth = dsFormat.Format.HasDepth;
+                    bool hasStencil = dsFormat.Format.HasStencil;
 
                     if (hasStencil && (!clearStencil || (clearAffectedByStencilMask && _state.State.StencilTestState.FrontMask != 0xff)))
                     {

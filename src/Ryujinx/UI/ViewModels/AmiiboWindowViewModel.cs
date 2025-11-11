@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 using Ryujinx.Ava.Common.Locale;
 using Ryujinx.Ava.Common.Models.Amiibo;
 using Ryujinx.Ava.UI.Helpers;
@@ -23,7 +24,7 @@ using System.Threading.Tasks;
 
 namespace Ryujinx.Ava.UI.ViewModels
 {
-    public class AmiiboWindowViewModel : BaseModel, IDisposable
+    public partial class AmiiboWindowViewModel : BaseModel, IDisposable
     {
         // ReSharper disable once InconsistentNaming
         private static bool _cachedUseRandomUuid;
@@ -36,17 +37,13 @@ namespace Ryujinx.Ava.UI.ViewModels
         private readonly HttpClient _httpClient;
         private readonly AmiiboWindow _owner;
 
-        private Bitmap _amiiboImage;
         private List<AmiiboApi> _amiiboList;
         private AvaloniaList<AmiiboApi> _amiibos;
         private ObservableCollection<string> _amiiboSeries;
 
         private int _amiiboSelectedIndex;
         private int _seriesSelectedIndex;
-        private bool _enableScanning;
         private bool _showAllAmiibo;
-        private bool _useRandomUuid = _cachedUseRandomUuid;
-        private string _usage;
 
         private static readonly AmiiboJsonSerializerContext _serializerContext = new(JsonHelper.GetDefaultSerializerOptions());
 
@@ -83,14 +80,14 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public bool UseRandomUuid
         {
-            get => _useRandomUuid;
+            get;
             set
             {
-                _cachedUseRandomUuid = _useRandomUuid = value;
+                _cachedUseRandomUuid = field = value;
 
                 OnPropertyChanged();
             }
-        }
+        } = _cachedUseRandomUuid;
 
         public bool ShowAllAmiibo
         {
@@ -154,38 +151,14 @@ namespace Ryujinx.Ava.UI.ViewModels
             }
         }
 
-        public Bitmap AmiiboImage
-        {
-            get => _amiiboImage;
-            set
-            {
-                _amiiboImage = value;
+        [ObservableProperty]
+        public partial Bitmap AmiiboImage { get; set; }
 
-                OnPropertyChanged();
-            }
-        }
+        [ObservableProperty]
+        public partial string Usage { get; set; }
 
-        public string Usage
-        {
-            get => _usage;
-            set
-            {
-                _usage = value;
-
-                OnPropertyChanged();
-            }
-        }
-
-        public bool EnableScanning
-        {
-            get => _enableScanning;
-            set
-            {
-                _enableScanning = value;
-
-                OnPropertyChanged();
-            }
-        }
+        [ObservableProperty]
+        public partial bool EnableScanning { get; set; }
 
         public void Scan()
         {

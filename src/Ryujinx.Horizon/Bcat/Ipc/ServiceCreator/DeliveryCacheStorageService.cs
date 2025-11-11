@@ -35,7 +35,7 @@ namespace Ryujinx.Horizon.Bcat.Ipc
                 service = null;
             }
 
-            return resultCode.ToHorizonResult();
+            return resultCode.Horizon;
         }
 
         [CmifCommand(1)]
@@ -54,13 +54,13 @@ namespace Ryujinx.Horizon.Bcat.Ipc
                 service = null;
             }
 
-            return resultCode.ToHorizonResult();
+            return resultCode.Horizon;
         }
 
         [CmifCommand(10)]
         public Result EnumerateDeliveryCacheDirectory(out int count, [Buffer(HipcBufferFlags.Out | HipcBufferFlags.MapAlias)] Span<DirectoryName> directoryNames)
         {
-            return _libHacService.Get.EnumerateDeliveryCacheDirectory(out count, directoryNames).ToHorizonResult();
+            return _libHacService.Get.EnumerateDeliveryCacheDirectory(out count, directoryNames).Horizon;
         }
 
         public void Dispose()

@@ -7,14 +7,16 @@ namespace Ryujinx.Ava.UI.ViewModels
 {
     public partial class DlcSelectViewModel : BaseModel
     {
-        [ObservableProperty] private DownloadableContentModel[] _dlcs;
+        [ObservableProperty]
+        public partial DownloadableContentModel[] Dlcs { get; set; }
 #nullable enable
-        [ObservableProperty] private DownloadableContentModel? _selectedDlc;
+        [ObservableProperty]
+        public partial DownloadableContentModel? SelectedDlc { get; set; }
 #nullable disable
 
         public DlcSelectViewModel(ulong titleId, ApplicationLibrary appLibrary)
         {
-            _dlcs = appLibrary.FindDlcsFor(titleId)
+            Dlcs = appLibrary.FindDlcsFor(titleId)
                 .OrderBy(it => it.IsBundled ? 0 : 1)
                 .ThenBy(it => it.TitleId)
                 .ToArray();

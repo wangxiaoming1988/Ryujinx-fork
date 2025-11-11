@@ -53,7 +53,7 @@ namespace Ryujinx.Graphics.OpenGL.Image
             int layers,
             int levels)
         {
-            TextureView srcConverted = src.Format.IsBgr() != dst.Format.IsBgr() ? BgraSwap(src) : src;
+            TextureView srcConverted = src.Format.IsBgr != dst.Format.IsBgr ? BgraSwap(src) : src;
 
             (int oldDrawFramebufferHandle, int oldReadFramebufferHandle) = ((Pipeline)_renderer.Pipeline).GetBoundFramebuffers();
 
@@ -87,7 +87,7 @@ namespace Ryujinx.Graphics.OpenGL.Image
 
                     ClearBufferMask mask = GetMask(src.Format);
 
-                    if ((mask & (ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit)) != 0 || src.Format.IsInteger())
+                    if ((mask & (ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit)) != 0 || src.Format.IsInt)
                     {
                         linearFilter = false;
                     }

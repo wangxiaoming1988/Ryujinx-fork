@@ -4,20 +4,28 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 {
     public partial class MotionInputViewModel : BaseModel
     {
-        [ObservableProperty] private int _slot;
+        [ObservableProperty]
+        public partial int Slot { get; set; }
 
-        [ObservableProperty] private int _altSlot;
+        [ObservableProperty]
+        public partial int AltSlot { get; set; }
 
-        [ObservableProperty] private string _dsuServerHost;
+        [ObservableProperty]
+        public partial string DsuServerHost { get; set; }
 
-        [ObservableProperty] private int _dsuServerPort;
+        [ObservableProperty]
+        public partial int DsuServerPort { get; set; }
 
-        [ObservableProperty] private bool _mirrorInput;
+        [ObservableProperty]
+        public partial bool MirrorInput { get; set; }
 
-        [ObservableProperty] private int _sensitivity;
+        [ObservableProperty]
+        public partial int Sensitivity { get; set; }
 
-        [ObservableProperty] private double _gyroDeadzone;
+        [ObservableProperty]
+        public partial double GyroDeadzone { get; set; }
 
-        [ObservableProperty] private bool _enableCemuHookMotion;
+        [ObservableProperty]
+        public partial bool EnableCemuHookMotion { get; set; }
     }
 }

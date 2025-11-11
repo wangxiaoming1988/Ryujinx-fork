@@ -385,7 +385,7 @@ namespace ARMeilleure.CodeGen.X86
         {
             ref readonly InstructionInfo info = ref _instTable[(int)X86Instruction.Movd];
 
-            if (source.Type.IsInteger() || source.Kind == OperandKind.Memory)
+            if (source.Type.IsInteger || source.Kind == OperandKind.Memory)
             {
                 WriteOpCode(dest, default, source, OperandType.None, info.Flags, info.OpRRM, rrm: true);
             }
@@ -416,11 +416,11 @@ namespace ARMeilleure.CodeGen.X86
 
             InstructionFlags flags = info.Flags | InstructionFlags.RexW;
 
-            if (source.Type.IsInteger() || source.Kind == OperandKind.Memory)
+            if (source.Type.IsInteger || source.Kind == OperandKind.Memory)
             {
                 WriteOpCode(dest, default, source, OperandType.None, flags, info.OpRRM, rrm: true);
             }
-            else if (dest.Type.IsInteger() || dest.Kind == OperandKind.Memory)
+            else if (dest.Type.IsInteger || dest.Kind == OperandKind.Memory)
             {
                 WriteOpCode(dest, default, source, OperandType.None, flags, info.OpRMR);
             }

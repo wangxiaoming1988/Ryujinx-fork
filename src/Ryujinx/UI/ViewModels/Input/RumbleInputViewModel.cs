@@ -4,8 +4,10 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 {
     public partial class RumbleInputViewModel : BaseModel
     {
-        [ObservableProperty] private float _strongRumble;
+        [ObservableProperty]
+        public partial float StrongRumble { get; set; }
 
-        [ObservableProperty] private float _weakRumble;
+        [ObservableProperty]
+        public partial float WeakRumble { get; set; }
     }
 }

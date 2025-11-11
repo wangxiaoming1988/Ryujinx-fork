@@ -227,7 +227,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
                 }
             }
 
-            int coordsCount = type.GetDimensions();
+            int coordsCount = type.Dimensions;
 
             for (int index = 0; index < coordsCount; index++)
             {
@@ -558,7 +558,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
 
                 if ((flags & TextureFlags.Offset) != 0)
                 {
-                    AddTextureOffset(type.GetDimensions(), 4, 4);
+                    AddTextureOffset(type.Dimensions, 4, 4);
                 }
             }
             else if (texsType == TexsType.Tld4s)
@@ -583,7 +583,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
 
                 if (tld4sOp.Aoffi)
                 {
-                    AddTextureOffset(type.GetDimensions(), 8, 6);
+                    AddTextureOffset(type.Dimensions, 8, 6);
 
                     flags |= TextureFlags.Offset;
                 }
@@ -714,7 +714,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
                 flags |= TextureFlags.Bindless;
             }
 
-            int coordsCount = type.GetDimensions();
+            int coordsCount = type.Dimensions;
 
             for (int index = 0; index < coordsCount; index++)
             {
@@ -847,7 +847,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
 
             SamplerType type = ConvertSamplerType(dimensions);
 
-            int coordsCount = type.GetDimensions();
+            int coordsCount = type.Dimensions;
 
             bool isArray =
                 dimensions is TexDim.Array1d or
@@ -942,26 +942,6 @@ namespace Ryujinx.Graphics.Shader.Instructions
                 return;
             }
 
-            Operand Ra()
-            {
-                if (srcA > RegisterConsts.RegisterZeroIndex)
-                {
-                    return Const(0);
-                }
-
-                return context.Copy(Register(srcA++, RegisterType.Gpr));
-            }
-
-            Operand Rb()
-            {
-                if (srcB > RegisterConsts.RegisterZeroIndex)
-                {
-                    return Const(0);
-                }
-
-                return context.Copy(Register(srcB++, RegisterType.Gpr));
-            }
-
             TextureFlags flags = TextureFlags.Derivatives;
 
             List<Operand> sourcesList = [];
@@ -975,7 +955,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
 
             SamplerType type = ConvertSamplerType(dimensions);
 
-            int coordsCount = type.GetDimensions();
+            int coordsCount = type.Dimensions;
 
             for (int index = 0; index < coordsCount; index++)
             {
@@ -1051,6 +1031,28 @@ namespace Ryujinx.Graphics.Shader.Instructions
             }
 
             EmitTextureSample(context, type, flags, imm, componentMask, dests, sources);
+
+            return;
+            
+            Operand Ra()
+            {
+                if (srcA > RegisterConsts.RegisterZeroIndex)
+                {
+                    return Const(0);
+                }
+
+                return context.Copy(Register(srcA++, RegisterType.Gpr));
+            }
+
+            Operand Rb()
+            {
+                if (srcB > RegisterConsts.RegisterZeroIndex)
+                {
+                    return Const(0);
+                }
+
+                return context.Copy(Register(srcB++, RegisterType.Gpr));
+            }
         }
 
         private static void EmitTxq(

@@ -34,7 +34,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             int gprCalleeSavedRegsCount = BitOperations.PopCount(_gprMask);
             int fpSimdCalleeSavedRegsCount = BitOperations.PopCount(_fpSimdMask);
 
-            return (_hasCall ? 16 : 0) + Align16(gprCalleeSavedRegsCount * 8 + fpSimdCalleeSavedRegsCount * _fpSimdType.GetSizeInBytes());
+            return (_hasCall ? 16 : 0) + Align16(gprCalleeSavedRegsCount * 8 + fpSimdCalleeSavedRegsCount * _fpSimdType.ByteSize);
         }
 
         public void WritePrologue(ref Assembler asm)
@@ -46,7 +46,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
             int fpSimdCalleeSavedRegsCount = BitOperations.PopCount(fpSimdMask);
 
             int reservedStackSize = Align16(_reservedStackSize);
-            int calleeSaveRegionSize = Align16(gprCalleeSavedRegsCount * 8 + fpSimdCalleeSavedRegsCount * _fpSimdType.GetSizeInBytes()) + reservedStackSize;
+            int calleeSaveRegionSize = Align16(gprCalleeSavedRegsCount * 8 + fpSimdCalleeSavedRegsCount * _fpSimdType.ByteSize) + reservedStackSize;
             int offset = 0;
 
             WritePrologueCalleeSavesPreIndexed(ref asm, ref gprMask, ref offset, calleeSaveRegionSize, OperandType.I64);
@@ -103,7 +103,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
                     asm.StrRiUn(Register(reg, type), Register(Assembler.SpRegister), 0);
                 }
 
-                offset += type.GetSizeInBytes();
+                offset += type.ByteSize;
             }
 
             while (mask != 0)
@@ -130,7 +130,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
                     asm.StpRiUn(Register(reg, type), Register(reg2, type), Register(Assembler.SpRegister), 0);
                 }
 
-                offset += type.GetSizeInBytes() * 2;
+                offset += type.ByteSize * 2;
             }
         }
 
@@ -144,7 +144,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
 
             bool misalignedVector = _fpSimdType == OperandType.V128 && (gprCalleeSavedRegsCount & 1) != 0;
 
-            int offset = gprCalleeSavedRegsCount * 8 + fpSimdCalleeSavedRegsCount * _fpSimdType.GetSizeInBytes();
+            int offset = gprCalleeSavedRegsCount * 8 + fpSimdCalleeSavedRegsCount * _fpSimdType.ByteSize;
 
             if (misalignedVector)
             {
@@ -197,7 +197,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
 
                     mask &= ~(1u << reg2);
 
-                    offset -= type.GetSizeInBytes() * 2;
+                    offset -= type.ByteSize * 2;
 
                     if (offset != 0)
                     {
@@ -215,7 +215,7 @@ namespace Ryujinx.Cpu.LightningJit.CodeGen.Arm64
                 }
                 else
                 {
-                    offset -= type.GetSizeInBytes();
+                    offset -= type.ByteSize;
 
                     if (offset != 0)
                     {

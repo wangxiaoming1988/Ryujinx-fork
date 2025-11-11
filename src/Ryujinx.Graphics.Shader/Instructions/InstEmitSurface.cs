@@ -228,7 +228,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
                 sourcesList.Add(context.Copy(GetSrcReg(context, srcC)));
             }
 
-            int coordsCount = type.GetDimensions();
+            int coordsCount = type.Dimensions;
 
             for (int index = 0; index < coordsCount; index++)
             {
@@ -335,7 +335,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
                 sourcesList.Add(context.Copy(Register(srcC, RegisterType.Gpr)));
             }
 
-            int coordsCount = type.GetDimensions();
+            int coordsCount = type.Dimensions;
 
             for (int index = 0; index < coordsCount; index++)
             {
@@ -507,7 +507,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
                 sourcesList.Add(context.Copy(GetSrcReg(context, srcC)));
             }
 
-            int coordsCount = type.GetDimensions();
+            int coordsCount = type.Dimensions;
 
             for (int index = 0; index < coordsCount; index++)
             {
@@ -612,7 +612,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
                 sourcesList.Add(context.Copy(Register(srcC, RegisterType.Gpr)));
             }
 
-            int coordsCount = type.GetDimensions();
+            int coordsCount = type.Dimensions;
 
             for (int index = 0; index < coordsCount; index++)
             {

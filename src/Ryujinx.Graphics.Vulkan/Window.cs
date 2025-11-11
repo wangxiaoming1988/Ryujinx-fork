@@ -401,7 +401,7 @@ namespace Ryujinx.Graphics.Vulkan
                     cbs = _gd.CommandBufferPool.Rent();
                 }
 
-                CaptureFrame(view, srcX0, srcY0, srcX1 - srcX0, srcY1 - srcY0, view.Info.Format.IsBgr(), crop.FlipX, crop.FlipY);
+                CaptureFrame(view, srcX0, srcY0, srcX1 - srcX0, srcY1 - srcY0, view.Info.Format.IsBgr, crop.FlipX, crop.FlipY);
 
                 ScreenCaptureRequested = false;
             }

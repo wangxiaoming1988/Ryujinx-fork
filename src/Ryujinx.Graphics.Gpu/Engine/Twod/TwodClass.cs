@@ -333,7 +333,7 @@ namespace Ryujinx.Graphics.Gpu.Engine.Twod
             // as copies between depth and color formats are not allowed.
             // For depth blit, the destination texture format should always match exactly.
 
-            if (srcTexture.Format.IsDepthOrStencil())
+            if (srcTexture.Format.IsDepthOrStencil)
             {
                 dstCopyTextureFormat = srcTexture.Info.FormatInfo;
             }

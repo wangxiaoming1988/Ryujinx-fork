@@ -15,9 +15,13 @@ namespace Ryujinx.Ava.UI.ViewModels
             _baseViewModel = settingsVm;
         }
 
-        [ObservableProperty] private bool _xc2MenuSoftlockFix = ConfigurationState.Instance.Hacks.Xc2MenuSoftlockFix;
-        [ObservableProperty] private bool _nifmDisableIsAnyInternetRequestAccepted = ConfigurationState.Instance.Hacks.DisableNifmIsAnyInternetRequestAccepted;
+        [ObservableProperty]
+        public partial bool Xc2MenuSoftlockFix { get; set; } = ConfigurationState.Instance.Hacks.Xc2MenuSoftlockFix;
 
+        [ObservableProperty]
+        public partial bool NifmDisableIsAnyInternetRequestAccepted { get; set; } = ConfigurationState.Instance.Hacks.DisableNifmIsAnyInternetRequestAccepted;
+        
+        
         public static string Xc2MenuFixTooltip { get; } = Lambda.String(sb =>
         {
             sb.AppendLine(

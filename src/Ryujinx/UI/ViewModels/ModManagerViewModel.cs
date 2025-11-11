@@ -24,9 +24,11 @@ namespace Ryujinx.Ava.UI.ViewModels
     {
         private readonly string _modJsonPath;
 
-        private AvaloniaList<ModModel> _mods = [];
-        [ObservableProperty] private AvaloniaList<ModModel> _views = [];
-        [ObservableProperty] private AvaloniaList<ModModel> _selectedMods = [];
+        [ObservableProperty]
+        public partial AvaloniaList<ModModel> Views { get; set; } = [];
+
+        [ObservableProperty]
+        public partial AvaloniaList<ModModel> SelectedMods { get; set; } = [];
 
         private string _search;
         private readonly ulong _applicationId;
@@ -37,15 +39,15 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public AvaloniaList<ModModel> Mods
         {
-            get => _mods;
+            get;
             set
             {
-                _mods = value;
+                field = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(ModCount));
                 Sort();
             }
-        }
+        } = [];
 
         public string Search
         {
@@ -58,10 +60,7 @@ namespace Ryujinx.Ava.UI.ViewModels
             }
         }
 
-        public string ModCount
-        {
-            get => string.Format(LocaleManager.Instance[LocaleKeys.ModWindowHeading], Mods.Count);
-        }
+        public string ModCount => string.Format(LocaleManager.Instance[LocaleKeys.ModWindowHeading], Mods.Count);
 
         public ModManagerViewModel(ulong applicationId, ulong applicationIdBase, ApplicationLibrary appLibrary)
         {

@@ -27,7 +27,7 @@ namespace Ryujinx.Audio.Integration
 
         public void AppendBuffer(ReadOnlySpan<short> data, uint channelCount)
         {
-            data.CopyTo(MemoryMarshal.Cast<byte, short>(_buffer));
+            data.CopyTo(MemoryMarshal.Cast<byte, short>(new Span<byte>(_buffer)));
 
             _session.QueueBuffer(new AudioBuffer
             {

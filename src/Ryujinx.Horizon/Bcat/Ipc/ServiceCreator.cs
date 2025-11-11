@@ -52,7 +52,7 @@ namespace Ryujinx.Horizon.Bcat.Ipc
                 service = null;
             }
 
-            return resultCode.ToHorizonResult();
+            return resultCode.Horizon;
         }
 
         [CmifCommand(2)]
@@ -71,7 +71,7 @@ namespace Ryujinx.Horizon.Bcat.Ipc
                 service = null;
             }
 
-            return resultCode.ToHorizonResult();
+            return resultCode.Horizon;
         }
 
         public void Dispose()

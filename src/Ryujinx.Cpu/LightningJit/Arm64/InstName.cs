@@ -1042,126 +1042,39 @@ namespace Ryujinx.Cpu.LightningJit.Arm64
 
     static class InstNameExtensions
     {
-        public static bool IsCall(this InstName name)
+        extension(InstName name)
         {
-            return name is InstName.Bl or InstName.Blr;
-        }
+            public bool IsCall => name is InstName.Bl or InstName.Blr;
 
-        public static bool IsControlFlowOrException(this InstName name)
-        {
-            switch (name)
+            public bool IsControlFlowOrException => name is
+                InstName.BUncond or InstName.BCond or InstName.Bl or InstName.Blr or InstName.Br or InstName.Brk
+                or InstName.Cbnz or InstName.Cbz or InstName.Ret or InstName.Tbnz or InstName.Tbz or InstName.Svc
+                or InstName.UdfPermUndef;
+
+            public bool IsException => name is InstName.Brk or InstName.Svc or InstName.UdfPermUndef;
+            
+            public bool IsSystem => name switch
             {
-                case InstName.BUncond:
-                case InstName.BCond:
-                case InstName.Bl:
-                case InstName.Blr:
-                case InstName.Br:
-                case InstName.Brk:
-                case InstName.Cbnz:
-                case InstName.Cbz:
-                case InstName.Ret:
-                case InstName.Tbnz:
-                case InstName.Tbz:
-                case InstName.Svc:
-                case InstName.UdfPermUndef:
-                    return true;
-            }
+                InstName.Mrs or InstName.MsrImm or InstName.MsrReg => true,
+                _ => name.IsException
+            };
 
-            return false;
-        }
+            public bool IsSystemOrCall => name.IsCall || name is
+                InstName.Svc or InstName.Mrs or InstName.MsrImm or InstName.MsrReg
+                or InstName.Sysl;
 
-        public static bool IsException(this InstName name)
-        {
-            switch (name)
-            {
-                case InstName.Brk:
-                case InstName.Svc:
-                case InstName.UdfPermUndef:
-                    return true;
-            }
+            public bool IsPrivileged => name is
+                InstName.Dcps1 or InstName.Dcps2 or InstName.Dcps3 or InstName.Drps or InstName.Eret or InstName.Ereta
+                or InstName.Hvc or InstName.MsrImm or InstName.Smc;
 
-            return false;
-        }
+            public bool IsPartialRegisterUpdateMemory => name is
+                InstName.Ld1AdvsimdSnglAsNoPostIndex or InstName.Ld1AdvsimdSnglAsPostIndex
+                or InstName.Ld2AdvsimdSnglAsNoPostIndex or InstName.Ld2AdvsimdSnglAsPostIndex
+                or InstName.Ld3AdvsimdSnglAsNoPostIndex or InstName.Ld3AdvsimdSnglAsPostIndex
+                or InstName.Ld4AdvsimdSnglAsNoPostIndex or InstName.Ld4AdvsimdSnglAsPostIndex;
 
-        public static bool IsSystem(this InstName name)
-        {
-            switch (name)
-            {
-                case InstName.Mrs:
-                case InstName.MsrImm:
-                case InstName.MsrReg:
-                    return true;
-            }
-
-            return name.IsException();
-        }
-
-        public static bool IsSystemOrCall(this InstName name)
-        {
-            switch (name)
-            {
-                case InstName.Bl:
-                case InstName.Blr:
-                case InstName.Svc:
-                case InstName.Mrs:
-                case InstName.MsrImm:
-                case InstName.MsrReg:
-                case InstName.Sysl:
-                    return true;
-            }
-
-            return false;
-        }
-
-        public static bool IsPrivileged(this InstName name)
-        {
-            switch (name)
-            {
-                case InstName.Dcps1:
-                case InstName.Dcps2:
-                case InstName.Dcps3:
-                case InstName.Drps:
-                case InstName.Eret:
-                case InstName.Ereta:
-                case InstName.Hvc:
-                case InstName.MsrImm:
-                case InstName.Smc:
-                    return true;
-            }
-
-            return false;
-        }
-
-        public static bool IsPartialRegisterUpdateMemory(this InstName name)
-        {
-            switch (name)
-            {
-                case InstName.Ld1AdvsimdSnglAsNoPostIndex:
-                case InstName.Ld1AdvsimdSnglAsPostIndex:
-                case InstName.Ld2AdvsimdSnglAsNoPostIndex:
-                case InstName.Ld2AdvsimdSnglAsPostIndex:
-                case InstName.Ld3AdvsimdSnglAsNoPostIndex:
-                case InstName.Ld3AdvsimdSnglAsPostIndex:
-                case InstName.Ld4AdvsimdSnglAsNoPostIndex:
-                case InstName.Ld4AdvsimdSnglAsPostIndex:
-                    return true;
-            }
-
-            return false;
-        }
-
-        public static bool IsPrefetchMemory(this InstName name)
-        {
-            switch (name)
-            {
-                case InstName.PrfmImm:
-                case InstName.PrfmLit:
-                case InstName.PrfmReg:
-                case InstName.Prfum:
-                    return true;
-            }
-
-            return false;
+            public bool IsPrefetchMemory => name is 
+                InstName.PrfmImm or InstName.PrfmLit or InstName.PrfmReg or InstName.Prfum;
         }
     }
 }

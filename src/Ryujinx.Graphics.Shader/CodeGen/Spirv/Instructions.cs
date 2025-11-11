@@ -615,7 +615,7 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Spirv
                 image = context.AccessChain(imagePointerType, image, textureIndex);
             }
 
-            int coordsCount = texOp.Type.GetDimensions();
+            int coordsCount = texOp.Type.Dimensions;
 
             int pCount = coordsCount + (isArray ? 1 : 0);
 
@@ -693,7 +693,7 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Spirv
 
             image = context.Load(declaration.ImageType, image);
 
-            int coordsCount = texOp.Type.GetDimensions();
+            int coordsCount = texOp.Type.Dimensions;
 
             int pCount = coordsCount + (isArray ? 1 : 0);
 
@@ -750,7 +750,7 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Spirv
 
             image = context.Load(declaration.ImageType, image);
 
-            int coordsCount = texOp.Type.GetDimensions();
+            int coordsCount = texOp.Type.Dimensions;
 
             int pCount = coordsCount + (isArray ? 1 : 0);
 
@@ -840,7 +840,7 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Spirv
             SamplerDeclaration declaration = context.Samplers[texOp.GetTextureSetAndBinding()];
             SpvInstruction image = GenerateSampledImageLoad(context, texOp, declaration, ref srcIndex);
 
-            int pCount = texOp.Type.GetDimensions();
+            int pCount = texOp.Type.Dimensions;
 
             SpvInstruction pCoords;
 
@@ -1164,7 +1164,7 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Spirv
             SamplerDeclaration declaration = context.Samplers[texOp.GetTextureSetAndBinding()];
             SpvInstruction image = GenerateSampledImageLoad(context, texOp, declaration, ref srcIndex);
 
-            int coordsCount = texOp.Type.GetDimensions();
+            int coordsCount = texOp.Type.Dimensions;
 
             int pCount = coordsCount;
 
@@ -1463,7 +1463,7 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Spirv
                 SamplerType type = context.SamplersTypes[texOp.GetTextureSetAndBinding()];
                 bool hasLod = !type.HasFlag(SamplerType.Multisample) && type != SamplerType.TextureBuffer;
 
-                int dimensions = (type & SamplerType.Mask) == SamplerType.TextureCube ? 2 : type.GetDimensions();
+                int dimensions = (type & SamplerType.Mask) == SamplerType.TextureCube ? 2 : type.Dimensions;
 
                 if (type.HasFlag(SamplerType.Array))
                 {
@@ -1486,7 +1486,7 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Spirv
 
                 if (dimensions != 1)
                 {
-                    result = context.CompositeExtract(context.TypeS32(), result, (SpvLiteralInteger)texOp.Index);
+                    result = context.CompositeExtract(context.TypeS32(), result, texOp.Index);
                 }
 
                 return new OperationResult(AggregateType.S32, result);

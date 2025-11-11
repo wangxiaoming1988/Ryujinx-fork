@@ -133,7 +133,7 @@ namespace Ryujinx.Graphics.Shader.Translation
             }
             else if (stage == ShaderStage.Geometry)
             {
-                LocalTopologyRemapMemoryId = AddMemoryDefinition("local_topology_remap", AggregateType.Array | AggregateType.U32, inputTopology.ToInputVertices());
+                LocalTopologyRemapMemoryId = AddMemoryDefinition("local_topology_remap", AggregateType.Array | AggregateType.U32, inputTopology.InputVertexCount);
 
                 LocalGeometryOutputVertexCountMemoryId = AddMemoryDefinition("local_geometry_output_vertex", AggregateType.U32);
                 LocalGeometryOutputIndexCountMemoryId = AddMemoryDefinition("local_geometry_output_index", AggregateType.U32);
@@ -273,7 +273,7 @@ namespace Ryujinx.Graphics.Shader.Translation
             bool coherent,
             bool separate)
         {
-            int dimensions = type == SamplerType.None ? 0 : type.GetDimensions();
+            int dimensions = type == SamplerType.None ? 0 : type.Dimensions;
             Dictionary<TextureInfo, TextureMeta> dict = isImage ? _usedImages : _usedTextures;
 
             TextureUsageFlags usageFlags = TextureUsageFlags.None;
@@ -282,7 +282,7 @@ namespace Ryujinx.Graphics.Shader.Translation
             {
                 usageFlags |= TextureUsageFlags.NeedsScaleValue;
 
-                bool canScale = _stage.SupportsRenderScale() && arrayLength == 1 && !write && dimensions == 2;
+                bool canScale = _stage.SupportsRenderScale && arrayLength == 1 && !write && dimensions == 2;
 
                 if (!canScale)
                 {
@@ -355,7 +355,7 @@ namespace Ryujinx.Graphics.Shader.Translation
 
             if (arrayLength != 1 && type != SamplerType.None)
             {
-                prefix += type.ToShortSamplerType();
+                prefix += type.ShortTypeName;
             }
 
             if (isImage)
@@ -432,9 +432,9 @@ namespace Ryujinx.Graphics.Shader.Translation
             if (found)
             {
                 selectedMeta.UsageFlags |= TextureUsageFlags.NeedsScaleValue;
-
-                int dimensions = type.GetDimensions();
-                bool canScale = _stage.SupportsRenderScale() && selectedInfo.ArrayLength == 1 && dimensions == 2;
+                
+                int dimensions = type.Dimensions;
+                bool canScale = _stage.SupportsRenderScale && selectedInfo.ArrayLength == 1 && dimensions == 2;
 
                 if (!canScale)
                 {

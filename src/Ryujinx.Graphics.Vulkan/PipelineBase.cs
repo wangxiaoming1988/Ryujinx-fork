@@ -1181,7 +1181,7 @@ namespace Ryujinx.Graphics.Vulkan
 
                 if (!attribute.IsZero)
                 {
-                    newVbScalarSizes[rawIndex] = Math.Max(newVbScalarSizes[rawIndex], attribute.Format.GetScalarSize());
+                    newVbScalarSizes[rawIndex] = Math.Max(newVbScalarSizes[rawIndex], attribute.Format.ScalarSize);
                     dirtyVbSizes |= 1u << rawIndex;
                 }
 
@@ -1575,7 +1575,7 @@ namespace Ryujinx.Graphics.Vulkan
                     // May need to enforce feedback loop layout here in the future.
                     // Though technically, it should always work with the general layout.
 
-                    if (view.Info.Format.IsDepthOrStencil())
+                    if (view.Info.Format.IsDepthOrStencil)
                     {
                         if (_passWritesDepthStencil)
                         {

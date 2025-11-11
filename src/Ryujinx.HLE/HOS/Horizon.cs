@@ -122,8 +122,8 @@ namespace Ryujinx.HLE.HOS
                 TickSource,
                 device,
                 device.Memory,
-                device.Configuration.MemoryConfiguration.ToKernelMemorySize(),
-                device.Configuration.MemoryConfiguration.ToKernelMemoryArrange());
+                device.Configuration.MemoryConfiguration.KernelMemorySize,
+                device.Configuration.MemoryConfiguration.KernelMemoryArrange);
 
             Device = device;
 

@@ -91,10 +91,8 @@ namespace Ryujinx.Ava.UI.ViewModels
                 OnPropertyChanged(nameof(VisibleEntries));
         }
 
-        [ObservableProperty] private bool _isRefreshing;
-        private bool _onlyShowForOwnedGames;
-        private bool _onlyShowPublicGames = true;
-        private bool _onlyShowJoinableGames = true;
+        [ObservableProperty]
+        public partial bool IsRefreshing { get; set; }
 
         public async Task RefreshAsync()
         {
@@ -109,12 +107,12 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public bool OnlyShowForOwnedGames
         {
-            get => _onlyShowForOwnedGames;
+            get;
             set
             {
                 OnPropertyChanging();
                 OnPropertyChanging(nameof(VisibleEntries));
-                _onlyShowForOwnedGames = value;
+                field = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(VisibleEntries));
             }
@@ -122,29 +120,29 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public bool OnlyShowPublicGames
         {
-            get => _onlyShowPublicGames;
+            get;
             set
             {
                 OnPropertyChanging();
                 OnPropertyChanging(nameof(VisibleEntries));
-                _onlyShowPublicGames = value;
+                field = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(VisibleEntries));
             }
-        }
+        } = true;
 
         public bool OnlyShowJoinableGames
         {
-            get => _onlyShowJoinableGames;
+            get;
             set
             {
                 OnPropertyChanging();
                 OnPropertyChanging(nameof(VisibleEntries));
-                _onlyShowJoinableGames = value;
+                field = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(VisibleEntries));
             }
-        }
+        } = true;
 
 
         public void NameSorting(int nameSort = 0)

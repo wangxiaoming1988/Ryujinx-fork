@@ -1,4 +1,5 @@
 using Ryujinx.Common.Utilities;
+using Ryujinx.HLE.HOS.SystemState;
 using System.Text.Json.Serialization;
 
 namespace Ryujinx.Ava.Systems.Configuration.System
@@ -17,10 +18,14 @@ namespace Ryujinx.Ava.Systems.Configuration.System
 
     public static class RegionEnumHelper
     {
-        public static Region ToUI(this HLE.HOS.SystemState.RegionCode hleRegion)
-            => (Region)hleRegion;
+        extension(RegionCode hle)
+        {
+            public Region Ui => (Region)hle;
+        }
 
-        public static HLE.HOS.SystemState.RegionCode ToHLE(this Region uiRegion)
-            => (HLE.HOS.SystemState.RegionCode)uiRegion;
+        extension(Region ui)
+        {
+            public RegionCode Horizon => (RegionCode)ui;
+        }
     }
 }

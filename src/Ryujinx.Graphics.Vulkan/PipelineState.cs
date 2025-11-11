@@ -647,7 +647,7 @@ namespace Ryujinx.Graphics.Vulkan
                 {
                     result.ThrowOnError();
                 }
-                else if (result.IsError())
+                else if (result.IsError)
                 {
                     program.AddGraphicsPipeline(ref Internal, null);
 

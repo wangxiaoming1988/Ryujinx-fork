@@ -17,7 +17,7 @@ namespace Ryujinx.Cpu.Jit
             _functionTable = AddressTable<ulong>.CreateForArm(for64Bit, memory.Type);
             _translator = new Translator(new JitMemoryAllocator(forJit: true), memory, _functionTable);
 
-            if (memory.Type.IsHostMappedOrTracked())
+            if (memory.Type.IsHostMappedOrTracked)
             {
                 NativeSignalHandler.InitializeSignalHandler();
             }

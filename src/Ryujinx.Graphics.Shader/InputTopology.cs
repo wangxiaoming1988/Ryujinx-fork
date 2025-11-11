@@ -11,9 +11,9 @@ namespace Ryujinx.Graphics.Shader
 
     static class InputTopologyExtensions
     {
-        public static string ToGlslString(this InputTopology topology)
+        extension(InputTopology topology)
         {
-            return topology switch
+            public string GlslString => topology switch
             {
                 InputTopology.Points => "points",
                 InputTopology.Lines => "lines",
@@ -22,11 +22,8 @@ namespace Ryujinx.Graphics.Shader
                 InputTopology.TrianglesAdjacency => "triangles_adjacency",
                 _ => "points",
             };
-        }
-
-        public static int ToInputVertices(this InputTopology topology)
-        {
-            return topology switch
+            
+            public int InputVertexCount => topology switch
             {
                 InputTopology.Points => 1,
                 InputTopology.Lines => 2,
@@ -35,17 +32,14 @@ namespace Ryujinx.Graphics.Shader
                 InputTopology.TrianglesAdjacency => 6,
                 _ => 1,
             };
-        }
-
-        public static int ToInputVerticesNoAdjacency(this InputTopology topology)
-        {
-            return topology switch
+            
+            public int InputVertexCountNoAdjacency => topology switch
             {
                 InputTopology.Points => 1,
                 InputTopology.Lines or
-                InputTopology.LinesAdjacency => 2,
+                    InputTopology.LinesAdjacency => 2,
                 InputTopology.Triangles or
-                InputTopology.TrianglesAdjacency => 3,
+                    InputTopology.TrianglesAdjacency => 3,
                 _ => 1,
             };
         }

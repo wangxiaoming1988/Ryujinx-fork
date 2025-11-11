@@ -45,19 +45,12 @@ namespace ARMeilleure.Memory
 
     public static class MemoryManagerTypeExtensions
     {
-        public static bool IsHostMapped(this MemoryManagerType type)
+        extension(MemoryManagerType type)
         {
-            return type is MemoryManagerType.HostMapped or MemoryManagerType.HostMappedUnsafe;
-        }
-
-        public static bool IsHostTracked(this MemoryManagerType type)
-        {
-            return type is MemoryManagerType.HostTracked or MemoryManagerType.HostTrackedUnsafe;
-        }
-
-        public static bool IsHostMappedOrTracked(this MemoryManagerType type)
-        {
-            return type.IsHostMapped() || type.IsHostTracked();
+            public bool IsHostMapped => type is MemoryManagerType.HostMapped or MemoryManagerType.HostMappedUnsafe;
+            public bool IsHostTracked => type is MemoryManagerType.HostTracked or MemoryManagerType.HostTrackedUnsafe;
+            
+            public bool IsHostMappedOrTracked => type.IsHostMapped || type.IsHostTracked;
         }
     }
 }

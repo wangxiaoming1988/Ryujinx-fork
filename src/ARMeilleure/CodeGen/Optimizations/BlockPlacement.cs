@@ -51,7 +51,7 @@ namespace ARMeilleure.CodeGen.Optimizations
                     if (trueSucc == block.ListNext)
                     {
                         Comparison comp = (Comparison)branchOp.GetSource(2).AsInt32();
-                        Comparison compInv = comp.Invert();
+                        Comparison compInv = comp.Inverse;
 
                         branchOp.SetSource(2, Const((int)compInv));
 

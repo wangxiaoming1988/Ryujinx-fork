@@ -59,10 +59,10 @@ namespace Ryujinx.Headless
                 DisableDockedMode = !configurationState.System.EnableDockedMode;
 
             if (NeedsOverride(nameof(SystemLanguage)))
-                SystemLanguage = configurationState.System.Language.Value.ToHLE();
+                SystemLanguage = configurationState.System.Language.Value.Horizon;
 
             if (NeedsOverride(nameof(SystemRegion)))
-                SystemRegion = configurationState.System.Region.Value.ToHLE();
+                SystemRegion = configurationState.System.Region.Value.Horizon;
 
             if (NeedsOverride(nameof(SystemTimeZone)))
                 SystemTimeZone = configurationState.System.TimeZone;

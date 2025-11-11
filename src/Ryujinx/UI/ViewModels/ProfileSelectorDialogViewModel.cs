@@ -7,8 +7,10 @@ namespace Ryujinx.Ava.UI.ViewModels
     public partial class ProfileSelectorDialogViewModel : BaseModel
     {
 
-        [ObservableProperty] private UserId _selectedUserId;
+        [ObservableProperty]
+        public partial UserId SelectedUserId { get; set; }
 
-        [ObservableProperty] private ObservableCollection<BaseModel> _profiles = [];
+        [ObservableProperty]
+        public partial ObservableCollection<BaseModel> Profiles { get; set; } = [];
     }
 }

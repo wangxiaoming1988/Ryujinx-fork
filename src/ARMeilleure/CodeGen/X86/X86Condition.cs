@@ -25,9 +25,9 @@ namespace ARMeilleure.CodeGen.X86
 
     static class ComparisonX86Extensions
     {
-        public static X86Condition ToX86Condition(this Comparison comp)
+        extension(Comparison comparison)
         {
-            return comp switch
+            public X86Condition X86 => comparison switch
             {
 #pragma warning disable IDE0055 // Disable formatting
                 Comparison.Equal            => X86Condition.Equal,
@@ -42,7 +42,7 @@ namespace ARMeilleure.CodeGen.X86
                 Comparison.LessUI           => X86Condition.Below,
 #pragma warning restore IDE0055
 
-                _ => throw new ArgumentException(null, nameof(comp)),
+                _ => throw new ArgumentException(null, nameof(comparison))
             };
         }
     }

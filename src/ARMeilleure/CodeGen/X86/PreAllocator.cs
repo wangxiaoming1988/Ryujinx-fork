@@ -86,7 +86,7 @@ namespace ARMeilleure.CodeGen.X86
                             break;
 
                         case Instruction.Negate:
-                            if (!node.GetSource(0).Type.IsInteger())
+                            if (!node.GetSource(0).Type.IsInteger)
                             {
                                 GenerateNegate(block.Operations, node);
                             }
@@ -159,7 +159,7 @@ namespace ARMeilleure.CodeGen.X86
 
             if (src1.Kind == OperandKind.Constant)
             {
-                if (!src1.Type.IsInteger())
+                if (!src1.Type.IsInteger)
                 {
                     // Handle non-integer types (FP32, FP64 and V128).
                     // For instructions without an immediate operand, we do the following:
@@ -208,7 +208,7 @@ namespace ARMeilleure.CodeGen.X86
 
             if (src2.Kind == OperandKind.Constant)
             {
-                if (!src2.Type.IsInteger())
+                if (!src2.Type.IsInteger)
                 {
                     src2 = AddXmmCopy(nodes, node, src2);
 
@@ -298,7 +298,7 @@ namespace ARMeilleure.CodeGen.X86
                         // - The dividend is always in RDX:RAX.
                         // - The result is always in RAX.
                         // - Additionally it also writes the remainder in RDX.
-                        if (dest.Type.IsInteger())
+                        if (dest.Type.IsInteger)
                         {
                             Operand src1 = node.GetSource(0);
 
@@ -466,7 +466,7 @@ namespace ARMeilleure.CodeGen.X86
             Operand dest = node.Destination;
             Operand source = node.GetSource(0);
 
-            Debug.Assert(source.Type.IsInteger(), $"Invalid source type \"{source.Type}\".");
+            Debug.Assert(source.Type.IsInteger, $"Invalid source type \"{source.Type}\".");
 
             Operation currentNode = node;
 
@@ -654,10 +654,10 @@ namespace ARMeilleure.CodeGen.X86
             switch (operation.Instruction)
             {
                 case Instruction.Add:
-                    return !HardwareCapabilities.SupportsVexEncoding && !operation.Destination.Type.IsInteger();
+                    return !HardwareCapabilities.SupportsVexEncoding && !operation.Destination.Type.IsInteger;
                 case Instruction.Multiply:
                 case Instruction.Subtract:
-                    return !HardwareCapabilities.SupportsVexEncoding || operation.Destination.Type.IsInteger();
+                    return !HardwareCapabilities.SupportsVexEncoding || operation.Destination.Type.IsInteger;
 
                 case Instruction.BitwiseAnd:
                 case Instruction.BitwiseExclusiveOr:
@@ -672,7 +672,7 @@ namespace ARMeilleure.CodeGen.X86
                     return true;
 
                 case Instruction.Divide:
-                    return !HardwareCapabilities.SupportsVexEncoding && !operation.Destination.Type.IsInteger();
+                    return !HardwareCapabilities.SupportsVexEncoding && !operation.Destination.Type.IsInteger;
 
                 case Instruction.VectorInsert:
                 case Instruction.VectorInsert16:

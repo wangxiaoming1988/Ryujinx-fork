@@ -297,7 +297,9 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
                 {
                     Format format = colorState.Format.Convert().Format;
 
-                    AttributeType type = format.IsInteger() ? (format.IsSint() ? AttributeType.Sint : AttributeType.Uint) : AttributeType.Float;
+                    AttributeType type = format.IsInt 
+                        ? (format.IsSignedInt ? AttributeType.Sint : AttributeType.Uint) 
+                        : AttributeType.Float;
 
                     if (type != fragmentOutputTypesSpan[index])
                     {

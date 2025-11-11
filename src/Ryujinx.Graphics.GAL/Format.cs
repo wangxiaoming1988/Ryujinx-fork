@@ -159,589 +159,191 @@ namespace Ryujinx.Graphics.GAL
         /// </summary>
         public const int MaxBufferFormatScalarSize = 4;
 
-        /// <summary>
-        /// Gets the byte size for a single component of this format, or its packed size.
-        /// </summary>
-        /// <param name="format">Texture format</param>
-        /// <returns>Byte size for a single component, or packed size</returns>
-        public static int GetScalarSize(this Format format)
+        extension(Format fmt)
         {
-            switch (format)
+            /// <summary>
+            /// Gets the byte size for a single component of this format, or its packed size.
+            /// </summary>
+            public int ScalarSize => fmt switch
             {
-                case Format.R8Unorm:
-                case Format.R8Snorm:
-                case Format.R8Uint:
-                case Format.R8Sint:
-                case Format.R8G8Unorm:
-                case Format.R8G8Snorm:
-                case Format.R8G8Uint:
-                case Format.R8G8Sint:
-                case Format.R8G8B8Unorm:
-                case Format.R8G8B8Snorm:
-                case Format.R8G8B8Uint:
-                case Format.R8G8B8Sint:
-                case Format.R8G8B8A8Unorm:
-                case Format.R8G8B8A8Snorm:
-                case Format.R8G8B8A8Uint:
-                case Format.R8G8B8A8Sint:
-                case Format.R8G8B8A8Srgb:
-                case Format.R4G4Unorm:
-                case Format.R8Uscaled:
-                case Format.R8Sscaled:
-                case Format.R8G8Uscaled:
-                case Format.R8G8Sscaled:
-                case Format.R8G8B8Uscaled:
-                case Format.R8G8B8Sscaled:
-                case Format.R8G8B8A8Uscaled:
-                case Format.R8G8B8A8Sscaled:
-                case Format.B8G8R8A8Unorm:
-                case Format.B8G8R8A8Srgb:
-                    return 1;
+                Format.R8Unorm or Format.R8Snorm or Format.R8Uint or Format.R8Sint or Format.R8G8Unorm
+                    or Format.R8G8Snorm or Format.R8G8Uint or Format.R8G8Sint or Format.R8G8B8Unorm
+                    or Format.R8G8B8Snorm or Format.R8G8B8Uint or Format.R8G8B8Sint or Format.R8G8B8A8Unorm
+                    or Format.R8G8B8A8Snorm or Format.R8G8B8A8Uint or Format.R8G8B8A8Sint or Format.R8G8B8A8Srgb
+                    or Format.R4G4Unorm or Format.R8Uscaled or Format.R8Sscaled or Format.R8G8Uscaled
+                    or Format.R8G8Sscaled or Format.R8G8B8Uscaled or Format.R8G8B8Sscaled or Format.R8G8B8A8Uscaled
+                    or Format.R8G8B8A8Sscaled or Format.B8G8R8A8Unorm or Format.B8G8R8A8Srgb => 1,
+                Format.R16Float or Format.R16Unorm or Format.R16Snorm or Format.R16Uint or Format.R16Sint
+                    or Format.R16G16Float or Format.R16G16Unorm or Format.R16G16Snorm or Format.R16G16Uint
+                    or Format.R16G16Sint or Format.R16G16B16Float or Format.R16G16B16Unorm or Format.R16G16B16Snorm
+                    or Format.R16G16B16Uint or Format.R16G16B16Sint or Format.R16G16B16A16Float
+                    or Format.R16G16B16A16Unorm or Format.R16G16B16A16Snorm or Format.R16G16B16A16Uint
+                    or Format.R16G16B16A16Sint or Format.R4G4B4A4Unorm or Format.R5G5B5X1Unorm or Format.R5G5B5A1Unorm
+                    or Format.R5G6B5Unorm or Format.R16Uscaled or Format.R16Sscaled or Format.R16G16Uscaled
+                    or Format.R16G16Sscaled or Format.R16G16B16Uscaled or Format.R16G16B16Sscaled
+                    or Format.R16G16B16A16Uscaled or Format.R16G16B16A16Sscaled or Format.B5G6R5Unorm
+                    or Format.B5G5R5A1Unorm or Format.A1B5G5R5Unorm => 2,
+                Format.R32Float or Format.R32Uint or Format.R32Sint or Format.R32G32Float or Format.R32G32Uint
+                    or Format.R32G32Sint or Format.R32G32B32Float or Format.R32G32B32Uint or Format.R32G32B32Sint
+                    or Format.R32G32B32A32Float or Format.R32G32B32A32Uint or Format.R32G32B32A32Sint
+                    or Format.R10G10B10A2Unorm or Format.R10G10B10A2Uint or Format.R11G11B10Float
+                    or Format.R9G9B9E5Float or Format.R32Uscaled or Format.R32Sscaled or Format.R32G32Uscaled
+                    or Format.R32G32Sscaled or Format.R32G32B32Uscaled or Format.R32G32B32Sscaled
+                    or Format.R32G32B32A32Uscaled or Format.R32G32B32A32Sscaled or Format.R10G10B10A2Snorm
+                    or Format.R10G10B10A2Sint or Format.R10G10B10A2Uscaled or Format.R10G10B10A2Sscaled
+                    or Format.B10G10R10A2Unorm => 4,
+                Format.S8Uint => 1,
+                Format.D16Unorm => 2,
+                Format.S8UintD24Unorm or Format.X8UintD24Unorm or Format.D32Float or Format.D24UnormS8Uint => 4,
+                Format.D32FloatS8Uint => 8,
+                Format.Bc1RgbaUnorm or Format.Bc1RgbaSrgb => 8,
+                Format.Bc2Unorm or Format.Bc3Unorm or Format.Bc2Srgb or Format.Bc3Srgb or Format.Bc4Unorm
+                    or Format.Bc4Snorm or Format.Bc5Unorm or Format.Bc5Snorm or Format.Bc7Unorm or Format.Bc7Srgb
+                    or Format.Bc6HSfloat or Format.Bc6HUfloat => 16,
+                Format.Etc2RgbUnorm or Format.Etc2RgbPtaUnorm or Format.Etc2RgbSrgb or Format.Etc2RgbPtaSrgb => 8,
+                Format.Etc2RgbaUnorm or Format.Etc2RgbaSrgb => 16,
+                Format.Astc4x4Unorm or Format.Astc5x4Unorm or Format.Astc5x5Unorm or Format.Astc6x5Unorm
+                    or Format.Astc6x6Unorm or Format.Astc8x5Unorm or Format.Astc8x6Unorm or Format.Astc8x8Unorm
+                    or Format.Astc10x5Unorm or Format.Astc10x6Unorm or Format.Astc10x8Unorm or Format.Astc10x10Unorm
+                    or Format.Astc12x10Unorm or Format.Astc12x12Unorm or Format.Astc4x4Srgb or Format.Astc5x4Srgb
+                    or Format.Astc5x5Srgb or Format.Astc6x5Srgb or Format.Astc6x6Srgb or Format.Astc8x5Srgb
+                    or Format.Astc8x6Srgb or Format.Astc8x8Srgb or Format.Astc10x5Srgb or Format.Astc10x6Srgb
+                    or Format.Astc10x8Srgb or Format.Astc10x10Srgb or Format.Astc12x10Srgb
+                    or Format.Astc12x12Srgb => 16,
+                _ => 1
+            };
 
-                case Format.R16Float:
-                case Format.R16Unorm:
-                case Format.R16Snorm:
-                case Format.R16Uint:
-                case Format.R16Sint:
-                case Format.R16G16Float:
-                case Format.R16G16Unorm:
-                case Format.R16G16Snorm:
-                case Format.R16G16Uint:
-                case Format.R16G16Sint:
-                case Format.R16G16B16Float:
-                case Format.R16G16B16Unorm:
-                case Format.R16G16B16Snorm:
-                case Format.R16G16B16Uint:
-                case Format.R16G16B16Sint:
-                case Format.R16G16B16A16Float:
-                case Format.R16G16B16A16Unorm:
-                case Format.R16G16B16A16Snorm:
-                case Format.R16G16B16A16Uint:
-                case Format.R16G16B16A16Sint:
-                case Format.R4G4B4A4Unorm:
-                case Format.R5G5B5X1Unorm:
-                case Format.R5G5B5A1Unorm:
-                case Format.R5G6B5Unorm:
-                case Format.R16Uscaled:
-                case Format.R16Sscaled:
-                case Format.R16G16Uscaled:
-                case Format.R16G16Sscaled:
-                case Format.R16G16B16Uscaled:
-                case Format.R16G16B16Sscaled:
-                case Format.R16G16B16A16Uscaled:
-                case Format.R16G16B16A16Sscaled:
-                case Format.B5G6R5Unorm:
-                case Format.B5G5R5A1Unorm:
-                case Format.A1B5G5R5Unorm:
-                    return 2;
+            /// <summary>
+            /// Checks if the texture format is a depth or depth-stencil format.
+            /// </summary>
+            public bool HasDepth => fmt is
+                Format.D16Unorm or Format.D24UnormS8Uint or Format.S8UintD24Unorm or Format.X8UintD24Unorm
+                or Format.D32Float or Format.D32FloatS8Uint;
 
-                case Format.R32Float:
-                case Format.R32Uint:
-                case Format.R32Sint:
-                case Format.R32G32Float:
-                case Format.R32G32Uint:
-                case Format.R32G32Sint:
-                case Format.R32G32B32Float:
-                case Format.R32G32B32Uint:
-                case Format.R32G32B32Sint:
-                case Format.R32G32B32A32Float:
-                case Format.R32G32B32A32Uint:
-                case Format.R32G32B32A32Sint:
-                case Format.R10G10B10A2Unorm:
-                case Format.R10G10B10A2Uint:
-                case Format.R11G11B10Float:
-                case Format.R9G9B9E5Float:
-                case Format.R32Uscaled:
-                case Format.R32Sscaled:
-                case Format.R32G32Uscaled:
-                case Format.R32G32Sscaled:
-                case Format.R32G32B32Uscaled:
-                case Format.R32G32B32Sscaled:
-                case Format.R32G32B32A32Uscaled:
-                case Format.R32G32B32A32Sscaled:
-                case Format.R10G10B10A2Snorm:
-                case Format.R10G10B10A2Sint:
-                case Format.R10G10B10A2Uscaled:
-                case Format.R10G10B10A2Sscaled:
-                case Format.B10G10R10A2Unorm:
-                    return 4;
+            /// <summary>
+            /// Checks if the texture format is a stencil or depth-stencil format.
+            /// </summary>
+            public bool HasStencil => fmt is
+                Format.D24UnormS8Uint or Format.S8UintD24Unorm or Format.D32FloatS8Uint or Format.S8Uint;
 
-                case Format.S8Uint:
-                    return 1;
-                case Format.D16Unorm:
-                    return 2;
-                case Format.S8UintD24Unorm:
-                case Format.X8UintD24Unorm:
-                case Format.D32Float:
-                case Format.D24UnormS8Uint:
-                    return 4;
-                case Format.D32FloatS8Uint:
-                    return 8;
+            /// <summary>
+            /// Checks if the texture format is valid to use as image format.
+            /// </summary>
+            public bool IsImageCompatible => fmt is
+                Format.R8Unorm or Format.R8Snorm or Format.R8Uint or Format.R8Sint or Format.R16Float or Format.R16Unorm
+                or Format.R16Snorm or Format.R16Uint or Format.R16Sint or Format.R32Float or Format.R32Uint
+                or Format.R32Sint or Format.R8G8Unorm or Format.R8G8Snorm or Format.R8G8Uint or Format.R8G8Sint
+                or Format.R16G16Float or Format.R16G16Unorm or Format.R16G16Snorm or Format.R16G16Uint
+                or Format.R16G16Sint or Format.R32G32Float or Format.R32G32Uint or Format.R32G32Sint
+                or Format.R8G8B8A8Unorm or Format.R8G8B8A8Snorm or Format.R8G8B8A8Uint or Format.R8G8B8A8Sint
+                or Format.R16G16B16A16Float or Format.R16G16B16A16Unorm or Format.R16G16B16A16Snorm
+                or Format.R16G16B16A16Uint or Format.R16G16B16A16Sint or Format.R32G32B32A32Float
+                or Format.R32G32B32A32Uint or Format.R32G32B32A32Sint or Format.R10G10B10A2Unorm
+                or Format.R10G10B10A2Uint or Format.R11G11B10Float or Format.B8G8R8A8Unorm;
 
-                case Format.Bc1RgbaUnorm:
-                case Format.Bc1RgbaSrgb:
-                    return 8;
+            /// <summary>
+            /// Checks if the texture format is valid to use as render target color format.
+            /// </summary>
+            public bool IsRtColorCompatible => fmt is
+                Format.R32G32B32A32Float or Format.R32G32B32A32Sint or Format.R32G32B32A32Uint
+                or Format.R16G16B16A16Unorm or Format.R16G16B16A16Snorm or Format.R16G16B16A16Sint
+                or Format.R16G16B16A16Uint or Format.R16G16B16A16Float or Format.R32G32Float or Format.R32G32Sint
+                or Format.R32G32Uint or Format.B8G8R8A8Unorm or Format.B8G8R8A8Srgb or Format.B10G10R10A2Unorm
+                or Format.R10G10B10A2Unorm or Format.R10G10B10A2Uint or Format.R8G8B8A8Unorm or Format.R8G8B8A8Srgb
+                or Format.R8G8B8A8Snorm or Format.R8G8B8A8Sint or Format.R8G8B8A8Uint or Format.R16G16Unorm
+                or Format.R16G16Snorm or Format.R16G16Sint or Format.R16G16Uint or Format.R16G16Float
+                or Format.R11G11B10Float or Format.R32Sint or Format.R32Uint or Format.R32Float
+                or Format.B5G6R5Unorm or Format.B5G5R5A1Unorm or Format.R8G8Unorm or Format.R8G8Snorm
+                or Format.R8G8Sint or Format.R8G8Uint or Format.R16Unorm or Format.R16Snorm or Format.R16Sint
+                or Format.R16Uint or Format.R16Float or Format.R8Unorm or Format.R8Snorm or Format.R8Sint
+                or Format.R8Uint;
 
-                case Format.Bc2Unorm:
-                case Format.Bc3Unorm:
-                case Format.Bc2Srgb:
-                case Format.Bc3Srgb:
-                case Format.Bc4Unorm:
-                case Format.Bc4Snorm:
-                case Format.Bc5Unorm:
-                case Format.Bc5Snorm:
-                case Format.Bc7Unorm:
-                case Format.Bc7Srgb:
-                case Format.Bc6HSfloat:
-                case Format.Bc6HUfloat:
-                    return 16;
+            /// <summary>
+            /// Checks if the texture format is 16 bit packed.
+            /// </summary>
+            public bool Is16BitPacked => fmt is
+                Format.B5G6R5Unorm or Format.B5G5R5A1Unorm or Format.R5G5B5X1Unorm or Format.R5G5B5A1Unorm
+                or Format.R5G6B5Unorm or Format.R4G4B4A4Unorm;
 
-                case Format.Etc2RgbUnorm:
-                case Format.Etc2RgbPtaUnorm:
-                case Format.Etc2RgbSrgb:
-                case Format.Etc2RgbPtaSrgb:
-                    return 8;
+            /// <summary>
+            /// Checks if the texture format is an ETC2 format.
+            /// </summary>
+            public bool IsEtc2 => fmt is
+                Format.Etc2RgbaSrgb or Format.Etc2RgbaUnorm or Format.Etc2RgbPtaSrgb
+                or Format.Etc2RgbPtaUnorm or Format.Etc2RgbSrgb or Format.Etc2RgbUnorm;
 
-                case Format.Etc2RgbaUnorm:
-                case Format.Etc2RgbaSrgb:
-                    return 16;
+            /// <summary>
+            /// Checks if the texture format is a BGR format.
+            /// </summary>
+            public bool IsBgr => fmt is
+                Format.B5G6R5Unorm or Format.B5G5R5A1Unorm or Format.B8G8R8A8Unorm or Format.B8G8R8A8Srgb
+                or Format.B10G10R10A2Unorm;
 
-                case Format.Astc4x4Unorm:
-                case Format.Astc5x4Unorm:
-                case Format.Astc5x5Unorm:
-                case Format.Astc6x5Unorm:
-                case Format.Astc6x6Unorm:
-                case Format.Astc8x5Unorm:
-                case Format.Astc8x6Unorm:
-                case Format.Astc8x8Unorm:
-                case Format.Astc10x5Unorm:
-                case Format.Astc10x6Unorm:
-                case Format.Astc10x8Unorm:
-                case Format.Astc10x10Unorm:
-                case Format.Astc12x10Unorm:
-                case Format.Astc12x12Unorm:
-                case Format.Astc4x4Srgb:
-                case Format.Astc5x4Srgb:
-                case Format.Astc5x5Srgb:
-                case Format.Astc6x5Srgb:
-                case Format.Astc6x6Srgb:
-                case Format.Astc8x5Srgb:
-                case Format.Astc8x6Srgb:
-                case Format.Astc8x8Srgb:
-                case Format.Astc10x5Srgb:
-                case Format.Astc10x6Srgb:
-                case Format.Astc10x8Srgb:
-                case Format.Astc10x10Srgb:
-                case Format.Astc12x10Srgb:
-                case Format.Astc12x12Srgb:
-                    return 16;
-            }
+            /// <summary>
+            /// Checks if the texture format is a depth, stencil or depth-stencil format.
+            /// </summary>
+            public bool IsDepthOrStencil => fmt is
+                Format.D16Unorm or Format.D24UnormS8Uint or Format.S8UintD24Unorm or Format.X8UintD24Unorm
+                or Format.D32Float or Format.D32FloatS8Uint or Format.S8Uint;
 
-            return 1;
-        }
+            /// <summary>
+            /// Checks if the texture format is a float or sRGB color format.
+            /// </summary>
+            /// <remarks>
+            /// Does not include normalized, compressed or depth formats.
+            /// Float and sRGB formats do not participate in logical operations.
+            /// </remarks>
+            public bool IsFloatOrSrgb => fmt is
+                Format.R8G8B8A8Srgb or Format.B8G8R8A8Srgb or Format.R16Float or Format.R16G16Float
+                or Format.R16G16B16Float or Format.R16G16B16A16Float or Format.R32Float or Format.R32G32Float
+                or Format.R32G32B32Float or Format.R32G32B32A32Float or Format.R11G11B10Float
+                or Format.R9G9B9E5Float;
+            
+            /// <summary>
+            /// Checks if the texture format is an ASTC Unorm format.
+            /// </summary>
+            public bool IsAstcUnorm => fmt is
+                Format.Astc4x4Unorm or Format.Astc5x4Unorm or Format.Astc5x5Unorm or Format.Astc6x5Unorm
+                or Format.Astc6x6Unorm or Format.Astc8x5Unorm or Format.Astc8x6Unorm or Format.Astc8x8Unorm
+                or Format.Astc10x5Unorm or Format.Astc10x6Unorm or Format.Astc10x8Unorm or Format.Astc10x10Unorm
+                or Format.Astc12x10Unorm or Format.Astc12x12Unorm;
 
-        /// <summary>
-        /// Checks if the texture format is a depth or depth-stencil format.
-        /// </summary>
-        /// <param name="format">Texture format</param>
-        /// <returns>True if the format is a depth or depth-stencil format, false otherwise</returns>
-        public static bool HasDepth(this Format format)
-        {
-            switch (format)
-            {
-                case Format.D16Unorm:
-                case Format.D24UnormS8Uint:
-                case Format.S8UintD24Unorm:
-                case Format.X8UintD24Unorm:
-                case Format.D32Float:
-                case Format.D32FloatS8Uint:
-                    return true;
-            }
+            /// <summary>
+            /// Checks if the texture format is an ASTC SRGB format.
+            /// </summary>
+            public bool IsAstcSrgb => fmt is
+                Format.Astc4x4Srgb or Format.Astc5x4Srgb or Format.Astc5x5Srgb or Format.Astc6x5Srgb
+                or Format.Astc6x6Srgb or Format.Astc8x5Srgb or Format.Astc8x6Srgb or Format.Astc8x8Srgb
+                or Format.Astc10x5Srgb or Format.Astc10x6Srgb or Format.Astc10x8Srgb or Format.Astc10x10Srgb
+                or Format.Astc12x10Srgb or Format.Astc12x12Srgb;
 
-            return false;
-        }
+            /// <summary>
+            /// Checks if the texture format is an ASTC format.
+            /// </summary>
+            public bool IsAstc => fmt.IsAstcUnorm || fmt.IsAstcSrgb;
 
-        /// <summary>
-        /// Checks if the texture format is a stencil or depth-stencil format.
-        /// </summary>
-        /// <param name="format">Texture format</param>
-        /// <returns>True if the format is a stencil or depth-stencil format, false otherwise</returns>
-        public static bool HasStencil(this Format format)
-        {
-            switch (format)
-            {
-                case Format.D24UnormS8Uint:
-                case Format.S8UintD24Unorm:
-                case Format.D32FloatS8Uint:
-                case Format.S8Uint:
-                    return true;
-            }
+            /// <summary>
+            /// Checks if the texture format is an unsigned integer color format.
+            /// </summary>
+            public bool IsUnsignedInt => fmt is
+                Format.R8Uint or Format.R16Uint or Format.R32Uint or Format.R8G8Uint or Format.R16G16Uint
+                or Format.R32G32Uint or Format.R8G8B8Uint or Format.R16G16B16Uint or Format.R32G32B32Uint
+                or Format.R8G8B8A8Uint or Format.R16G16B16A16Uint or Format.R32G32B32A32Uint
+                or Format.R10G10B10A2Uint;
 
-            return false;
-        }
+            /// <summary>
+            /// Checks if the texture format is a signed integer color format.
+            /// </summary>
+            public bool IsSignedInt => fmt is
+                Format.R8Sint or Format.R16Sint or Format.R32Sint or Format.R8G8Sint or Format.R16G16Sint
+                or Format.R32G32Sint or Format.R8G8B8Sint or Format.R16G16B16Sint or Format.R32G32B32Sint
+                or Format.R8G8B8A8Sint or Format.R16G16B16A16Sint or Format.R32G32B32A32Sint
+                or Format.R10G10B10A2Sint;
 
-        /// <summary>
-        /// Checks if the texture format is valid to use as image format.
-        /// </summary>
-        /// <param name="format">Texture format</param>
-        /// <returns>True if the texture can be used as image, false otherwise</returns>
-        public static bool IsImageCompatible(this Format format)
-        {
-            switch (format)
-            {
-                case Format.R8Unorm:
-                case Format.R8Snorm:
-                case Format.R8Uint:
-                case Format.R8Sint:
-                case Format.R16Float:
-                case Format.R16Unorm:
-                case Format.R16Snorm:
-                case Format.R16Uint:
-                case Format.R16Sint:
-                case Format.R32Float:
-                case Format.R32Uint:
-                case Format.R32Sint:
-                case Format.R8G8Unorm:
-                case Format.R8G8Snorm:
-                case Format.R8G8Uint:
-                case Format.R8G8Sint:
-                case Format.R16G16Float:
-                case Format.R16G16Unorm:
-                case Format.R16G16Snorm:
-                case Format.R16G16Uint:
-                case Format.R16G16Sint:
-                case Format.R32G32Float:
-                case Format.R32G32Uint:
-                case Format.R32G32Sint:
-                case Format.R8G8B8A8Unorm:
-                case Format.R8G8B8A8Snorm:
-                case Format.R8G8B8A8Uint:
-                case Format.R8G8B8A8Sint:
-                case Format.R16G16B16A16Float:
-                case Format.R16G16B16A16Unorm:
-                case Format.R16G16B16A16Snorm:
-                case Format.R16G16B16A16Uint:
-                case Format.R16G16B16A16Sint:
-                case Format.R32G32B32A32Float:
-                case Format.R32G32B32A32Uint:
-                case Format.R32G32B32A32Sint:
-                case Format.R10G10B10A2Unorm:
-                case Format.R10G10B10A2Uint:
-                case Format.R11G11B10Float:
-                case Format.B8G8R8A8Unorm:
-                    return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Checks if the texture format is valid to use as render target color format.
-        /// </summary>
-        /// <param name="format">Texture format</param>
-        /// <returns>True if the texture can be used as render target, false otherwise</returns>
-        public static bool IsRtColorCompatible(this Format format)
-        {
-            switch (format)
-            {
-                case Format.R32G32B32A32Float:
-                case Format.R32G32B32A32Sint:
-                case Format.R32G32B32A32Uint:
-                case Format.R16G16B16A16Unorm:
-                case Format.R16G16B16A16Snorm:
-                case Format.R16G16B16A16Sint:
-                case Format.R16G16B16A16Uint:
-                case Format.R16G16B16A16Float:
-                case Format.R32G32Float:
-                case Format.R32G32Sint:
-                case Format.R32G32Uint:
-                case Format.B8G8R8A8Unorm:
-                case Format.B8G8R8A8Srgb:
-                case Format.B10G10R10A2Unorm:
-                case Format.R10G10B10A2Unorm:
-                case Format.R10G10B10A2Uint:
-                case Format.R8G8B8A8Unorm:
-                case Format.R8G8B8A8Srgb:
-                case Format.R8G8B8A8Snorm:
-                case Format.R8G8B8A8Sint:
-                case Format.R8G8B8A8Uint:
-                case Format.R16G16Unorm:
-                case Format.R16G16Snorm:
-                case Format.R16G16Sint:
-                case Format.R16G16Uint:
-                case Format.R16G16Float:
-                case Format.R11G11B10Float:
-                case Format.R32Sint:
-                case Format.R32Uint:
-                case Format.R32Float:
-                case Format.B5G6R5Unorm:
-                case Format.B5G5R5A1Unorm:
-                case Format.R8G8Unorm:
-                case Format.R8G8Snorm:
-                case Format.R8G8Sint:
-                case Format.R8G8Uint:
-                case Format.R16Unorm:
-                case Format.R16Snorm:
-                case Format.R16Sint:
-                case Format.R16Uint:
-                case Format.R16Float:
-                case Format.R8Unorm:
-                case Format.R8Snorm:
-                case Format.R8Sint:
-                case Format.R8Uint:
-                    return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Checks if the texture format is 16 bit packed.
-        /// </summary>
-        /// <param name="format">Texture format</param>
-        /// <returns>True if the texture format is 16 bit packed, false otherwise</returns>
-        public static bool Is16BitPacked(this Format format)
-        {
-            switch (format)
-            {
-                case Format.B5G6R5Unorm:
-                case Format.B5G5R5A1Unorm:
-                case Format.R5G5B5X1Unorm:
-                case Format.R5G5B5A1Unorm:
-                case Format.R5G6B5Unorm:
-                case Format.R4G4B4A4Unorm:
-                    return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Checks if the texture format is an ASTC format.
-        /// </summary>
-        /// <param name="format">Texture format</param>
-        /// <returns>True if the texture format is an ASTC format, false otherwise</returns>
-        public static bool IsAstc(this Format format)
-        {
-            return format.IsAstcUnorm() || format.IsAstcSrgb();
-        }
-
-        /// <summary>
-        /// Checks if the texture format is an ASTC Unorm format.
-        /// </summary>
-        /// <param name="format">Texture format</param>
-        /// <returns>True if the texture format is an ASTC Unorm format, false otherwise</returns>
-        public static bool IsAstcUnorm(this Format format)
-        {
-            switch (format)
-            {
-                case Format.Astc4x4Unorm:
-                case Format.Astc5x4Unorm:
-                case Format.Astc5x5Unorm:
-                case Format.Astc6x5Unorm:
-                case Format.Astc6x6Unorm:
-                case Format.Astc8x5Unorm:
-                case Format.Astc8x6Unorm:
-                case Format.Astc8x8Unorm:
-                case Format.Astc10x5Unorm:
-                case Format.Astc10x6Unorm:
-                case Format.Astc10x8Unorm:
-                case Format.Astc10x10Unorm:
-                case Format.Astc12x10Unorm:
-                case Format.Astc12x12Unorm:
-                    return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Checks if the texture format is an ASTC SRGB format.
-        /// </summary>
-        /// <param name="format">Texture format</param>
-        /// <returns>True if the texture format is an ASTC SRGB format, false otherwise</returns>
-        public static bool IsAstcSrgb(this Format format)
-        {
-            switch (format)
-            {
-                case Format.Astc4x4Srgb:
-                case Format.Astc5x4Srgb:
-                case Format.Astc5x5Srgb:
-                case Format.Astc6x5Srgb:
-                case Format.Astc6x6Srgb:
-                case Format.Astc8x5Srgb:
-                case Format.Astc8x6Srgb:
-                case Format.Astc8x8Srgb:
-                case Format.Astc10x5Srgb:
-                case Format.Astc10x6Srgb:
-                case Format.Astc10x8Srgb:
-                case Format.Astc10x10Srgb:
-                case Format.Astc12x10Srgb:
-                case Format.Astc12x12Srgb:
-                    return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Checks if the texture format is an ETC2 format.
-        /// </summary>
-        /// <param name="format">Texture format</param>
-        /// <returns>True if the texture format is an ETC2 format, false otherwise</returns>
-        public static bool IsEtc2(this Format format)
-        {
-            switch (format)
-            {
-                case Format.Etc2RgbaSrgb:
-                case Format.Etc2RgbaUnorm:
-                case Format.Etc2RgbPtaSrgb:
-                case Format.Etc2RgbPtaUnorm:
-                case Format.Etc2RgbSrgb:
-                case Format.Etc2RgbUnorm:
-                    return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Checks if the texture format is a BGR format.
-        /// </summary>
-        /// <param name="format">Texture format</param>
-        /// <returns>True if the texture format is a BGR format, false otherwise</returns>
-        public static bool IsBgr(this Format format)
-        {
-            switch (format)
-            {
-                case Format.B5G6R5Unorm:
-                case Format.B5G5R5A1Unorm:
-                case Format.B8G8R8A8Unorm:
-                case Format.B8G8R8A8Srgb:
-                case Format.B10G10R10A2Unorm:
-                    return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Checks if the texture format is a depth, stencil or depth-stencil format.
-        /// </summary>
-        /// <param name="format">Texture format</param>
-        /// <returns>True if the format is a depth, stencil or depth-stencil format, false otherwise</returns>
-        public static bool IsDepthOrStencil(this Format format)
-        {
-            switch (format)
-            {
-                case Format.D16Unorm:
-                case Format.D24UnormS8Uint:
-                case Format.S8UintD24Unorm:
-                case Format.X8UintD24Unorm:
-                case Format.D32Float:
-                case Format.D32FloatS8Uint:
-                case Format.S8Uint:
-                    return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Checks if the texture format is an unsigned integer color format.
-        /// </summary>
-        /// <param name="format">Texture format</param>
-        /// <returns>True if the texture format is an unsigned integer color format, false otherwise</returns>
-        public static bool IsUint(this Format format)
-        {
-            switch (format)
-            {
-                case Format.R8Uint:
-                case Format.R16Uint:
-                case Format.R32Uint:
-                case Format.R8G8Uint:
-                case Format.R16G16Uint:
-                case Format.R32G32Uint:
-                case Format.R8G8B8Uint:
-                case Format.R16G16B16Uint:
-                case Format.R32G32B32Uint:
-                case Format.R8G8B8A8Uint:
-                case Format.R16G16B16A16Uint:
-                case Format.R32G32B32A32Uint:
-                case Format.R10G10B10A2Uint:
-                    return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Checks if the texture format is a signed integer color format.
-        /// </summary>
-        /// <param name="format">Texture format</param>
-        /// <returns>True if the texture format is a signed integer color format, false otherwise</returns>
-        public static bool IsSint(this Format format)
-        {
-            switch (format)
-            {
-                case Format.R8Sint:
-                case Format.R16Sint:
-                case Format.R32Sint:
-                case Format.R8G8Sint:
-                case Format.R16G16Sint:
-                case Format.R32G32Sint:
-                case Format.R8G8B8Sint:
-                case Format.R16G16B16Sint:
-                case Format.R32G32B32Sint:
-                case Format.R8G8B8A8Sint:
-                case Format.R16G16B16A16Sint:
-                case Format.R32G32B32A32Sint:
-                case Format.R10G10B10A2Sint:
-                    return true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// Checks if the texture format is an integer color format.
-        /// </summary>
-        /// <param name="format">Texture format</param>
-        /// <returns>True if the texture format is an integer color format, false otherwise</returns>
-        public static bool IsInteger(this Format format)
-        {
-            return format.IsUint() || format.IsSint();
-        }
-
-        /// <summary>
-        /// Checks if the texture format is a float or sRGB color format.
-        /// </summary>
-        /// <remarks>
-        /// Does not include normalized, compressed or depth formats.
-        /// Float and sRGB formats do not participate in logical operations.
-        /// </remarks>
-        /// <param name="format">Texture format</param>
-        /// <returns>True if the format is a float or sRGB color format, false otherwise</returns>
-        public static bool IsFloatOrSrgb(this Format format)
-        {
-            switch (format)
-            {
-                case Format.R8G8B8A8Srgb:
-                case Format.B8G8R8A8Srgb:
-                case Format.R16Float:
-                case Format.R16G16Float:
-                case Format.R16G16B16Float:
-                case Format.R16G16B16A16Float:
-                case Format.R32Float:
-                case Format.R32G32Float:
-                case Format.R32G32B32Float:
-                case Format.R32G32B32A32Float:
-                case Format.R11G11B10Float:
-                case Format.R9G9B9E5Float:
-                    return true;
-            }
-
-            return false;
+            /// <summary>
+            /// Checks if the texture format is an integer color format.
+            /// </summary>
+            public bool IsInt => fmt.IsUnsignedInt || fmt.IsSignedInt;
         }
     }
 }

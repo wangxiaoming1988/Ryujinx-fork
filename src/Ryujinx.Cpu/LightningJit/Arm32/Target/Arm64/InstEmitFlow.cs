@@ -104,7 +104,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
 
                 if (invert)
                 {
-                    conditions[i++] = ((ArmCondition)firstCond).Invert();
+                    conditions[i++] = ((ArmCondition)firstCond).Inverse;
                 }
                 else
                 {

@@ -26,7 +26,7 @@ namespace Ryujinx.Graphics.OpenGL
 
         public void Map(BufferHandle handle, int size)
         {
-            GL.BindBuffer(BufferTarget.CopyWriteBuffer, handle.ToInt32());
+            GL.BindBuffer(BufferTarget.CopyWriteBuffer, handle);
             nint ptr = GL.MapBufferRange(BufferTarget.CopyWriteBuffer, nint.Zero, size, BufferAccessMask.MapReadBit | BufferAccessMask.MapPersistentBit);
 
             _maps[handle] = ptr;
@@ -36,7 +36,7 @@ namespace Ryujinx.Graphics.OpenGL
         {
             if (_maps.ContainsKey(handle))
             {
-                GL.BindBuffer(BufferTarget.CopyWriteBuffer, handle.ToInt32());
+                GL.BindBuffer(BufferTarget.CopyWriteBuffer, handle);
                 GL.UnmapBuffer(BufferTarget.CopyWriteBuffer);
 
                 _maps.Remove(handle);
@@ -140,7 +140,7 @@ namespace Ryujinx.Graphics.OpenGL
         {
             EnsureBuffer(size);
 
-            GL.BindBuffer(BufferTarget.CopyReadBuffer, buffer.ToInt32());
+            GL.BindBuffer(BufferTarget.CopyReadBuffer, buffer);
             GL.BindBuffer(BufferTarget.CopyWriteBuffer, _copyBufferHandle);
 
             GL.CopyBufferSubData(BufferTarget.CopyReadBuffer, BufferTarget.CopyWriteBuffer, (nint)offset, nint.Zero, size);

@@ -9,9 +9,10 @@ namespace Ryujinx.Graphics.Shader
 
     static class OutputTopologyExtensions
     {
-        public static string ToGlslString(this OutputTopology topology)
+
+        extension(OutputTopology topology)
         {
-            return topology switch
+            public string GlslString => topology switch
             {
                 OutputTopology.LineStrip => "line_strip",
                 OutputTopology.PointList => "points",

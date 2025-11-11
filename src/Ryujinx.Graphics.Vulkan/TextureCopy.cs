@@ -53,7 +53,7 @@ namespace Ryujinx.Graphics.Vulkan
             ImageBlit.SrcOffsetsBuffer srcOffsets = new();
             ImageBlit.DstOffsetsBuffer dstOffsets = new();
 
-            Filter filter = linearFilter && !dstInfo.Format.IsDepthOrStencil() ? Filter.Linear : Filter.Nearest;
+            Filter filter = linearFilter && !dstInfo.Format.IsDepthOrStencil ? Filter.Linear : Filter.Nearest;
 
             TextureView.InsertImageBarrier(
                 api,

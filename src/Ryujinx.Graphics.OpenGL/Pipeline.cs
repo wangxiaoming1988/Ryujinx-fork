@@ -587,7 +587,7 @@ namespace Ryujinx.Graphics.OpenGL
 
             _vertexArray.SetRangeOfIndexBuffer();
 
-            GL.BindBuffer((BufferTarget)All.DrawIndirectBuffer, indirectBuffer.Handle.ToInt32());
+            GL.BindBuffer((BufferTarget)All.DrawIndirectBuffer, indirectBuffer.Handle);
 
             GL.DrawElementsIndirect(_primitiveType, _elementsType, (nint)indirectBuffer.Offset);
 
@@ -608,8 +608,8 @@ namespace Ryujinx.Graphics.OpenGL
 
             _vertexArray.SetRangeOfIndexBuffer();
 
-            GL.BindBuffer((BufferTarget)All.DrawIndirectBuffer, indirectBuffer.Handle.ToInt32());
-            GL.BindBuffer((BufferTarget)All.ParameterBuffer, parameterBuffer.Handle.ToInt32());
+            GL.BindBuffer((BufferTarget)All.DrawIndirectBuffer, indirectBuffer.Handle);
+            GL.BindBuffer((BufferTarget)All.ParameterBuffer, parameterBuffer.Handle);
 
             GL.MultiDrawElementsIndirectCount(
                 _primitiveType,
@@ -634,7 +634,7 @@ namespace Ryujinx.Graphics.OpenGL
 
             PreDrawVbUnbounded();
 
-            GL.BindBuffer((BufferTarget)All.DrawIndirectBuffer, indirectBuffer.Handle.ToInt32());
+            GL.BindBuffer((BufferTarget)All.DrawIndirectBuffer, indirectBuffer.Handle);
 
             GL.DrawArraysIndirect(_primitiveType, (nint)indirectBuffer.Offset);
 
@@ -651,8 +651,8 @@ namespace Ryujinx.Graphics.OpenGL
 
             PreDrawVbUnbounded();
 
-            GL.BindBuffer((BufferTarget)All.DrawIndirectBuffer, indirectBuffer.Handle.ToInt32());
-            GL.BindBuffer((BufferTarget)All.ParameterBuffer, parameterBuffer.Handle.ToInt32());
+            GL.BindBuffer((BufferTarget)All.DrawIndirectBuffer, indirectBuffer.Handle);
+            GL.BindBuffer((BufferTarget)All.ParameterBuffer, parameterBuffer.Handle);
 
             GL.MultiDrawArraysIndirectCount(
                 _primitiveType,
@@ -812,10 +812,10 @@ namespace Ryujinx.Graphics.OpenGL
             EnsureFramebuffer();
 
             _framebuffer.SetDualSourceBlend(
-                blend.ColorSrcFactor.IsDualSource() ||
-                blend.ColorDstFactor.IsDualSource() ||
-                blend.AlphaSrcFactor.IsDualSource() ||
-                blend.AlphaDstFactor.IsDualSource());
+                blend.ColorSrcFactor.IsDualSource ||
+                blend.ColorDstFactor.IsDualSource ||
+                blend.AlphaSrcFactor.IsDualSource ||
+                blend.AlphaDstFactor.IsDualSource);
 
             if (_blendConstant != blend.BlendConstant)
             {
@@ -1178,7 +1178,7 @@ namespace Ryujinx.Graphics.OpenGL
 
                 if (color != null)
                 {
-                    int isBgra = color.Format.IsBgr() ? 1 : 0;
+                    int isBgra = color.Format.IsBgr ? 1 : 0;
 
                     if (_fpIsBgra[index].X != isBgra)
                     {
@@ -1349,7 +1349,7 @@ namespace Ryujinx.Graphics.OpenGL
 
                 Buffer.Resize(_tfbs[i], buffer.Size);
                 Buffer.Copy(buffer.Handle, _tfbs[i], buffer.Offset, 0, buffer.Size);
-                GL.BindBufferBase(BufferRangeTarget.TransformFeedbackBuffer, i, _tfbs[i].ToInt32());
+                GL.BindBufferBase(BufferRangeTarget.TransformFeedbackBuffer, i, _tfbs[i]);
             }
 
             if (_tfEnabled)
@@ -1454,7 +1454,7 @@ namespace Ryujinx.Graphics.OpenGL
                     continue;
                 }
 
-                GL.BindBufferRange(target, assignment.Binding, buffer.Handle.ToInt32(), (nint)buffer.Offset, buffer.Size);
+                GL.BindBufferRange(target, assignment.Binding, buffer.Handle, (nint)buffer.Offset, buffer.Size);
             }
         }
 

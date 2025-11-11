@@ -16,9 +16,9 @@ namespace ARMeilleure.IntermediateRepresentation
 
     static class ComparisonExtensions
     {
-        public static Comparison Invert(this Comparison comp)
+        extension(Comparison comparison)
         {
-            return (Comparison)((int)comp ^ 1);
+            public Comparison Inverse => (Comparison)((int)comparison ^ 1);
         }
     }
 }

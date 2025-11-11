@@ -171,7 +171,7 @@ namespace Ryujinx.Graphics.Gpu.Engine.InlineToMemory
         {
             MemoryManager memoryManager = _channel.MemoryManager;
 
-            Span<byte> data = MemoryMarshal.Cast<int, byte>(_buffer)[.._size];
+            Span<byte> data = MemoryMarshal.Cast<int, byte>(new Span<int>(_buffer))[.._size];
 
             if (_isLinear && _lineCount == 1)
             {

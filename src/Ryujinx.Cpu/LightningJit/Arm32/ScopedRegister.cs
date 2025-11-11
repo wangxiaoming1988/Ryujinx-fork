@@ -26,7 +26,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32
                 return;
             }
 
-            if (_operand.Type.IsInteger())
+            if (_operand.Type.IsInteger)
             {
                 _registerAllocator.FreeTempGprRegister(_operand.AsInt32());
             }

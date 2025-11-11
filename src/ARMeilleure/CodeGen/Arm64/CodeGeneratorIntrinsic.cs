@@ -462,7 +462,7 @@ namespace ARMeilleure.CodeGen.Arm64
         {
             instruction |= (sz << 22);
 
-            if (rd.Type.IsInteger())
+            if (rd.Type.IsInteger)
             {
                 context.Assembler.WriteInstructionAuto(instruction, rd, rn);
             }
@@ -490,7 +490,7 @@ namespace ARMeilleure.CodeGen.Arm64
             instruction |= (sz << 22);
             instruction |= (64 - fBits) << 10;
 
-            if (rd.Type.IsInteger())
+            if (rd.Type.IsInteger)
             {
                 Debug.Assert(rd.Type != OperandType.I32 || fBits <= 32);
 

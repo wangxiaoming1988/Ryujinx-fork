@@ -25,9 +25,9 @@ namespace ARMeilleure.CodeGen.Arm64
 
     static class ComparisonArm64Extensions
     {
-        public static ArmCondition ToArmCondition(this Comparison comp)
+        extension(Comparison comparison)
         {
-            return comp switch
+            public ArmCondition Arm => comparison switch
             {
 #pragma warning disable IDE0055 // Disable formatting
                 Comparison.Equal            => ArmCondition.Eq,
@@ -42,7 +42,7 @@ namespace ARMeilleure.CodeGen.Arm64
                 Comparison.LessUI           => ArmCondition.LtUn,
 #pragma warning restore IDE0055
 
-                _ => throw new ArgumentException(null, nameof(comp)),
+                _ => throw new ArgumentException(null, nameof(comparison))
             };
         }
     }

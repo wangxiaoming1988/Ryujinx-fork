@@ -208,7 +208,7 @@ namespace ARMeilleure.CodeGen.RegisterAllocators
 
         private bool TryAllocateRegWithoutSpill(AllocationContext context, LiveInterval current, int cIndex, int registersCount)
         {
-            RegisterType regType = current.Local.Type.ToRegisterType();
+            RegisterType regType = current.Local.Type.Register;
 
             Span<int> freePositions = stackalloc int[registersCount];
 
@@ -318,7 +318,7 @@ namespace ARMeilleure.CodeGen.RegisterAllocators
 
         private void AllocateRegWithSpill(AllocationContext context, LiveInterval current, int cIndex, int registersCount)
         {
-            RegisterType regType = current.Local.Type.ToRegisterType();
+            RegisterType regType = current.Local.Type.Register;
 
             Span<int> usePositions = stackalloc int[registersCount];
             Span<int> blockedPositions = stackalloc int[registersCount];

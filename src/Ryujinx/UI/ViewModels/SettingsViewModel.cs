@@ -19,7 +19,6 @@ using Ryujinx.Common.Configuration;
 using Ryujinx.Common.Configuration.Multiplayer;
 using Ryujinx.Common.GraphicsDriver;
 using Ryujinx.Common.Helper;
-using Ryujinx.Common.Logging;
 using Ryujinx.Graphics.GAL;
 using Ryujinx.Graphics.Vulkan;
 using Ryujinx.HLE;
@@ -46,47 +45,49 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         private readonly Dictionary<string, string> _networkInterfaces;
 
-        private float _customResolutionScale;
         private int _resolutionScale;
-        private int _graphicsBackendMultithreadingIndex;
-        private float _volume;
-        [ObservableProperty] private bool _isVulkanAvailable = true;
-        [ObservableProperty] private bool _gameListNeedsRefresh;
+        [ObservableProperty]
+        public partial bool IsVulkanAvailable { get; set; } = true;
+
+        [ObservableProperty]
+        public partial bool GameListNeedsRefresh { get; set; }
+
         private readonly List<string> _gpuIds = [];
-        public bool _useInputGlobalConfig;
-        private int _graphicsBackendIndex;
         private int _scalingFilter;
-        private int _scalingFilterLevel;
         private int _customVSyncInterval;
-        private bool _enableCustomVSyncInterval;
         private int _customVSyncIntervalPercentageProxy;
         private VSyncMode _vSyncMode;
-        private long _turboModeMultiplier;
 
         public event Action CloseWindow;
         public event Action SaveSettingsEvent;
         public event Action<bool> LocalGlobalInputSwitchEvent;
-        private int _networkInterfaceIndex;
-        private int _multiplayerModeIndex;
-        private string _ldnPassphrase;
-        [ObservableProperty] private string _ldnServer;
-
-        private bool _enableGDBStub;
-        private ushort _gdbStubPort;
-        private bool _debuggerSuspendOnStart;
-
         public SettingsHacksViewModel DirtyHacks { get; }
 
-        private readonly bool _isGameRunning;
-        private readonly Bitmap _gameIcon;
-        private readonly string _gameTitle;
-        private readonly string _gamePath;
-        private readonly string _gameId;
-        public bool IsGameRunning => _isGameRunning;
-        public Bitmap GameIcon => _gameIcon;
-        public string GamePath => _gamePath;
-        public string GameTitle => _gameTitle;
-        public string GameId => _gameId;
+        public bool IsGameRunning
+        {
+            get;
+        }
+
+        public Bitmap GameIcon
+        {
+            get;
+        }
+
+        public string GamePath
+        {
+            get;
+        }
+
+        public string GameTitle
+        {
+            get;
+        }
+
+        public string GameId
+        {
+            get;
+        }
+
         public bool IsGameTitleNotNull => !string.IsNullOrEmpty(GameTitle);
         public double PanelOpacity => IsGameTitleNotNull ? 0.5 : 1;
 
@@ -104,17 +105,18 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public int GraphicsBackendMultithreadingIndex
         {
-            get => _graphicsBackendMultithreadingIndex;
+            get;
             set
             {
-                _graphicsBackendMultithreadingIndex = value;
+                field = value;
 
-                if (_graphicsBackendMultithreadingIndex != (int)ConfigurationState.Instance.Graphics.BackendThreading.Value)
+                if (field != (int)ConfigurationState.Instance.Graphics.BackendThreading.Value)
                 {
                     Dispatcher.UIThread.InvokeAsync(() =>
-                         ContentDialogHelper.CreateInfoDialog(LocaleManager.Instance[LocaleKeys.DialogSettingsBackendThreadingWarningMessage],
-                             string.Empty,
-                             string.Empty,
+                        ContentDialogHelper.CreateInfoDialog(
+                            LocaleManager.Instance[LocaleKeys.DialogSettingsBackendThreadingWarningMessage],
+                            string.Empty,
+                            string.Empty,
                             LocaleManager.Instance[LocaleKeys.InputDialogOk],
                             LocaleManager.Instance[LocaleKeys.DialogSettingsBackendThreadingWarningTitle])
                     );
@@ -126,10 +128,10 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public float CustomResolutionScale
         {
-            get => _customResolutionScale;
+            get;
             set
             {
-                _customResolutionScale = MathF.Round(value, 1);
+                field = MathF.Round(value, 1);
 
                 OnPropertyChanged();
             }
@@ -152,12 +154,12 @@ namespace Ryujinx.Ava.UI.ViewModels
         public int FocusLostActionType { get; set; }
 
         public bool UseGlobalInputConfig
-        { 
-            get => _useInputGlobalConfig;
+        {
+            get;
             set
             {
-                _useInputGlobalConfig = value;
-                LocalGlobalInputSwitchEvent?.Invoke(_useInputGlobalConfig);
+                field = value;
+                LocalGlobalInputSwitchEvent?.Invoke(field);
                 OnPropertyChanged(nameof(InputPanelOpacity));
                 OnPropertyChanged();
             }
@@ -196,10 +198,10 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public bool EnableCustomVSyncInterval
         {
-            get => _enableCustomVSyncInterval;
+            get;
             set
             {
-                _enableCustomVSyncInterval = value;
+                field = value;
                 if (_vSyncMode == VSyncMode.Custom && !value)
                 {
                     VSyncMode = VSyncMode.Switch;
@@ -233,12 +235,12 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public long TurboMultiplier
         {
-            get => _turboModeMultiplier;
+            get;
             set
             {
-                if (_turboModeMultiplier != value)
+                if (field != value)
                 {
-                    _turboModeMultiplier = value;
+                    field = value;
 
                     OnPropertyChanged();
                     OnPropertyChanged((nameof(TurboMultiplierPercentageText)));
@@ -285,10 +287,10 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public string LdnPassphrase
         {
-            get => _ldnPassphrase;
+            get;
             set
             {
-                _ldnPassphrase = value;
+                field = value;
                 IsInvalidLdnPassphraseVisible = !ValidateLdnPassphrase(value);
 
                 OnPropertyChanged();
@@ -304,29 +306,33 @@ namespace Ryujinx.Ava.UI.ViewModels
         public int AspectRatio { get; set; }
         public int AntiAliasingEffect { get; set; }
         public string ScalingFilterLevelText => ScalingFilterLevel.ToString("0");
+
         public int ScalingFilterLevel
         {
-            get => _scalingFilterLevel;
+            get;
             set
             {
-                _scalingFilterLevel = value;
+                field = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(ScalingFilterLevelText));
             }
         }
+
         public int OpenglDebugLevel { get; set; }
         public int MemoryMode { get; set; }
         public int BaseStyleIndex { get; set; }
+
         public int GraphicsBackendIndex
         {
-            get => _graphicsBackendIndex;
+            get;
             set
             {
-                _graphicsBackendIndex = value;
+                field = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsVulkanSelected));
             }
         }
+
         public int ScalingFilter
         {
             get => _scalingFilter;
@@ -342,12 +348,12 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public float Volume
         {
-            get => _volume;
+            get;
             set
             {
-                _volume = value;
+                field = value;
 
-                ConfigurationState.Instance.System.AudioVolume.Value = _volume / 100;
+                ConfigurationState.Instance.System.AudioVolume.Value = field / 100;
 
                 OnPropertyChanged();
             }
@@ -373,19 +379,19 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public int NetworkInterfaceIndex
         {
-            get => _networkInterfaceIndex;
+            get;
             set
             {
-                _networkInterfaceIndex = value != -1 ? value : 0;
+                field = value != -1 ? value : 0;
             }
         }
 
         public int MultiplayerModeIndex
         {
-            get => _multiplayerModeIndex;
+            get;
             set
             {
-                _multiplayerModeIndex = value;
+                field = value;
             }
         }
 
@@ -393,31 +399,31 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public bool EnableGdbStub
         {
-            get => _enableGDBStub;
+            get;
             set
             {
-                _enableGDBStub = value;
-                ConfigurationState.Instance.Debug.EnableGdbStub.Value = _enableGDBStub;
+                field = value;
+                ConfigurationState.Instance.Debug.EnableGdbStub.Value = field;
             }
         }
 
         public ushort GDBStubPort
         {
-            get => _gdbStubPort;
+            get;
             set
             {
-                _gdbStubPort = value;
-                ConfigurationState.Instance.Debug.GdbStubPort.Value = _gdbStubPort;
+                field = value;
+                ConfigurationState.Instance.Debug.GdbStubPort.Value = field;
             }
         }
 
         public bool DebuggerSuspendOnStart
         {
-            get => _debuggerSuspendOnStart;
+            get;
             set
             {
-                _debuggerSuspendOnStart = value;
-                ConfigurationState.Instance.Debug.DebuggerSuspendOnStart.Value = _debuggerSuspendOnStart;
+                field = value;
+                ConfigurationState.Instance.Debug.DebuggerSuspendOnStart.Value = field;
             }
         }
 
@@ -450,13 +456,13 @@ namespace Ryujinx.Ava.UI.ViewModels
             if (gameIconData is { Length: > 0 })
             {
                 using MemoryStream ms = new(gameIconData);
-                _gameIcon = new Bitmap(ms);
+                GameIcon = new Bitmap(ms);
             }
 
-            _isGameRunning = gameRunning;
-            _gamePath = gamePath;
-            _gameTitle = gameName;
-            _gameId = gameId;
+            IsGameRunning = gameRunning;
+            GamePath = gamePath;
+            GameTitle = gameName;
+            GameId = gameId;
 
             if (customConfig) // During the game. If there is no user config, then load the global config window
             {
@@ -717,7 +723,6 @@ namespace Ryujinx.Ava.UI.ViewModels
             MultiplayerModeIndex = (int)config.Multiplayer.Mode.Value;
             DisableP2P = config.Multiplayer.DisableP2p;
             LdnPassphrase = config.Multiplayer.LdnPassphrase;
-            LdnServer = config.Multiplayer.LdnServer;
 
             // Debug
             EnableGdbStub = config.Debug.EnableGdbStub.Value;
@@ -842,7 +847,6 @@ namespace Ryujinx.Ava.UI.ViewModels
             config.Multiplayer.Mode.Value = (MultiplayerMode)MultiplayerModeIndex;
             config.Multiplayer.DisableP2p.Value = DisableP2P;
             config.Multiplayer.LdnPassphrase.Value = LdnPassphrase;
-            config.Multiplayer.LdnServer.Value = LdnServer;
 
             // Debug
             config.Debug.EnableGdbStub.Value = EnableGdbStub;

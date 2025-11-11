@@ -25,14 +25,15 @@ namespace Ryujinx.Ava.UI.ViewModels
     {
         private static readonly Dictionary<string, byte[]> _avatarStore = new();
 
-        [ObservableProperty] private ObservableCollection<ProfileImageModel> _images;
-        [ObservableProperty] private Color _backgroundColor = Colors.White;
+        [ObservableProperty]
+        public partial ObservableCollection<ProfileImageModel> Images { get; set; }
 
-        private int _selectedIndex;
+        [ObservableProperty]
+        public partial Color BackgroundColor { get; set; } = Colors.White;
 
         public UserFirmwareAvatarSelectorViewModel()
         {
-            _images = [];
+            Images = [];
 
             LoadImagesFromStore();
             PropertyChanged += (_, args) =>
@@ -44,21 +45,17 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public int SelectedIndex
         {
-            get => _selectedIndex;
+            get;
             set
             {
-                _selectedIndex = value;
+                field = value;
 
-                if (_selectedIndex == -1)
-                {
-                    SelectedImage = null;
-                }
-                else
-                {
-                    SelectedImage = Images[_selectedIndex].Data;
-                }
+                SelectedImage = field == -1 
+                    ? null 
+                    : Images[field].Data;
 
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(SelectedImage));
             }
         }
 

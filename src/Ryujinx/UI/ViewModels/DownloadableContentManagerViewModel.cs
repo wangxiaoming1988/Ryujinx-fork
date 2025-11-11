@@ -19,10 +19,14 @@ namespace Ryujinx.Ava.UI.ViewModels
     public partial class DownloadableContentManagerViewModel : BaseModel
     {
         private readonly ApplicationLibrary _applicationLibrary;
-        private AvaloniaList<DownloadableContentModel> _downloadableContents = [];
-        [ObservableProperty] private AvaloniaList<DownloadableContentModel> _selectedDownloadableContents = [];
-        [ObservableProperty] private AvaloniaList<DownloadableContentModel> _views = [];
-        [ObservableProperty] private bool _showBundledContentNotice = false;
+        [ObservableProperty]
+        public partial AvaloniaList<DownloadableContentModel> SelectedDownloadableContents { get; set; } = [];
+
+        [ObservableProperty]
+        public partial AvaloniaList<DownloadableContentModel> Views { get; set; } = [];
+
+        [ObservableProperty]
+        public partial bool ShowBundledContentNotice { get; set; } = false;
 
         private string _search;
         private readonly ApplicationData _applicationData;
@@ -30,15 +34,15 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public AvaloniaList<DownloadableContentModel> DownloadableContents
         {
-            get => _downloadableContents;
+            get;
             set
             {
-                _downloadableContents = value;
+                field = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(UpdateCount));
                 Sort();
             }
-        }
+        } = [];
 
         public string Search
         {
@@ -51,10 +55,7 @@ namespace Ryujinx.Ava.UI.ViewModels
             }
         }
 
-        public string UpdateCount
-        {
-            get => string.Format(LocaleManager.Instance[LocaleKeys.DlcWindowHeading], DownloadableContents.Count);
-        }
+        public string UpdateCount => string.Format(LocaleManager.Instance[LocaleKeys.DlcWindowHeading], DownloadableContents.Count);
 
         public DownloadableContentManagerViewModel(ApplicationLibrary applicationLibrary, ApplicationData applicationData)
         {

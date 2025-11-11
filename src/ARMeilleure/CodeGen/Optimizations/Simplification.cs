@@ -105,7 +105,7 @@ namespace ARMeilleure.CodeGen.Optimizations
             Operand x = operation.GetSource(0);
             Operand y = operation.GetSource(1);
 
-            if (x == y && x.Type.IsInteger())
+            if (x == y && x.Type.IsInteger)
             {
                 operation.TurnIntoCopy(Const(x.Type, 0));
             }
@@ -161,7 +161,7 @@ namespace ARMeilleure.CodeGen.Optimizations
 
         private static bool IsConstEqual(Operand operand, ulong comparand)
         {
-            if (operand.Kind != OperandKind.Constant || !operand.Type.IsInteger())
+            if (operand.Kind != OperandKind.Constant || !operand.Type.IsInteger)
             {
                 return false;
             }

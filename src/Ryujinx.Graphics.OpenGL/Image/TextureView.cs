@@ -84,7 +84,7 @@ namespace Ryujinx.Graphics.OpenGL.Image
                 swizzleRgba[2] = temp2;
                 swizzleRgba[3] = temp;
             }
-            else if (Info.Format.IsBgr())
+            else if (Info.Format.IsBgr)
             {
                 // Swap B <-> R for BGRA formats, as OpenGL has no support for them
                 // and we need to manually swap the components on read/write on the GPU.
@@ -116,13 +116,13 @@ namespace Ryujinx.Graphics.OpenGL.Image
         {
             TextureView destinationView = (TextureView)destination;
 
-            bool srcIsMultisample = Target.IsMultisample();
-            bool dstIsMultisample = destinationView.Target.IsMultisample();
+            bool srcIsMultisample = Target.IsMultisample;
+            bool dstIsMultisample = destinationView.Target.IsMultisample;
 
-            if (dstIsMultisample != srcIsMultisample && Info.Format.IsDepthOrStencil())
+            if (dstIsMultisample != srcIsMultisample && Info.Format.IsDepthOrStencil)
             {
                 int layers = Math.Min(Info.GetLayers(), destinationView.Info.GetLayers() - firstLayer);
-                CopyWithBlitForDepthMS(destinationView, 0, firstLayer, layers);
+                CopyWithBlitForDepthMultisample(destinationView, 0, firstLayer, layers);
             }
             else if (!dstIsMultisample && srcIsMultisample)
             {
@@ -140,7 +140,7 @@ namespace Ryujinx.Graphics.OpenGL.Image
                 int levels = Math.Min(Info.Levels, destinationView.Info.Levels - firstLevel);
                 _renderer.TextureCopyIncompatible.CopyIncompatibleFormats(this, destinationView, 0, firstLayer, 0, firstLevel, layers, levels);
             }
-            else if (destinationView.Format.IsDepthOrStencil() != Format.IsDepthOrStencil())
+            else if (destinationView.Format.IsDepthOrStencil != Format.IsDepthOrStencil)
             {
                 int layers = Math.Min(Info.GetLayers(), destinationView.Info.GetLayers() - firstLayer);
                 int levels = Math.Min(Info.Levels, destinationView.Info.Levels - firstLevel);
@@ -172,12 +172,12 @@ namespace Ryujinx.Graphics.OpenGL.Image
         {
             TextureView destinationView = (TextureView)destination;
 
-            bool srcIsMultisample = Target.IsMultisample();
-            bool dstIsMultisample = destinationView.Target.IsMultisample();
+            bool srcIsMultisample = Target.IsMultisample;
+            bool dstIsMultisample = destinationView.Target.IsMultisample;
 
-            if (dstIsMultisample != srcIsMultisample && Info.Format.IsDepthOrStencil())
+            if (dstIsMultisample != srcIsMultisample && Info.Format.IsDepthOrStencil)
             {
-                CopyWithBlitForDepthMS(destinationView, srcLayer, dstLayer, 1);
+                CopyWithBlitForDepthMultisample(destinationView, srcLayer, dstLayer, 1);
             }
             else if (!dstIsMultisample && srcIsMultisample)
             {
@@ -191,7 +191,7 @@ namespace Ryujinx.Graphics.OpenGL.Image
             {
                 _renderer.TextureCopyIncompatible.CopyIncompatibleFormats(this, destinationView, srcLayer, dstLayer, srcLevel, dstLevel, 1, 1);
             }
-            else if (destinationView.Format.IsDepthOrStencil() != Format.IsDepthOrStencil())
+            else if (destinationView.Format.IsDepthOrStencil != Format.IsDepthOrStencil)
             {
                 int minWidth = Math.Min(Width, destinationView.Width);
                 int minHeight = Math.Min(Height, destinationView.Height);
@@ -204,7 +204,7 @@ namespace Ryujinx.Graphics.OpenGL.Image
             }
         }
 
-        private void CopyWithBlitForDepthMS(TextureView destinationView, int srcLayer, int dstLayer, int layers)
+        private void CopyWithBlitForDepthMultisample(TextureView destinationView, int srcLayer, int dstLayer, int layers)
         {
             // This is currently used for multisample <-> non-multisample copies.
             // We can't do that with compute because it's not possible to write depth textures on compute.
@@ -216,9 +216,9 @@ namespace Ryujinx.Graphics.OpenGL.Image
             Extents2D srcRegion = new(0, 0, Width, Height);
             Extents2D dstRegion = new(0, 0, destinationView.Width, destinationView.Height);
 
-            if (destinationView.Target.IsMultisample())
+            if (destinationView.Target.IsMultisample)
             {
-                TextureView intermmediate = _renderer.TextureCopy.IntermediatePool.GetOrCreateWithAtLeast(
+                TextureView intermediate = _renderer.TextureCopy.IntermediatePool.GetOrCreateWithAtLeast(
                     Info.Target,
                     Info.BlockWidth,
                     Info.BlockHeight,
@@ -230,8 +230,8 @@ namespace Ryujinx.Graphics.OpenGL.Image
                     1,
                     1);
 
-                _renderer.TextureCopy.Copy(this, intermmediate, srcRegion, dstRegion, false);
-                _renderer.TextureCopy.Copy(intermmediate, destinationView, dstRegion, dstRegion, false, srcLayer, dstLayer, 0, 0, layers, 1);
+                _renderer.TextureCopy.Copy(this, intermediate, srcRegion, dstRegion, false);
+                _renderer.TextureCopy.Copy(intermediate, destinationView, dstRegion, dstRegion, false, srcLayer, dstLayer, 0, 0, layers, 1);
             }
             else
             {
@@ -242,7 +242,7 @@ namespace Ryujinx.Graphics.OpenGL.Image
                     _ => Target,
                 };
 
-                TextureView intermmediate = _renderer.TextureCopy.IntermediatePool.GetOrCreateWithAtLeast(
+                TextureView intermediate = _renderer.TextureCopy.IntermediatePool.GetOrCreateWithAtLeast(
                     target,
                     Info.BlockWidth,
                     Info.BlockHeight,
@@ -254,8 +254,8 @@ namespace Ryujinx.Graphics.OpenGL.Image
                     1,
                     1);
 
-                _renderer.TextureCopy.Copy(this, intermmediate, srcRegion, srcRegion, false);
-                _renderer.TextureCopy.Copy(intermmediate, destinationView, srcRegion, dstRegion, false, srcLayer, dstLayer, 0, 0, layers, 1);
+                _renderer.TextureCopy.Copy(this, intermediate, srcRegion, srcRegion, false);
+                _renderer.TextureCopy.Copy(intermediate, destinationView, srcRegion, dstRegion, false, srcLayer, dstLayer, 0, 0, layers, 1);
             }
         }
 
@@ -305,14 +305,12 @@ namespace Ryujinx.Graphics.OpenGL.Image
             {
                 return PinnedSpan<byte>.UnsafeFromSpan(_renderer.PersistentBuffers.Default.GetTextureData(this, size, layer, level));
             }
-            else
-            {
-                nint target = _renderer.PersistentBuffers.Default.GetHostArray(size);
 
-                int offset = WriteTo2D(target, layer, level);
+            nint target = _renderer.PersistentBuffers.Default.GetHostArray(size);
 
-                return new PinnedSpan<byte>((byte*)target.ToPointer() + offset, size);
-            }
+            int offset = WriteTo2D(target, layer, level);
+
+            return new PinnedSpan<byte>((byte*)target.ToPointer() + offset, size);
         }
 
         public void CopyTo(BufferRange range, int layer, int level, int stride)
@@ -322,7 +320,7 @@ namespace Ryujinx.Graphics.OpenGL.Image
                 throw new NotSupportedException("Stride conversion for texture copy to buffer not supported.");
             }
 
-            GL.BindBuffer(BufferTarget.PixelPackBuffer, range.Handle.ToInt32());
+            GL.BindBuffer(BufferTarget.PixelPackBuffer, range.Handle);
 
             FormatInfo format = FormatTable.GetFormatInfo(Info.Format);
             if (format.PixelFormat == PixelFormat.DepthStencil)
