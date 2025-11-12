@@ -28,6 +28,8 @@ namespace Ryujinx.Ava.Systems.Configuration
             {
                 RyuLogger.Warning?.Print(LogClass.Application, $"Unsupported configuration version {cff.Version}, loading default.");
 
+                ConfigurationFileFormat.RenameInvalidConfigFile(configurationFilePath);
+
                 LoadDefault();
                 return;
             }

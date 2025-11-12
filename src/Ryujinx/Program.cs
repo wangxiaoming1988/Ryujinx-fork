@@ -233,6 +233,8 @@ namespace Ryujinx.Ava
                 {
                     Logger.Warning?.PrintMsg(LogClass.Application, $"Failed to load config! Loading the default config instead.\nFailed config location: {ConfigurationPath}");
 
+                    ConfigurationFileFormat.RenameInvalidConfigFile(ConfigurationPath);
+
                     ConfigurationState.Instance.LoadDefault();
                 }
             }

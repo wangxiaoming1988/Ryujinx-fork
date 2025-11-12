@@ -6,7 +6,9 @@ using Ryujinx.Common.Configuration.Multiplayer;
 using Ryujinx.Common.Logging;
 using Ryujinx.Common.Utilities;
 using Ryujinx.HLE;
+using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Ryujinx.Ava.Systems.Configuration
 {
@@ -507,6 +509,43 @@ namespace Ryujinx.Ava.Systems.Configuration
                 configurationFileFormat = null;
 
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Renames the configuration file when it is deemed invalid
+        /// </summary>
+        /// <param name="path">The path to the invalid JSON configuration file</param>
+        /// <returns>The path of the renamed invalid JSON configuration file, or null if the rename failed</returns>
+        public static string RenameInvalidConfigFile(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+            {
+                return null;
+            }
+
+            try
+            {
+                string directory = Path.GetDirectoryName(path) ?? string.Empty;
+                string originalFileName = Path.GetFileName(path);
+                if (string.IsNullOrWhiteSpace(originalFileName))
+                {
+                    return null;
+                }
+                string renamedFileName = $"{originalFileName}.{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.invalid";
+                string renamedPath = string.IsNullOrEmpty(directory) ? renamedFileName : Path.Combine(directory, renamedFileName);
+
+                File.Move(path, renamedPath, overwrite: false);
+
+                Logger.Warning?.PrintMsg(LogClass.Application, $"Invalid configuration renamed to: {renamedPath}");
+
+                return renamedPath;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error?.PrintMsg(LogClass.Application, $"Failed to rename invalid configuration file \"{path}\": {ex}");
+
+                return null;
             }
         }
 
