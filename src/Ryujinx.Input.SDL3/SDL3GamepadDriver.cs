@@ -65,7 +65,7 @@ namespace Ryujinx.Input.SDL3
 
             string strGuid = new(guidBytes);
 
-            return $"{strGuid[0..8]}-{strGuid[8..12]}-{strGuid[12..16]}-{strGuid[16..20]}-{strGuid[20..32]}";
+            return $"{strGuid[4..6]}{strGuid[6..8]}{strGuid[2..4]}{strGuid[0..2]}-{strGuid[10..12]}{strGuid[8..10]}-{strGuid[12..16]}-{strGuid[16..20]}-{strGuid[20..32]}";
 
         }
 
