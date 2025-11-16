@@ -2275,12 +2275,12 @@
 010018E011D92000,"Pokémon™ Shining Pearl",gpu;ldn-works,ingame,2024-08-28 13:26:35
 010015F008C54000,"Pokémon™ HOME",Needs Update;crash;services,menus,2020-12-06 06:01:51
 01001F5010DFA000,"Pokémon™ Legends: Arceus",gpu;Needs Update;ldn-works,ingame,2024-09-19 10:02:02
+0100F43008C44000,"Pokémon™ Legends: Z-A",gpu;crash;ldn-works,ingame,2025-11-16 00:30:00
 01005D100807A000,"Pokémon™ Quest",,playable,2022-02-22 16:12:32
 0100A3D008C5C000,"Pokémon™ Scarlet",gpu;nvdec;ldn-works;amd-vendor-bug,ingame,2023-12-14 13:18:29
 01008F6008C5E000,"Pokémon™ Violet",gpu;nvdec;ldn-works;amd-vendor-bug;mac-bug,ingame,2024-07-30 02:51:48
 0100187003A36000,"Pokémon™: Let’s Go, Eevee!",crash;nvdec;online-broken;ldn-broken,ingame,2024-06-01 15:03:04
 010003F003A34000,"Pokémon™: Let’s Go, Pikachu!",crash;nvdec;online-broken;ldn-broken,ingame,2024-03-15 07:55:41
-0100F43008C44000,"Pokémon Legends: Z-A",gpu;crash;ldn-broken,ingame,2025-10-16 19:13:00
 0100B3F000BE2000,"Pokkén Tournament™ DX",nvdec;ldn-works;opengl-backend-bug;LAN;amd-vendor-bug;intel-vendor-bug,playable,2024-07-18 23:11:08
 010030D005AE6000,"Pokkén Tournament™ DX Demo",demo;opengl-backend-bug,playable,2022-08-10 12:03:19
 0100A3500B4EC000,"Polandball: Can Into Space",,playable,2020-06-25 15:13:26
