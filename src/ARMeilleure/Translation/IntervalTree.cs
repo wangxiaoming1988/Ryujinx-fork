@@ -361,10 +361,7 @@ namespace ARMeilleure.Translation
 
             IntervalTreeNode<TK, TV> tmp = LeftOf(replacementNode) ?? RightOf(replacementNode);
 
-            if (tmp != null)
-            {
-                tmp.Parent = ParentOf(replacementNode);
-            }
+            tmp?.Parent = ParentOf(replacementNode);
 
             if (ParentOf(replacementNode) == null)
             {
@@ -582,10 +579,7 @@ namespace ARMeilleure.Translation
             {
                 IntervalTreeNode<TK, TV> right = RightOf(node);
                 node.Right = LeftOf(right);
-                if (node.Right != null)
-                {
-                    node.Right.Parent = node;
-                }
+                node.Right?.Parent = node;
 
                 IntervalTreeNode<TK, TV> nodeParent = ParentOf(node);
                 right.Parent = nodeParent;
@@ -615,10 +609,7 @@ namespace ARMeilleure.Translation
             {
                 IntervalTreeNode<TK, TV> left = LeftOf(node);
                 node.Left = RightOf(left);
-                if (node.Left != null)
-                {
-                    node.Left.Parent = node;
-                }
+                node.Left?.Parent = node;
 
                 IntervalTreeNode<TK, TV> nodeParent = ParentOf(node);
                 left.Parent = nodeParent;
@@ -667,10 +658,7 @@ namespace ARMeilleure.Translation
         /// <param name="color">Color (Boolean)</param>
         private static void SetColor(IntervalTreeNode<TK, TV> node, bool color)
         {
-            if (node != null)
-            {
-                node.Color = color;
-            }
+            node?.Color = color;
         }
 
         /// <summary>

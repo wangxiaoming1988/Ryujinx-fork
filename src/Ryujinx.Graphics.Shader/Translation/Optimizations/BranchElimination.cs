@@ -26,12 +26,8 @@ namespace Ryujinx.Graphics.Shader.Translation.Optimizations
             // - Both branches are jumping to the same location.
             // In this case, the branch on the current block can be removed,
             // as the next block is going to jump to the same place anyway.
-            if (nextBlock == null)
-            {
-                return false;
-            }
 
-            if (nextBlock.Operations.First?.Value is not Operation next)
+            if (nextBlock?.Operations.First?.Value is not Operation next)
             {
                 return false;
             }

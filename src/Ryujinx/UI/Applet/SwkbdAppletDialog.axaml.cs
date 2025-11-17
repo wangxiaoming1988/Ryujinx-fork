@@ -167,10 +167,7 @@ namespace Ryujinx.Ava.UI.Controls
 
         private void Message_TextInput(object sender, TextInputEventArgs e)
         {
-            if (_host != null)
-            {
-                _host.IsPrimaryButtonEnabled = _checkLength(Message.Length) && _checkInput(Message);
-            }
+            _host?.IsPrimaryButtonEnabled = _checkLength(Message.Length) && _checkInput(Message);
         }
 
         private void Message_KeyUp(object sender, KeyEventArgs e)

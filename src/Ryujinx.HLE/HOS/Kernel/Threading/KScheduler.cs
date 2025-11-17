@@ -174,10 +174,7 @@ namespace Ryujinx.HLE.HOS.Kernel.Threading
 
             if (previousThread != nextThread)
             {
-                if (previousThread != null)
-                {
-                    previousThread.LastScheduledTime = PerformanceCounter.ElapsedTicks;
-                }
+                previousThread?.LastScheduledTime = PerformanceCounter.ElapsedTicks;
 
                 _state.SelectedThread = nextThread;
                 _state.NeedsScheduling = true;
