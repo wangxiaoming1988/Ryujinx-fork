@@ -134,6 +134,11 @@ namespace ARMeilleure.State
         public bool GetFPstateFlag(FPState flag) => _nativeContext.GetFPStateFlag(flag);
         public void SetFPstateFlag(FPState flag, bool value) => _nativeContext.SetFPStateFlag(flag, value);
 
+        internal void ResetCallDepth()
+        {
+            _nativeContext.ResetCallDepth();
+        }
+
         internal void CheckInterrupt()
         {
             if (Interrupted)
