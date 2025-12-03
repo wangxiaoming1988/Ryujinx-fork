@@ -483,10 +483,29 @@ namespace Ryujinx.HLE.FileSystem
         {
             if (Directory.Exists(keysSource))
             {
-                foreach (string filePath in Directory.EnumerateFiles(keysSource, "*.keys"))
+                string[] keyPaths = Directory.EnumerateFiles(keysSource, "*.keys").ToArray();
+
+                if (keyPaths.Length is 0)
+                    throw new FileNotFoundException($"Directory '{keysSource}' contained no '.keys' files.");
+
+                foreach (string filePath in keyPaths)
                 {
-                    VerifyKeysFile(filePath);
-                    File.Copy(filePath, Path.Combine(installDirectory, Path.GetFileName(filePath)), true);
+                    try
+                    {
+                        VerifyKeysFile(filePath);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Error?.Print(LogClass.Application, e.Message);
+                        continue;
+                    }
+
+                    string destPath = Path.Combine(installDirectory, Path.GetFileName(filePath));
+
+                    if (File.Exists(destPath))
+                        File.Delete(destPath);
+
+                    File.Copy(filePath, destPath, true);
                 }
 
                 return;
@@ -501,13 +520,25 @@ namespace Ryujinx.HLE.FileSystem
 
             using FileStream file = File.OpenRead(keysSource);
 
-            if (info.Extension is ".keys")
+            if (info.Extension is not ".keys")
+                throw new InvalidFirmwarePackageException("Input file extension is not .keys");
+
+            try
             {
                 VerifyKeysFile(keysSource);
-                File.Copy(keysSource, Path.Combine(installDirectory, info.Name), true);
-            } 
-            else
+            }
+            catch
+            {
                 throw new InvalidFirmwarePackageException("Input file is not a valid key package");
+            }
+
+            string dest = Path.Combine(installDirectory, info.Name);
+
+            if (File.Exists(dest))
+                File.Delete(dest);
+
+            // overwrite: true seems to not work on its own? https://github.com/Ryubing/Issues/issues/189
+            File.Copy(keysSource, dest, true);
         }
 
         private void FinishInstallation(string temporaryDirectory, string registeredDirectory)
@@ -985,8 +1016,8 @@ namespace Ryujinx.HLE.FileSystem
         public static void VerifyKeysFile(string filePath)
         {
             // Verify the keys file format refers to https://github.com/Thealexbarney/LibHac/blob/master/KEYS.md
-            string genericPattern = @"^[a-z0-9_]+ = [a-z0-9]+$";
-            string titlePattern = @"^[a-z0-9]{32} = [a-z0-9]{32}$";
+            string genericPattern = "^[a-z0-9_]+ = [a-z0-9]+$";
+            string titlePattern = "^[a-z0-9]{32} = [a-z0-9]{32}$";
 
             if (File.Exists(filePath))
             {
@@ -994,24 +1025,13 @@ namespace Ryujinx.HLE.FileSystem
                 string fileName = Path.GetFileName(filePath);
                 string[] lines = File.ReadAllLines(filePath);
 
-                bool verified;
-                switch (fileName)
+                bool verified = fileName switch
                 {
-                    case "prod.keys":
-                        verified = VerifyKeys(lines, genericPattern);
-                        break;
-                    case "title.keys":
-                        verified = VerifyKeys(lines, titlePattern);
-                        break;
-                    case "console.keys":
-                        verified = VerifyKeys(lines, genericPattern);
-                        break;
-                    case "dev.keys":
-                        verified = VerifyKeys(lines, genericPattern);
-                        break;
-                    default:
-                        throw new FormatException($"Keys file name \"{fileName}\" not supported. Only \"prod.keys\", \"title.keys\", \"console.keys\", \"dev.keys\" are supported.");
-                }
+                    "prod.keys" or "console.keys" or "dev.keys" => VerifyKeys(lines, genericPattern),
+                    "title.keys" => VerifyKeys(lines, titlePattern),
+                    _ => throw new FormatException(
+                        $"Keys file name \"{fileName}\" not supported. Only \"prod.keys\", \"title.keys\", \"console.keys\", \"dev.keys\" are supported.")
+                };
 
                 if (!verified)
                 {
