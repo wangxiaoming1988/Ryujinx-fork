@@ -30,8 +30,8 @@ jobs:
     strategy:
       matrix:
         platform:
-          - { name: win-x64,     os: windows-latest, zip_os_name: win_x64     }
-          #- { name: win-arm64,   os: windows-latest, zip_os_name: win_arm64   }
+          - { name: win-x64,     os: ubuntu-latest, zip_os_name: win_x64     }
+          #- { name: win-arm64,   os: ubuntu-latest, zip_os_name: win_arm64   }
           - { name: linux-x64,   os: ubuntu-latest,  zip_os_name: linux_x64   }
           - { name: linux-arm64, os: ubuntu-latest,  zip_os_name: linux_arm64 }
     steps:
@@ -43,6 +43,20 @@ jobs:
 
       - name: Overwrite csc problem matcher
         run: echo "::add-matcher::.github/csc.json"
+
+      - name: Install 7zip
+        run: |
+          sudo apt install -y 7zip
+
+      - name: Install GitLabCli
+        run: |
+          mkdir -p $HOME/.bin
+          gh release download -R GreemDev/GLI -O gli -p 'GitLabCli-linux_x64'
+          chmod +x gli
+          mv gli $HOME/.bin/
+          echo "$HOME/.bin" >> $GITHUB_PATH
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get version info
         id: version_info
@@ -69,33 +83,20 @@ jobs:
           dotnet publish -c Release -r "${{ matrix.platform.name }}" -o ./publish -p:Version="${{ steps.version_info.outputs.build_version }}" -p:SourceRevisionId="${{ steps.version_info.outputs.git_short_hash }}" -p:DebugType=embedded src/Ryujinx --self-contained
 
       - name: Packing Windows builds
-        if: matrix.platform.os == 'windows-latest'
+        if: contains(matrix.platform.name, 'win')
         run: |
           pushd publish
           rm libarmeilleure-jitsupport.dylib
-          7z a ../release_output/ryujinx-canary-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip ../publish
+          7zz a ../release_output/ryujinx-canary-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip ../publish
           popd
           
-          gh release download -R GreemDev/GLI -O gli.exe -p 'GitLabCli-win_x64.exe'
-          
-          ./gli.exe --access-token=${{ secrets.GITLAB_TOKEN }} --project=ryubing/canary --command=UploadGenericPackage "Ryubing-Canary|${{ steps.version_info.outputs.build_version }}|release_output/ryujinx-canary-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip"
+          gli --access-token=${{ secrets.GITLAB_TOKEN }} --project=ryubing/canary --command=UploadGenericPackage "Ryubing-Canary|${{ steps.version_info.outputs.build_version }}|release_output/ryujinx-canary-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip"
         shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Install GitLabCli
-        if: matrix.platform.os == 'ubuntu-latest'
-        run: |
-          mkdir -p $HOME/.bin
-          gh release download -R GreemDev/GLI -O gli -p 'GitLabCli-linux_x64'
-          chmod +x gli
-          mv gli $HOME/.bin/
-          echo "$HOME/.bin" >> $GITHUB_PATH
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Packing Linux builds
-        if: matrix.platform.os == 'ubuntu-latest'
+        if: contains(matrix.platform.name, 'linux')
         run: |
           pushd publish
           rm libarmeilleure-jitsupport.dylib
@@ -107,7 +108,7 @@ jobs:
         shell: bash
 
       - name: Build AppImage (Linux)
-        if: matrix.platform.os == 'ubuntu-latest'
+        if: contains(matrix.platform.name, 'linux')
         run: |
           BUILD_VERSION="${{ steps.version_info.outputs.build_version }}"
           PLATFORM_NAME="${{ matrix.platform.name }}"
