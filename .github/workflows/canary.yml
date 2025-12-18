@@ -51,7 +51,7 @@ jobs:
       - name: Install GitLabCli
         run: |
           mkdir -p $HOME/.bin
-          gh release download -R GreemDev/GLI -O gli -p 'GitLabCli-linux_x64'
+          gh release download -R GreemDev/GLI -O gli -p 'GitLabCli-linux_x64' 1.4.1
           chmod +x gli
           mv gli $HOME/.bin/
           echo "$HOME/.bin" >> $GITHUB_PATH
@@ -163,7 +163,7 @@ jobs:
       - name: Install GitLabCli
         run: |
           mkdir -p $HOME/.bin
-          gh release download -R GreemDev/GLI -O gli -p 'GitLabCli-linux_x64'
+          gh release download -R GreemDev/GLI -O gli -p 'GitLabCli-linux_x64' 1.4.1
           chmod +x gli
           mv gli $HOME/.bin/
           echo "$HOME/.bin" >> $GITHUB_PATH
@@ -223,7 +223,7 @@ jobs:
       - name: Install GitLabCli
         run: |
           mkdir -p $HOME/.bin
-          gh release download -R GreemDev/GLI -O gli -p 'GitLabCli-linux_x64'
+          gh release download -R GreemDev/GLI -O gli -p 'GitLabCli-linux_x64' 1.4.1
           chmod +x gli
           mv gli $HOME/.bin/
           echo "$HOME/.bin" >> $GITHUB_PATH
