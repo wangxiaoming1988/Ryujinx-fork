@@ -86,7 +86,7 @@ jobs:
           7z a ../release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip ../publish
           popd
 
-          gli upload-generic-package -T ${{ secrets.GITLAB_TOKEN }} -P ryubing/ryujinx -n Ryubing -v ${{ steps.version_info.outputs.build_version }} -p release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip
+          gli upload-generic-package -T ${{ secrets.GITLAB_TOKEN }} -P ryubing/ryujinx -n Ryubing -v ${{ steps.version_info.outputs.build_version }} -r 5 -p release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.zip
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -100,7 +100,7 @@ jobs:
           tar -czvf ../release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz ../publish
           popd
 
-          gli upload-generic-package -T ${{ secrets.GITLAB_TOKEN }} -P ryubing/ryujinx -n Ryubing -v ${{ steps.version_info.outputs.build_version }} -p release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz
+          gli upload-generic-package -T ${{ secrets.GITLAB_TOKEN }} -P ryubing/ryujinx -n Ryubing -v ${{ steps.version_info.outputs.build_version }} -r 5 -p release_output/ryujinx-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -139,7 +139,7 @@ jobs:
           mv Ryujinx.AppImage ../release_output/ryujinx-$BUILD_VERSION-$ARCH_NAME.AppImage
           popd
 
-          gli upload-generic-package -T ${{ secrets.GITLAB_TOKEN }} -P ryubing/ryujinx -n Ryubing -v ${{ steps.version_info.outputs.build_version }} -p release_output/ryujinx-$BUILD_VERSION-$ARCH_NAME.AppImage
+          gli upload-generic-package -T ${{ secrets.GITLAB_TOKEN }} -P ryubing/ryujinx -n Ryubing -v ${{ steps.version_info.outputs.build_version }} -r 5 -p release_output/ryujinx-$BUILD_VERSION-$ARCH_NAME.AppImage
         shell: bash
 
   macos_release:
@@ -203,7 +203,7 @@ jobs:
         run: |
           ./distribution/macos/create_macos_build_ava.sh . publish_tmp_ava publish ./distribution/macos/entitlements.xml "${{ steps.version_info.outputs.build_version }}" "${{ steps.version_info.outputs.git_short_hash }}" Release 0
           
-          gli upload-generic-package -T ${{ secrets.GITLAB_TOKEN }} -P ryubing/ryujinx -n Ryubing -v ${{ steps.version_info.outputs.build_version }} -p publish/ryujinx-${{ steps.version_info.outputs.build_version }}-macos_universal.app.tar.gz
+          gli upload-generic-package -T ${{ secrets.GITLAB_TOKEN }} -P ryubing/ryujinx -n Ryubing -v ${{ steps.version_info.outputs.build_version }} -r 5 -p publish/ryujinx-${{ steps.version_info.outputs.build_version }}-macos_universal.app.tar.gz
           
   create_gitlab_release:
     name: Create GitLab Release
