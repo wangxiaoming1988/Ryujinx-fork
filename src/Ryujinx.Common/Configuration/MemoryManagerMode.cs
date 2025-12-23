@@ -1,9 +1,8 @@
-using Ryujinx.Common.Utilities;
 using System.Text.Json.Serialization;
 
 namespace Ryujinx.Common.Configuration
 {
-    [JsonConverter(typeof(TypedStringEnumConverter<MemoryManagerMode>))]
+    [JsonConverter(typeof(JsonStringEnumConverter<MemoryManagerMode>))]
     public enum MemoryManagerMode : byte
     {
         SoftwarePageTable,

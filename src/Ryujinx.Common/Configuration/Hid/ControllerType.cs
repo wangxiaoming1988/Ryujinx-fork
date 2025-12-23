@@ -1,4 +1,3 @@
-using Ryujinx.Common.Utilities;
 using System;
 using System.Text.Json.Serialization;
 
@@ -6,7 +5,7 @@ namespace Ryujinx.Common.Configuration.Hid
 {
     // This enum was duplicated from Ryujinx.HLE.HOS.Services.Hid.PlayerIndex and should be kept identical
     [Flags]
-    [JsonConverter(typeof(TypedStringEnumConverter<ControllerType>))]
+    [JsonConverter(typeof(JsonStringEnumConverter<ControllerType>))]
     public enum ControllerType
     {
         None,

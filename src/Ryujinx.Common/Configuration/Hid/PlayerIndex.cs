@@ -1,10 +1,9 @@
-using Ryujinx.Common.Utilities;
 using System.Text.Json.Serialization;
 
 namespace Ryujinx.Common.Configuration.Hid
 {
     // This enum was duplicated from Ryujinx.HLE.HOS.Services.Hid.PlayerIndex and should be kept identical
-    [JsonConverter(typeof(TypedStringEnumConverter<PlayerIndex>))]
+    [JsonConverter(typeof(JsonStringEnumConverter<PlayerIndex>))]
     public enum PlayerIndex
     {
         Player1 = 0,

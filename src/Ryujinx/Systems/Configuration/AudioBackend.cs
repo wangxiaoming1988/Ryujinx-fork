@@ -1,9 +1,8 @@
-using Ryujinx.Common.Utilities;
 using System.Text.Json.Serialization;
 
 namespace Ryujinx.Ava.Systems.Configuration
 {
-    [JsonConverter(typeof(TypedStringEnumConverter<AudioBackend>))]
+    [JsonConverter(typeof(JsonStringEnumConverter<AudioBackend>))]
     public enum AudioBackend
     {
         Dummy,

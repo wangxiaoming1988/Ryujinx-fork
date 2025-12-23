@@ -1,9 +1,8 @@
-using Ryujinx.Common.Utilities;
 using System.Text.Json.Serialization;
 
 namespace Ryujinx.Common.Configuration.Hid.Controller.Motion
 {
-    [JsonConverter(typeof(TypedStringEnumConverter<MotionInputBackendType>))]
+    [JsonConverter(typeof(JsonStringEnumConverter<MotionInputBackendType>))]
     public enum MotionInputBackendType : byte
     {
         Invalid,

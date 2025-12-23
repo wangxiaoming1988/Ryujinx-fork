@@ -1,10 +1,9 @@
-using Ryujinx.Common.Utilities;
 using Ryujinx.HLE.HOS.SystemState;
 using System.Text.Json.Serialization;
 
 namespace Ryujinx.Ava.Systems.Configuration.System
 {
-    [JsonConverter(typeof(TypedStringEnumConverter<Region>))]
+    [JsonConverter(typeof(JsonStringEnumConverter<Region>))]
     public enum Region
     {
         Japan,

@@ -1,10 +1,9 @@
-using Ryujinx.Common.Utilities;
 using Ryujinx.HLE.HOS.SystemState;
 using System.Text.Json.Serialization;
 
 namespace Ryujinx.Ava.Systems.Configuration.System
 {
-    [JsonConverter(typeof(TypedStringEnumConverter<Language>))]
+    [JsonConverter(typeof(JsonStringEnumConverter<Language>))]
     public enum Language
     {
         Japanese,

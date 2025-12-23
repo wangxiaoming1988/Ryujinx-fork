@@ -1,9 +1,8 @@
-using Ryujinx.Common.Utilities;
 using System.Text.Json.Serialization;
 
 namespace Ryujinx.Common.Configuration.Hid
 {
-    [JsonConverter(typeof(TypedStringEnumConverter<Key>))]
+    [JsonConverter(typeof(JsonStringEnumConverter<Key>))]
     public enum Key
     {
         Unknown,
