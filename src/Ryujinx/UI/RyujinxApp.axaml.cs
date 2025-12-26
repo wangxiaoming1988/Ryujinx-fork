@@ -56,6 +56,8 @@ namespace Ryujinx.Ava
 
             if (OperatingSystem.IsMacOS())
             {
+                // Switches macOS key held behavior to repeat the input key instead of showing the character accents menu (like doing on an iOS keyboard would).
+                // https://macos-defaults.com/keyboard/applepressandholdenabled.html
                 Process.Start("/usr/bin/defaults", "write org.ryujinx.Ryujinx ApplePressAndHoldEnabled -bool false");
             }
         }
