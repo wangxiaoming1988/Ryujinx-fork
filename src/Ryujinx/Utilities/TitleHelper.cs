@@ -1,3 +1,4 @@
+using Gommon;
 using Ryujinx.HLE.Loaders.Processes;
 
 namespace Ryujinx.Ava.Utilities
@@ -21,6 +22,24 @@ namespace Ryujinx.Ava.Utilities
             return !string.IsNullOrEmpty(pauseString)
                 ? appTitle + $" ({pauseString})"
                 : appTitle;
+        }
+
+        public static string FormatRenderDocCaptureTitle(ProcessResult activeProcess, string applicationVersion)
+        {
+            if (activeProcess == null)
+                return string.Empty;
+
+            string titleNameSection = string.IsNullOrWhiteSpace(activeProcess.Name) ? string.Empty : activeProcess.Name;
+            string titleVersionSection = string.IsNullOrWhiteSpace(activeProcess.DisplayVersion) ? string.Empty : $"v{activeProcess.DisplayVersion}";
+            string titleIdSection = $"({activeProcess.ProgramIdText.ToUpper()})";
+            string titleArchSection = activeProcess.Is64Bit ? "(64-bit)" : "(32-bit)";
+
+            return CommandLineState.RenderDocCaptureTitleFormat
+                .ReplaceIgnoreCase("{EmuVersion}", applicationVersion)
+                .ReplaceIgnoreCase("{GuestName}", titleNameSection)
+                .ReplaceIgnoreCase("{GuestVersion}", titleVersionSection)
+                .ReplaceIgnoreCase("{GuestTitleId}", titleIdSection)
+                .ReplaceIgnoreCase("{GuestArch}", titleArchSection);
         }
     }
 }

@@ -21,6 +21,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ryujinx.Graphics.GAL", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ryujinx.Graphics.OpenGL", "src\Ryujinx.Graphics.OpenGL\Ryujinx.Graphics.OpenGL.csproj", "{9558FB96-075D-4219-8FFF-401979DC0B69}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ryujinx.Graphics.RenderDoc", "src\Ryujinx.Graphics.RenderDocApi\Ryujinx.Graphics.RenderDocApi.csproj", "{D58FA894-27D5-4EAA-9042-AD422AD82931}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ryujinx.Graphics.Texture", "src\Ryujinx.Graphics.Texture\Ryujinx.Graphics.Texture.csproj", "{E1B1AD28-289D-47B7-A106-326972240207}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ryujinx.Graphics.Shader", "src\Ryujinx.Graphics.Shader\Ryujinx.Graphics.Shader.csproj", "{03B955CD-AD84-4B93-AAA7-BF17923BBAA5}"
@@ -555,6 +557,18 @@ Global
 		{988E6191-82E1-4E13-9DDB-CB9FA2FDAF29}.Release|x64.Build.0 = Release|Any CPU
 		{988E6191-82E1-4E13-9DDB-CB9FA2FDAF29}.Release|x86.ActiveCfg = Release|Any CPU
 		{988E6191-82E1-4E13-9DDB-CB9FA2FDAF29}.Release|x86.Build.0 = Release|Any CPU
+		{D58FA894-27D5-4EAA-9042-AD422AD82931}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D58FA894-27D5-4EAA-9042-AD422AD82931}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D58FA894-27D5-4EAA-9042-AD422AD82931}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D58FA894-27D5-4EAA-9042-AD422AD82931}.Debug|x64.Build.0 = Debug|Any CPU
+		{D58FA894-27D5-4EAA-9042-AD422AD82931}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D58FA894-27D5-4EAA-9042-AD422AD82931}.Debug|x86.Build.0 = Debug|Any CPU
+		{D58FA894-27D5-4EAA-9042-AD422AD82931}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D58FA894-27D5-4EAA-9042-AD422AD82931}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D58FA894-27D5-4EAA-9042-AD422AD82931}.Release|x64.ActiveCfg = Release|Any CPU
+		{D58FA894-27D5-4EAA-9042-AD422AD82931}.Release|x64.Build.0 = Release|Any CPU
+		{D58FA894-27D5-4EAA-9042-AD422AD82931}.Release|x86.ActiveCfg = Release|Any CPU
+		{D58FA894-27D5-4EAA-9042-AD422AD82931}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

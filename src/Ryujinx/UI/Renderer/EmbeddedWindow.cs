@@ -2,8 +2,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform;
 using Ryujinx.Ava.Systems.Configuration;
+using Ryujinx.Ava.Utilities;
 using Ryujinx.Common.Configuration;
 using Ryujinx.Common.Helper;
+using Ryujinx.Common.Logging;
+using Ryujinx.Graphics.RenderDocApi;
+using Ryujinx.HLE;
 using SPB.Graphics;
 using SPB.Platform;
 using SPB.Platform.GLX;
@@ -30,6 +34,7 @@ namespace Ryujinx.Ava.UI.Renderer
         protected nint MetalLayer { get; set; }
 
         public delegate void UpdateBoundsCallbackDelegate(Rect rect);
+
         private UpdateBoundsCallbackDelegate _updateBoundsCallback;
 
         public event EventHandler<nint> WindowCreated;
@@ -45,6 +50,55 @@ namespace Ryujinx.Ava.UI.Renderer
         public virtual void OnWindowCreated() { }
 
         protected virtual void OnWindowDestroyed() { }
+
+        public bool ToggleRenderDocCapture(Switch device)
+        {
+            if (!RenderDoc.IsAvailable) return false;
+
+            if (RenderDoc.IsFrameCapturing)
+            {
+                if (EndRenderDocCapture())
+                {
+                    Logger.Info?.Print(LogClass.Application, "Ended RenderDoc capture.");
+                    return true;
+                }
+            } 
+            else if (StartRenderDocCapture(device))
+            {
+                Logger.Info?.Print(LogClass.Application, "Starting RenderDoc capture.");
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool StartRenderDocCapture(Switch device)
+        {
+            if (!RenderDoc.IsAvailable) return false;
+
+            if (RenderDoc.IsFrameCapturing) return false;
+
+            RenderDoc.StartFrameCapture(nint.Zero, WindowHandle);
+            RenderDoc.SetCaptureTitle(TitleHelper.FormatRenderDocCaptureTitle(device.Processes.ActiveApplication, Program.Version));
+
+            return true;
+        }
+
+        public bool EndRenderDocCapture()
+        {
+            if (!RenderDoc.IsAvailable) return false;
+            if (!RenderDoc.IsFrameCapturing) return false;
+
+            return RenderDoc.IsFrameCapturing && RenderDoc.EndFrameCapture(nint.Zero, WindowHandle);
+        }
+
+        public bool DiscardRenderDocCapture()
+        {
+            if (!RenderDoc.IsAvailable) return false;
+            if (!RenderDoc.IsFrameCapturing) return false;
+
+            return RenderDoc.IsFrameCapturing && RenderDoc.DiscardFrameCapture(nint.Zero, WindowHandle);
+        }
 
         protected virtual void OnWindowDestroying()
         {
@@ -124,7 +178,9 @@ namespace Ryujinx.Ava.UI.Renderer
             }
             else
             {
-                X11Window = PlatformHelper.CreateOpenGLWindow(new FramebufferFormat(new ColorFormat(8, 8, 8, 0), 16, 0, ColorFormat.Zero, 0, 2, false), 0, 0, 100, 100) as GLXWindow;
+                X11Window = PlatformHelper.CreateOpenGLWindow(
+                    new FramebufferFormat(new ColorFormat(8, 8, 8, 0), 16, 0, ColorFormat.Zero, 0, 2, false), 0, 0, 100,
+                    100) as GLXWindow;
             }
 
             WindowHandle = X11Window.WindowHandle.RawHandle;
@@ -138,7 +194,7 @@ namespace Ryujinx.Ava.UI.Renderer
         {
             _className = "NativeWindow-" + Guid.NewGuid();
 
-            _wndProcDelegate = delegate (nint hWnd, WindowsMessages msg, nint wParam, nint lParam)
+            _wndProcDelegate = delegate(nint hWnd, WindowsMessages msg, nint wParam, nint lParam)
             {
                 switch (msg)
                 {
@@ -161,7 +217,8 @@ namespace Ryujinx.Ava.UI.Renderer
 
             RegisterClassEx(ref wndClassEx);
 
-            WindowHandle = CreateWindowEx(0, _className, "NativeWindow", WindowStyles.WsChild, 0, 0, 640, 480, control.Handle, nint.Zero, nint.Zero, nint.Zero);
+            WindowHandle = CreateWindowEx(0, _className, "NativeWindow", WindowStyles.WsChild, 0, 0, 640, 480,
+                control.Handle, nint.Zero, nint.Zero, nint.Zero);
 
             SetWindowLongPtrW(control.Handle, GWLP_WNDPROC, wndClassEx.lpfnWndProc);
 

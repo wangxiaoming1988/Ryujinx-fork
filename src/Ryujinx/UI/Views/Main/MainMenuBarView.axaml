@@ -8,6 +8,7 @@
     xmlns:viewModels="clr-namespace:Ryujinx.Ava.UI.ViewModels"
     xmlns:controls="clr-namespace:Ryujinx.Ava.UI.Controls"
     xmlns:common="clr-namespace:Ryujinx.Common;assembly=Ryujinx.Common"
+    xmlns:renderDocApi="clr-namespace:Ryujinx.Graphics.RenderDocApi;assembly=Ryujinx.Graphics.RenderDocApi"
     x:DataType="viewModels:MainWindowViewModel"
     x:Class="Ryujinx.Ava.UI.Views.Main.MainMenuBarView">
     <Design.DataContext>
@@ -199,6 +200,29 @@
                     Name="CheatManagerMenuItem"
                     Header="{ext:Locale GameListContextMenuManageCheat}"
                     Icon="{ext:Icon fa-solid fa-code}"
+                    IsEnabled="{Binding IsGameRunning}" />
+                <Separator IsVisible="{Binding RenderDocIsAvailable}" />
+                <MenuItem
+                    IsVisible="{Binding ShowStartCaptureButton}"
+                    Command="{Binding StartRenderDocCapture}"
+                    CommandParameter="{Binding}"
+                    Header="{ext:Locale RenderDoc_MenuBarActions_StartCapture}"
+                    Icon="{ext:Icon fa-solid fa-video}"
+                    IsEnabled="{Binding IsGameRunning}" />
+                <MenuItem
+                    IsVisible="{Binding ShowEndCaptureButton}"
+                    Command="{Binding EndRenderDocCapture}"
+                    CommandParameter="{Binding}"
+                    Header="{ext:Locale RenderDoc_MenuBarActions_EndCapture}"
+                    Icon="{ext:Icon fa-solid fa-video-slash}"
+                    IsEnabled="{Binding IsGameRunning}" />
+                <MenuItem
+                    IsVisible="{Binding ShowEndCaptureButton}"
+                    Command="{Binding DiscardRenderDocCapture}"
+                    CommandParameter="{Binding}"
+                    Header="{ext:Locale RenderDoc_MenuBarActions_DiscardCapture}"
+                    ToolTip.Tip="{ext:Locale RenderDoc_MenuBarActions_DiscardCapture_ToolTip}"
+                    Icon="{ext:Icon fa-solid fa-video-slash}"
                     IsEnabled="{Binding IsGameRunning}" />
             </MenuItem>
             <MenuItem VerticalAlignment="Center" Header="{ext:Locale MenuBarActions}" IsVisible="{Binding EnableNonGameRunningControls}">

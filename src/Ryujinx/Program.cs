@@ -18,6 +18,7 @@ using Ryujinx.Common.GraphicsDriver;
 using Ryujinx.Common.Logging;
 using Ryujinx.Common.SystemInterop;
 using Ryujinx.Common.Utilities;
+using Ryujinx.Graphics.RenderDocApi;
 using Ryujinx.Graphics.Vulkan.MoltenVK;
 using Ryujinx.Headless;
 using Ryujinx.SDL3.Common;

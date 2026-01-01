@@ -78,7 +78,9 @@
   
   <ItemGroup>
     <ProjectReference Include="..\Ryujinx.Audio.Backends.SDL3\Ryujinx.Audio.Backends.SDL3.csproj" />
-    <ProjectReference Include="..\Ryujinx.Graphics.Vulkan\Ryujinx.Graphics.Vulkan.csproj" />
+    <ProjectReference Include="..\Ryujinx.Graphics.RenderDocApi\Ryujinx.Graphics.RenderDocApi.csproj" />
+    <ProjectReference Include="..\Ryujinx.Graphics.Vulkan/Ryujinx.Graphics.Vulkan.csproj" />
+    <ProjectReference Include="..\Ryujinx.Graphics.OpenGL/Ryujinx.Graphics.OpenGL.csproj" />
     <ProjectReference Include="..\Ryujinx.Input\Ryujinx.Input.csproj" />
     <ProjectReference Include="..\Ryujinx.Input.SDL3\Ryujinx.Input.SDL3.csproj" />
     <ProjectReference Include="..\Ryujinx.Audio.Backends.OpenAL\Ryujinx.Audio.Backends.OpenAL.csproj" />
@@ -86,7 +88,6 @@
     <ProjectReference Include="..\Ryujinx.Common\Ryujinx.Common.csproj" />
     <ProjectReference Include="..\Ryujinx.HLE\Ryujinx.HLE.csproj" />
     <ProjectReference Include="..\ARMeilleure\ARMeilleure.csproj" />
-    <ProjectReference Include="..\Ryujinx.Graphics.OpenGL\Ryujinx.Graphics.OpenGL.csproj" />
     <ProjectReference Include="..\Ryujinx.Graphics.Gpu\Ryujinx.Graphics.Gpu.csproj" />
     <ProjectReference Include="..\Ryujinx.UI.LocaleGenerator\Ryujinx.UI.LocaleGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
