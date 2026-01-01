@@ -190,7 +190,7 @@ namespace Ryujinx.Ava.Common.Locale
 
             }
 
-            foreach (LocalesJson file in _localeData.Value.LocalesFiles.Values)
+            foreach ((string fileName, LocalesJson file) in _localeData.Value.LocalesFiles)
             {
                 foreach (LocalesEntry locale in file.Locales)
                 {
@@ -206,7 +206,7 @@ namespace Ryujinx.Ava.Common.Locale
                             $"Locale key {{{locale.ID}}} has too many languages! Has {locale.Translations.Count} translations, expected {_localeData.Value.Languages.Count}!");
                     }
 
-                    if (!Enum.TryParse<LocaleKeys>(locale.ID, out LocaleKeys localeKey))
+                    if (!Enum.TryParse<LocaleKeys>(fileName == "Root.json" ? locale.ID : $"{fileName[..^".json".Length]}_{locale.ID}" , out LocaleKeys localeKey))
                         continue;
 
                     string str = locale.Translations.TryGetValue(languageCode, out string val) && !string.IsNullOrEmpty(val)
