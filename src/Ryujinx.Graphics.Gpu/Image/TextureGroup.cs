@@ -658,7 +658,7 @@ namespace Ryujinx.Graphics.Gpu.Image
 
                 bool canImport = Storage.Info.IsLinear && Storage.Info.Stride >= Storage.Info.Width * Storage.Info.FormatInfo.BytesPerPixel;
 
-                IntPtr hostPointer = canImport ? _physicalMemory.GetHostPointer(Storage.Range) : 0;
+                nint hostPointer = canImport ? _physicalMemory.GetHostPointer(Storage.Range) : 0;
 
                 if (hostPointer != 0 && _context.Renderer.PrepareHostMapping(hostPointer, Storage.Size))
                 {

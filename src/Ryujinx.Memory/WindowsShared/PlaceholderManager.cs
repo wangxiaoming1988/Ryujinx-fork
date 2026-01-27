@@ -159,7 +159,7 @@ namespace Ryujinx.Memory.WindowsShared
         {
             SplitForMap((ulong)location, (ulong)size, srcOffset);
 
-            IntPtr ptr = WindowsApi.MapViewOfFile3(
+            nint ptr = WindowsApi.MapViewOfFile3(
                 sharedMemory,
                 WindowsApi.CurrentProcessHandle,
                 location,

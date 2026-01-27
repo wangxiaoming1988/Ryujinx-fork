@@ -130,7 +130,7 @@ namespace Ryujinx.Audio.Backends.SoundIo.Native
             unsafe
             {
                 int* frameCountPtr = &nativeFrameCount;
-                IntPtr* arenasPtr = &arenas;
+                nint* arenasPtr = &arenas;
                 CheckError(soundio_outstream_begin_write(_context, (nint)arenasPtr, (nint)frameCountPtr));
 
                 frameCount = *frameCountPtr;

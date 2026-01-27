@@ -86,7 +86,7 @@ namespace Ryujinx.Graphics.Vulkan
                 enabledExtensions = enabledExtensions.Append(ExtDebugUtils.ExtensionName).ToArray();
             }
 
-            IntPtr appName = Marshal.StringToHGlobalAnsi(AppName);
+            nint appName = Marshal.StringToHGlobalAnsi(AppName);
 
             ApplicationInfo applicationInfo = new()
             {
@@ -166,7 +166,7 @@ namespace Ryujinx.Graphics.Vulkan
 
         internal static DeviceInfo[] GetSuitablePhysicalDevices(Vk api)
         {
-            IntPtr appName = Marshal.StringToHGlobalAnsi(AppName);
+            nint appName = Marshal.StringToHGlobalAnsi(AppName);
 
             ApplicationInfo applicationInfo = new()
             {

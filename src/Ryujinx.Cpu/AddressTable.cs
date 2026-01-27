@@ -30,9 +30,9 @@ namespace ARMeilleure.Common
             /// <summary>
             /// Base address for the page.
             /// </summary>
-            public readonly IntPtr Address;
+            public readonly nint Address;
 
-            public AddressTablePage(bool isSparse, IntPtr address)
+            public AddressTablePage(bool isSparse, nint address)
             {
                 IsSparse = isSparse;
                 Address = address;
@@ -47,20 +47,20 @@ namespace ARMeilleure.Common
             public readonly SparseMemoryBlock Block;
             private readonly TrackingEventDelegate _trackingEvent;
 
-            public TableSparseBlock(ulong size, Action<IntPtr> ensureMapped, PageInitDelegate pageInit)
+            public TableSparseBlock(ulong size, Action<nint> ensureMapped, PageInitDelegate pageInit)
             {
                 SparseMemoryBlock block = new(size, pageInit, null);
 
                 _trackingEvent = (address, size, write) =>
                 {
                     ulong pointer = (ulong)block.Block.Pointer + address;
-                    ensureMapped((IntPtr)pointer);
+                    ensureMapped((nint)pointer);
                     return pointer;
                 };
 
                 bool added = NativeSignalHandler.AddTrackedRegion(
                     (nuint)block.Block.Pointer,
-                    (nuint)(block.Block.Pointer + (IntPtr)block.Block.Size),
+                    (nuint)(block.Block.Pointer + (nint)block.Block.Size),
                     Marshal.GetFunctionPointerForDelegate(_trackingEvent));
 
                 if (!added)
@@ -116,7 +116,7 @@ namespace ARMeilleure.Common
         }
 
         /// <inheritdoc/>
-        public IntPtr Base
+        public nint Base
         {
             get
             {
@@ -124,7 +124,7 @@ namespace ARMeilleure.Common
 
                 lock (_pages)
                 {
-                    return (IntPtr)GetRootPage();
+                    return (nint)GetRootPage();
                 }
             }
         }
@@ -240,7 +240,7 @@ namespace ARMeilleure.Common
 
                 long index = Levels[^1].GetValue(address);
 
-                EnsureMapped((IntPtr)(page + index));
+                EnsureMapped((nint)(page + index));
 
                 return ref page[index];
             }
@@ -284,7 +284,7 @@ namespace ARMeilleure.Common
         /// Ensure the given pointer is mapped in any overlapping sparse reservations.
         /// </summary>
         /// <param name="ptr">Pointer to be mapped</param>
-        private void EnsureMapped(IntPtr ptr)
+        private void EnsureMapped(nint ptr)
         {
             if (Sparse)
             {
@@ -299,7 +299,7 @@ namespace ARMeilleure.Common
                     {
                         SparseMemoryBlock sparse = reserved.Block;
 
-                        if (ptr >= sparse.Block.Pointer && ptr < sparse.Block.Pointer + (IntPtr)sparse.Block.Size)
+                        if (ptr >= sparse.Block.Pointer && ptr < sparse.Block.Pointer + (nint)sparse.Block.Size)
                         {
                             sparse.EnsureMapped((ulong)(ptr - sparse.Block.Pointer));
 
@@ -319,15 +319,15 @@ namespace ARMeilleure.Common
         /// </summary>
         /// <param name="level">Level to get the fill value for</param>
         /// <returns>The fill value</returns>
-        private IntPtr GetFillValue(int level)
+        private nint GetFillValue(int level)
         {
             if (_fillBottomLevel != null && level == Levels.Length - 2)
             {
-                return (IntPtr)_fillBottomLevelPtr;
+                return (nint)_fillBottomLevelPtr;
             }
             else
             {
-                return IntPtr.Zero;
+                return nint.Zero;
             }
         }
 
@@ -379,7 +379,7 @@ namespace ARMeilleure.Common
         /// <param name="fill">Fill value</param>
         /// <param name="leaf"><see langword="true"/> if leaf; otherwise <see langword="false"/></param>
         /// <returns>Allocated block</returns>
-        private IntPtr Allocate<T>(int length, T fill, bool leaf) where T : unmanaged
+        private nint Allocate<T>(int length, T fill, bool leaf) where T : unmanaged
         {
             int size = sizeof(T) * length;
 
@@ -405,7 +405,7 @@ namespace ARMeilleure.Common
                     }
                 }
 
-                page = new AddressTablePage(true, block.Block.Pointer + (IntPtr)_sparseReservedOffset);
+                page = new AddressTablePage(true, block.Block.Pointer + (nint)_sparseReservedOffset);
 
                 _sparseReservedOffset += (ulong)size;
 
@@ -413,7 +413,7 @@ namespace ARMeilleure.Common
             }
             else
             {
-                IntPtr address = (IntPtr)NativeAllocator.Instance.Allocate((uint)size);
+                nint address = (nint)NativeAllocator.Instance.Allocate((uint)size);
                 page = new AddressTablePage(false, address);
 
                 Span<T> span = new((void*)page.Address, length);

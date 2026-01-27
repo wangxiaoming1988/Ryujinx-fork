@@ -168,7 +168,7 @@ namespace ARMeilleure.Common
             {
                 _allocated.Dispose();
 
-                foreach (IntPtr page in _pages.Values)
+                foreach (nint page in _pages.Values)
                 {
                     NativeAllocator.Instance.Free((void*)page);
                 }

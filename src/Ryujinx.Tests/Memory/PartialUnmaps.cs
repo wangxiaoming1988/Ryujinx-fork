@@ -227,7 +227,7 @@ namespace Ryujinx.Tests.Memory
 
             // Create some info to be used for managing the native writing loop.
             int stateSize = Unsafe.SizeOf<NativeWriteLoopState>();
-            IntPtr statePtr = Marshal.AllocHGlobal(stateSize);
+            nint statePtr = Marshal.AllocHGlobal(stateSize);
             Unsafe.InitBlockUnaligned((void*)statePtr, 0, (uint)stateSize);
 
             ref NativeWriteLoopState writeLoopState = ref Unsafe.AsRef<NativeWriteLoopState>((void*)statePtr);
