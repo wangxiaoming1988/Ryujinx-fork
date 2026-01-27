@@ -110,8 +110,9 @@ namespace Ryujinx.Audio.Backends.Apple
 
                 return false;
             }
-            catch
+            catch (Exception e)
             {
+                Logger.Error?.Print(LogClass.Audio, $"Failed to check if AudioToolbox is supported: {e.Message}\n{e.StackTrace}");
                 return false;
             }
         }
