@@ -83,39 +83,7 @@ namespace Ryujinx.Audio.Backends.Apple
             }
         }
 
-        public static bool IsSupported => IsSupportedInternal();
-
-        private static bool IsSupportedInternal()
-        {
-            if (!OperatingSystem.IsMacOS()) return false;
-
-            try
-            {
-                AudioStreamBasicDescription format =
-                    GetAudioFormat(SampleFormat.PcmInt16, Constants.TargetSampleRate, 2);
-                int result = AudioQueueNewOutput(
-                    ref format,
-                    nint.Zero,
-                    nint.Zero,
-                    nint.Zero,
-                    nint.Zero,
-                    0,
-                    out nint testQueue);
-
-                if (result == 0)
-                {
-                    AudioQueueDispose(testQueue, true);
-                    return true;
-                }
-
-                return false;
-            }
-            catch (Exception e)
-            {
-                Logger.Error?.Print(LogClass.Audio, $"Failed to check if AudioToolbox is supported: {e.Message}\n{e.StackTrace}");
-                return false;
-            }
-        }
+        public static bool IsSupported => OperatingSystem.IsMacOSVersionAtLeast(10, 5);
 
         public ManualResetEvent GetUpdateRequiredEvent()
             => _updateRequiredEvent;
