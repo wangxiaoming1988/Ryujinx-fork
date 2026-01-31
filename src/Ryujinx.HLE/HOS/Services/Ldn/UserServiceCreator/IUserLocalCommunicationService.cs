@@ -5,6 +5,7 @@ using Ryujinx.Common.Logging;
 using Ryujinx.Common.Memory;
 using Ryujinx.Common.Utilities;
 using Ryujinx.Cpu;
+using Ryujinx.HLE.Exceptions;
 using Ryujinx.HLE.HOS.Ipc;
 using Ryujinx.HLE.HOS.Kernel.Threading;
 using Ryujinx.HLE.HOS.Services.Ldn.Types;
@@ -14,6 +15,7 @@ using Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator.Types;
 using Ryujinx.Horizon.Common;
 using Ryujinx.Memory;
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -484,6 +486,23 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
             // NOTE: WirelessControllerRestriction value is used for the btm service in SetWlanMode call.
             //       Since we use our own implementation we can do nothing here.
 
+            return ResultCode.Success;
+        }
+
+        [CommandCmif(106)] // 20.0.0+
+        // SetProtocol
+        public ResultCode SetProtocol(ServiceCtx context)
+        {
+            uint protocolValue =  context.RequestData.ReadUInt32();
+
+            // On NX only input value 1 or 3 is allowed, with an error being thrown otherwise.
+
+            if (protocolValue != 1 && protocolValue != 3)
+            {
+                throw new ArgumentException($"{GetType().FullName}: Protocol value is not 1 or 3!! Protocol value: {protocolValue}");
+            }
+            
+            Logger.Stub?.PrintStub(LogClass.ServiceLdn, $"Protocol value:  {protocolValue}");
             return ResultCode.Success;
         }
 
