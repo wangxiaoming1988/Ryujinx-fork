@@ -21,7 +21,7 @@
         "th_TH": "",
         "tr_TR": "",
         "uk_UA": "",
-        "zh_CN": "",
+        "zh_CN": "启动 RenderDoc 帧捕获",
         "zh_TW": ""
       }
     },
@@ -46,7 +46,7 @@
         "th_TH": "",
         "tr_TR": "",
         "uk_UA": "",
-        "zh_CN": "",
+        "zh_CN": "结束 RenderDoc 帧捕获",
         "zh_TW": ""
       }
     },
@@ -71,7 +71,7 @@
         "th_TH": "",
         "tr_TR": "",
         "uk_UA": "",
-        "zh_CN": "",
+        "zh_CN": "丢弃 RenderDoc 帧捕获",
         "zh_TW": ""
       }
     },
@@ -96,7 +96,7 @@
         "th_TH": "",
         "tr_TR": "",
         "uk_UA": "",
-        "zh_CN": "",
+        "zh_CN": "结束当前正在进行的 RenderDoc 帧捕获，并立即丢弃其结果。",
         "zh_TW": ""
       }
     }
