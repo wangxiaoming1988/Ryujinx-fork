@@ -107,12 +107,12 @@ namespace Ryujinx.BuildValidationTasks
                         {
                             locale.Translations[langCode] = string.Empty;
                             Console.WriteLine(
-                                $"Lanugage '{langCode}' is a duplicate of en_US in Locale '{locale.ID}'! Resetting it...");
+                                $"Language '{langCode}' is a duplicate of en_US in Locale '{locale.ID}'! Resetting it...");
                         }
                         else
                         {
                             Console.WriteLine(
-                                $"Lanugage '{langCode}' is a duplicate of en_US in Locale '{locale.ID}'!");
+                                $"Language '{langCode}' is a duplicate of en_US in Locale '{locale.ID}'!");
                         }
                     }
 
