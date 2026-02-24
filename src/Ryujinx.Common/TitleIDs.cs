@@ -184,6 +184,7 @@ namespace Ryujinx.Common
             "01001b300b9be000", // Diablo III: Eternal Collection
             "010027400cdc6000", // Divinity Original 2 - Definitive Edition
             "01008c8012920000", // Dying Light Platinum Edition
+            "0100d11013e6a000", // Eschatos
             "01001cc01b2d4000", // Goat Simulator 3
             "01003620068ea000", // Hand of Fate 2
             "0100f7e00c70e000", // Hogwarts Legacy
@@ -193,9 +194,15 @@ namespace Ryujinx.Common
             "0100d71004694000", // Minecraft
             "01007430037f6000", // Monopoly
             "0100853015e86000", // No Man's Sky
+            "0100f85014ed0000", // No More Heroes
+            "0100463014ed4000", // No More Heroes 2
+            "0100e570094e8000", // Owlboy
             "01007bb017812000", // Portal
             "0100abd01785c000", // Portal 2
+            "01009f100bc52000", // Psikyo Collection 1
+            "01009d400c4a8000", // Psikyo Collection 2
             "01008e200c5c2000", // Muse Dash
+            "01005ff002e2a000", // Rayman Legends
             "01007820196a6000", // Red Dead Redemption
             "0100e8300a67a000", // Risk
             "01002f7013224000", // Rune Factory 5
