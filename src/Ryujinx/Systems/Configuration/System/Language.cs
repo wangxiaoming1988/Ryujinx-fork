@@ -24,6 +24,8 @@ namespace Ryujinx.Ava.Systems.Configuration.System
         SimplifiedChinese,
         TraditionalChinese,
         BrazilianPortuguese,
+        Polish,
+        Thai,
     }
 
     public static class LanguageEnumHelper

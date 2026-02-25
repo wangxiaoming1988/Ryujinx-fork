@@ -1404,7 +1404,7 @@ namespace Ryujinx.Ava.Systems.AppLibrary
 
             if (string.IsNullOrWhiteSpace(data.Name))
             {
-                foreach (ref readonly ApplicationControlProperty.ApplicationTitle controlTitle in controlData.Title)
+                foreach (ApplicationControlProperty.ApplicationTitle controlTitle in controlData.Title)
                 {
                     if (!controlTitle.NameString.IsEmpty())
                     {
@@ -1417,7 +1417,7 @@ namespace Ryujinx.Ava.Systems.AppLibrary
 
             if (string.IsNullOrWhiteSpace(data.Developer))
             {
-                foreach (ref readonly ApplicationControlProperty.ApplicationTitle controlTitle in controlData.Title)
+                foreach (ApplicationControlProperty.ApplicationTitle controlTitle in controlData.Title)
                 {
                     if (!controlTitle.PublisherString.IsEmpty())
                     {

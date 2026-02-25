@@ -1,12 +1,19 @@
 using Ryujinx.Common.Memory;
 using System;
+using System.Buffers.Binary;
+using System.IO;
+using System.IO.Compression;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Ryujinx.Horizon.Sdk.Ns
 {
     public struct ApplicationControlProperty
     {
-        public Array16<ApplicationTitle> Title;
+        /// <summary>
+        /// Use <see cref="Title"/> to access titles instead of accessing them directly.
+        /// </summary>
+        public Array16<ApplicationTitle> TitleBlock;
         public Array37<byte> Isbn;
         public StartupUserAccountValue StartupUserAccount;
         public UserAccountSwitchLockValue UserAccountSwitchLock;
@@ -58,7 +65,10 @@ namespace Ryujinx.Horizon.Sdk.Ns
         public RepairFlagValue RepairFlag;
         public byte ProgramIndex;
         public RequiredNetworkServiceLicenseOnLaunchValue RequiredNetworkServiceLicenseOnLaunchFlag;
-        public Array4<byte> Reserved3214;
+        public byte ApplicationErrorCodePrefix;
+        public TitleCompressionValue TitleCompression;
+        public byte AcdIndex;
+        public byte ApparentPlatform;
         public ApplicationNeighborDetectionClientConfiguration NeighborDetectionClientConfiguration;
         public ApplicationJitConfiguration JitConfiguration;
         public RequiredAddOnContentsSetBinaryDescriptor RequiredAddOnContentsSetBinaryDescriptors;
@@ -74,6 +84,47 @@ namespace Ryujinx.Horizon.Sdk.Ns
         public readonly string DisplayVersionString => Encoding.UTF8.GetString(DisplayVersion.AsSpan()).TrimEnd('\0');
         public readonly string ApplicationErrorCodeCategoryString => Encoding.UTF8.GetString(ApplicationErrorCodeCategory.AsSpan()).TrimEnd('\0');
         public readonly string BcatPassphraseString => Encoding.UTF8.GetString(BcatPassphrase.AsSpan()).TrimEnd('\0');
+        
+        private const int TitleCount = 32;
+        private const int TitleEntrySize = 0x300;
+        
+
+        /// <summary>
+        /// Returns the resolved title entries. When <see cref="TitleCompression"/> is
+        /// <see cref="TitleCompressionValue.Enable"/>, the raw <see cref="TitleBlock"/> bytes are
+        /// decompressed (raw deflate) from 0x3000 into 0x6000 bytes yielding up to 32 entries.
+        /// Otherwise the 16 uncompressed entries from <see cref="TitleBlock"/> are returned directly.
+        /// </summary>
+        public readonly ApplicationTitle[] Title
+        {
+            get
+            {
+                var titles = new ApplicationTitle[TitleCount];
+                
+                if (TitleCompression != TitleCompressionValue.Enable)
+                {
+                    TitleBlock.AsSpan().CopyTo(titles);
+                    
+                    return titles;
+                }
+
+                ReadOnlySpan<byte> titleBytes = MemoryMarshal.AsBytes(TitleBlock.AsSpan());
+                ushort compressedBlobSize = BinaryPrimitives.ReadUInt16LittleEndian(titleBytes);
+                ReadOnlySpan<byte> compressedBlob = titleBytes.Slice(2, compressedBlobSize);
+
+                byte[] decompressed = new byte[TitleCount * TitleEntrySize];
+
+                using (var compressedStream = new MemoryStream(compressedBlob.ToArray()))
+                using (var deflateStream = new DeflateStream(compressedStream, CompressionMode.Decompress))
+                {
+                    deflateStream.ReadExactly(decompressed, 0, decompressed.Length);
+                }
+
+                MemoryMarshal.Cast<byte, ApplicationTitle>(decompressed).CopyTo(titles);
+
+                return titles;
+            }
+        }
 
         public struct ApplicationTitle
         {
@@ -130,6 +181,8 @@ namespace Ryujinx.Horizon.Sdk.Ns
             TraditionalChinese = 13,
             SimplifiedChinese = 14,
             BrazilianPortuguese = 15,
+            Polish = 16,
+            Thai = 17,
         }
 
         public enum Organization
@@ -301,6 +354,12 @@ namespace Ryujinx.Horizon.Sdk.Ns
         {
             Deny = 0,
             Allow = 1,
+        }
+
+        public enum TitleCompressionValue : byte
+        {
+            Disable = 0,
+            Enable = 1,
         }
     }
 }
