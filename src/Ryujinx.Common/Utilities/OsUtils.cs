@@ -22,10 +22,11 @@ namespace Ryujinx.Common.Utilities
         }
 
         // "dumpable" attribute of the calling process
+        private const int PR_GET_DUMPABLE = 3;
         private const int PR_SET_DUMPABLE = 4;
 
-        [DllImport("libc", SetLastError = true)]
-        private static extern int prctl(int option, int arg2);
+        [LibraryImport("libc", SetLastError = true)]
+        private static partial int prctl(int option, int arg2);
 
         public static void SetCoreDumpable(bool dumpable)
         {
@@ -35,6 +36,14 @@ namespace Ryujinx.Common.Utilities
                 int result = prctl(PR_SET_DUMPABLE, dumpableInt);
                 Debug.Assert(result == 0);
             }
+        }
+
+        // Use the below line to display dumpable status in the console:
+        // Console.WriteLine($"{OsUtils.IsCoreDumpable()}");
+        public static bool IsCoreDumpable()
+        {
+            int result = prctl(PR_GET_DUMPABLE, 0);
+            return result == 1;
         }
     }
 }

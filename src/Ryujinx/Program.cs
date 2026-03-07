@@ -42,6 +42,7 @@ namespace Ryujinx.Ava
         public static bool PreviewerDetached { get; private set; }
         public static bool UseHardwareAcceleration { get; private set; }
         public static string BackendThreadingArg { get; private set; }
+        public static bool CoreDumpArg { get; private set; }
 
         private const uint MbIconwarning = 0x30;
 
@@ -80,6 +81,8 @@ namespace Ryujinx.Ava
 
             bool noGuiArg = ConsumeCommandLineArgument(ref args, "--no-gui") || ConsumeCommandLineArgument(ref args, "nogui");
             bool coreDumpArg = ConsumeCommandLineArgument(ref args, "--core-dumps");
+
+            CoreDumpArg = coreDumpArg;
 
             // TODO: Ryujinx causes core dumps on Linux when it exits "uncleanly", eg. through an unhandled exception.
             //       This is undesirable and causes very odd behavior during development (the process stops responding, 
