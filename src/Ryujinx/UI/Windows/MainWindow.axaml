@@ -41,6 +41,7 @@
         <KeyBinding Gesture="Escape" Command="{Binding ExitCurrentState}" />
         <KeyBinding Gesture="Ctrl+A" Command="{Binding OpenAmiiboWindow}" />
         <KeyBinding Gesture="Ctrl+B" Command="{Binding OpenBinFile}" />
+        <KeyBinding Gesture="Ctrl+R" Command="{Binding RestartEmulation}" />
         <KeyBinding Gesture="Ctrl+Shift+R" Command="{Binding ReloadRenderDocApi}" />
         <KeyBinding Gesture="Ctrl+Shift+C" Command="{Binding ToggleCapture}" />
     </Window.KeyBindings>

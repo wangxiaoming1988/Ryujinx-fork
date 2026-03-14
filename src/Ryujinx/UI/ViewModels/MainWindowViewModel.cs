@@ -174,6 +174,7 @@ namespace Ryujinx.Ava.UI.ViewModels
         private string _screenshotKey = "F8";
         private float _volume;
         private ApplicationData _currentApplicationData;
+        private bool _pendingRestart;
         private readonly AutoResetEvent _rendererWaitEvent;
         private int _customVSyncInterval;
         private int _customVSyncIntervalPercentageProxy;
@@ -1250,12 +1251,35 @@ namespace Ryujinx.Ava.UI.ViewModels
 
                 await LoadApplication(_currentApplicationData);
             }
+            else if (_pendingRestart)
+            {
+                _pendingRestart = false;
+
+                Logger.Info?.Print(LogClass.Application, $"Restarting emulation for '{_currentApplicationData.Name}'");
+
+                await LoadApplication(_currentApplicationData);
+            }
             else
             {
                 // Otherwise, clear state.
                 UserChannelPersistence = new UserChannelPersistence();
                 _currentApplicationData = null;
             }
+        }
+
+        public void RestartEmulation()
+        {
+            if (AppHost is null || _currentApplicationData is null)
+            {
+                Logger.Warning?.Print(LogClass.Application, "RestartEmulation called but no application is running.");
+
+                return;
+            }
+
+            Logger.Info?.Print(LogClass.Application, $"Restart requested for '{_currentApplicationData.Name}'");
+
+            _pendingRestart = true;
+            AppHost.Stop();
         }
 
         private void Update_StatusBar(object sender, StatusUpdatedEventArgs args)

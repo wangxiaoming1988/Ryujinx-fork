@@ -167,6 +167,12 @@
                     Icon="{ext:Icon fa-solid fa-stop}"
                     InputGesture="Escape"
                     IsEnabled="{Binding IsGameRunning}" />
+                <MenuItem
+                    Name="RestartEmulationMenuItem"
+                    Header="{ext:Locale MenuBarOptionsRestartEmulation}"
+                    Icon="{ext:Icon fa-solid fa-rotate-right}"
+                    InputGesture="Ctrl + R"
+                    IsEnabled="{Binding IsGameRunning}" />
                 <MenuItem Command="{Binding SimulateWakeUpMessage}" Header="{ext:Locale MenuBarOptionsSimulateWakeUpMessage}" Icon="{ext:Icon fa-solid fa-sun}" />
                 <Separator />
                 <MenuItem
