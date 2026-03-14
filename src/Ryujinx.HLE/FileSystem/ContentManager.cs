@@ -488,6 +488,8 @@ namespace Ryujinx.HLE.FileSystem
                 if (keyPaths.Length is 0)
                     throw new FileNotFoundException($"Directory '{keysSource}' contained no '.keys' files.");
 
+                List<string> failedFiles = new();
+
                 foreach (string filePath in keyPaths)
                 {
                     try
@@ -497,15 +499,18 @@ namespace Ryujinx.HLE.FileSystem
                     catch (Exception e)
                     {
                         Logger.Error?.Print(LogClass.Application, e.Message);
+                        failedFiles.Add(Path.GetFileName(filePath));
                         continue;
                     }
 
                     string destPath = Path.Combine(installDirectory, Path.GetFileName(filePath));
 
-                    if (File.Exists(destPath))
-                        File.Delete(destPath);
-
                     File.Copy(filePath, destPath, true);
+                }
+
+                if (failedFiles.Count > 0)
+                {
+                    throw new InvalidOperationException($"Failed to install the following key files: {string.Join(", ", failedFiles)}");
                 }
 
                 return;
@@ -517,8 +522,6 @@ namespace Ryujinx.HLE.FileSystem
             }
 
             FileInfo info = new(keysSource);
-
-            using FileStream file = File.OpenRead(keysSource);
 
             if (info.Extension is not ".keys")
                 throw new InvalidFirmwarePackageException("Input file extension is not .keys");
@@ -534,10 +537,6 @@ namespace Ryujinx.HLE.FileSystem
 
             string dest = Path.Combine(installDirectory, info.Name);
 
-            if (File.Exists(dest))
-                File.Delete(dest);
-
-            // overwrite: true seems to not work on its own? https://github.com/Ryubing/Issues/issues/189
             File.Copy(keysSource, dest, true);
         }
 
@@ -1059,7 +1058,7 @@ namespace Ryujinx.HLE.FileSystem
             }
         }
 
-        public static bool AreKeysAlredyPresent(string pathToCheck)
+        public static bool AreKeysAlreadyPresent(string pathToCheck)
         {
             string[] fileNames = ["prod.keys", "title.keys", "console.keys", "dev.keys"];
             foreach (string file in fileNames)
