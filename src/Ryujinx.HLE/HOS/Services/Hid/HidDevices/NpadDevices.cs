@@ -584,8 +584,13 @@ namespace Ryujinx.HLE.HOS.Services.Hid
         
         public bool isAtRest(int playerNumber)
         {
-            
             ref NpadInternalState currentNpad = ref _device.Hid.SharedMemory.Npads[playerNumber].InternalState;
+
+            if (currentNpad.StyleSet == NpadStyleTag.None)
+            {
+                return true; // it will always be at rest because it cannot move.
+            }
+            
             ref SixAxisSensorState storage = ref GetSixAxisSensorLifo(ref currentNpad, false).GetCurrentEntryRef();
                 
             float acceleration = Math.Abs(storage.Acceleration.X)
