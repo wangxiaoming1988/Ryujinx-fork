@@ -17,13 +17,12 @@ namespace Ryujinx.HLE.HOS.Services.Sm
         private static readonly Dictionary<string, Type> _services;
 
         private readonly SmRegistry _registry;
-        private readonly ServerBase _commonServer;
+        private ServerBase _commonServer;
 
         private bool _isInitialized;
 
         public IUserInterface(KernelContext context, SmRegistry registry) : base(registerTipc: true)
         {
-            _commonServer = new ServerBase(context, "CommonServer");
             _registry = registry;
         }
 
@@ -97,6 +96,11 @@ namespace Ryujinx.HLE.HOS.Services.Sm
 
                     IpcService service = GetServiceInstance(type, context, serviceAttribute.Parameter);
 
+                    if (_commonServer is null)
+                    {
+                        _commonServer = new ServerBase(context.Device.System.KernelContext, "Common");
+                    }
+                    
                     service.TrySetServer(_commonServer);
                     service.Server.AddSessionObj(session.ServerSession, service);
                 }
@@ -253,7 +257,7 @@ namespace Ryujinx.HLE.HOS.Services.Sm
 
         public override void DestroyAtExit()
         {
-            _commonServer.Dispose();
+            _commonServer?.Dispose();
 
             base.DestroyAtExit();
         }

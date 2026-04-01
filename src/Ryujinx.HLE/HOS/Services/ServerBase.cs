@@ -79,9 +79,15 @@ namespace Ryujinx.HLE.HOS.Services
                 ProcessCreationFlags.Is64Bit |
                 ProcessCreationFlags.PoolPartitionSystem;
 
-            ProcessCreationInfo creationInfo = new("Service", 1, 0, 0x8000000, 1, Flags, 0, 0);
+            ProcessCreationInfo creationInfo = new(Name, 1, 0, 0x8000000, 1, Flags, 0, 0);
 
-            KernelStatic.StartInitialProcess(context, creationInfo, DefaultCapabilities, 44, Main);
+            KernelStatic.StartInitialProcess(context, creationInfo, DefaultCapabilities, 44, () =>
+            {
+                var currentThread = KernelStatic.GetCurrentThread();
+                currentThread.HostThread.Name = $"{{{Name}}}";
+
+                Main();
+            });
         }
 
         private void AddPort(int serverPortHandle, Func<IpcService> objectFactory)

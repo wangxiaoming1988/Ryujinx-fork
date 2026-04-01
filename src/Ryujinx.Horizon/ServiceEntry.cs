@@ -9,12 +9,14 @@ namespace Ryujinx.Horizon
         private readonly Action<ServiceTable> _entrypoint;
         private readonly ServiceTable _serviceTable;
         private readonly HorizonOptions _options;
+        public readonly string Name;
 
-        internal ServiceEntry(Action<ServiceTable> entrypoint, ServiceTable serviceTable, HorizonOptions options)
+        internal ServiceEntry(Action<ServiceTable> entrypoint, ServiceTable serviceTable, HorizonOptions options, string name)
         {
             _entrypoint = entrypoint;
             _serviceTable = serviceTable;
             _options = options;
+            Name = name;
         }
 
         public void Start(ISyscallApi syscallApi, IVirtualMemoryManager addressSpace, IThreadContext threadContext)

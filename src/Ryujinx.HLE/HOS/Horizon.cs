@@ -246,21 +246,21 @@ namespace Ryujinx.HLE.HOS
         public void InitializeServices()
         {
             SmRegistry = new SmRegistry();
-            SmServer = new ServerBase(KernelContext, "SmServer", () => new IUserInterface(KernelContext, SmRegistry));
+            SmServer = new ServerBase(KernelContext, "Sm", () => new IUserInterface(KernelContext, SmRegistry));
 
             // Wait until SM server thread is done with initialization,
             // only then doing connections to SM is safe.
             SmServer.InitDone.WaitOne();
 
-            BsdServer = new ServerBase(KernelContext, "BsdServer");
-            FsServer = new ServerBase(KernelContext, "FsServer");
-            HidServer = new ServerBase(KernelContext, "HidServer");
-            NvDrvServer = new ServerBase(KernelContext, "NvservicesServer");
-            TimeServer = new ServerBase(KernelContext, "TimeServer");
-            ViServer = new ServerBase(KernelContext, "ViServerU");
-            ViServerM = new ServerBase(KernelContext, "ViServerM");
-            ViServerS = new ServerBase(KernelContext, "ViServerS");
-            LdnServer = new ServerBase(KernelContext, "LdnServer");
+            BsdServer = new ServerBase(KernelContext, "Bsd");
+            FsServer = new ServerBase(KernelContext, "Fs");
+            HidServer = new ServerBase(KernelContext, "Hid");
+            NvDrvServer = new ServerBase(KernelContext, "Nv");
+            TimeServer = new ServerBase(KernelContext, "Time");
+            ViServer = new ServerBase(KernelContext, "Vi:u");
+            ViServerM = new ServerBase(KernelContext, "Vi:m");
+            ViServerS = new ServerBase(KernelContext, "Vi:s");
+            LdnServer = new ServerBase(KernelContext, "Ldn");
 
             StartNewServices();
         }
@@ -286,7 +286,7 @@ namespace Ryujinx.HLE.HOS
                     ProcessCreationFlags.Is64Bit |
                     ProcessCreationFlags.PoolPartitionSystem;
 
-                ProcessCreationInfo creationInfo = new("Service", 1, 0, 0x8000000, 1, Flags, 0, 0);
+                ProcessCreationInfo creationInfo = new(service.Name, 1, 0, 0x8000000, 1, Flags, 0, 0);
 
                 uint[] defaultCapabilities =
                 [
