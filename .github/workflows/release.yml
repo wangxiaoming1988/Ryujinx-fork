@@ -44,7 +44,7 @@ jobs:
       - name: Install gli
         run: |
           mkdir -p $HOME/.bin
-          gh release download -R GreemDev/GLI -O gli -p 'gli-linux-x64' 2.0.30
+          gh release download -R GreemDev/GLI -O gli -p 'gli-linux-x64' 2.0.31
           chmod +x gli
           mv gli $HOME/.bin/
           echo "$HOME/.bin" >> $GITHUB_PATH
