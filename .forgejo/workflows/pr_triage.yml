@@ -20,6 +20,7 @@ jobs:
       - name: Update labels based on changes
         uses: actions/labeler@v5
         with:
+          repo-token: ${{ secrets.LABELER_TOKEN }}
           configuration-path: .forgejo/labeler.yml
           sync-labels: true
           dot: true
