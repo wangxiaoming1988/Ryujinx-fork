@@ -203,8 +203,8 @@ jobs:
           files: |-
             publish_ava/ryujinx-canary-${{ steps.version_info.outputs.build_version }}-macos_universal.app.tar.gz
 
-  create_gitlab_release:
-    name: Create GitLab Release
+  post_ci:
+    name: Post-CI Steps
     runs-on: ubuntu-24.04
     needs:
       - macos_release

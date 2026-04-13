@@ -136,6 +136,7 @@ jobs:
         uses: actions/create-release@v1
         with:
           name: "Canary ${{ steps.version_info.outputs.build_version }}"
+          body: "**Full Changelog:** [`${{ steps.version_info.outputs.prev_build_version }}...${{ steps.version_info.outputs.build_version }}`](https://git.ryujinx.app/projects/Ryubing/compare/Canary-${{ steps.version_info.outputs.prev_build_version }}...Canary-${{ steps.version_info.outputs.build_version }})"
           repository: "Ryubing/Canary"
           token: ${{ secrets.RELEASER_TOKEN  }}
           tag_name: ${{ steps.version_info.outputs.build_version }}
@@ -198,6 +199,7 @@ jobs:
         uses: actions/create-release@v1
         with:
           name: "Canary ${{ steps.version_info.outputs.build_version }}"
+          body: "**Full Changelog:** [`${{ steps.version_info.outputs.prev_build_version }}...${{ steps.version_info.outputs.build_version }}`](https://git.ryujinx.app/projects/Ryubing/compare/Canary-${{ steps.version_info.outputs.prev_build_version }}...Canary-${{ steps.version_info.outputs.build_version }})"
           repository: "Ryubing/Canary"
           token: ${{ secrets.RELEASER_TOKEN  }}
           tag_name: ${{ steps.version_info.outputs.build_version }}

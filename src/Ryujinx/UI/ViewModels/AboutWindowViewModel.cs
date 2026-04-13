@@ -11,7 +11,7 @@ namespace Ryujinx.Ava.UI.ViewModels
 {
     public partial class AboutWindowViewModel : BaseModel, IDisposable
     {
-        [ObservableProperty] public partial Bitmap GitLabLogo { get; set; }
+        [ObservableProperty] public partial Bitmap ForgejoLogo { get; set; }
 
         [ObservableProperty] public partial Bitmap DiscordLogo { get; set; }
 
@@ -37,6 +37,7 @@ namespace Ryujinx.Ava.UI.ViewModels
         }
 
         private const string LogoPathFormat = "resm:Ryujinx.Assets.UIImages.Logo_{0}_{1}.png?assembly=Ryujinx";
+        private const string UnthemedLogoPathFormat = "resm:Ryujinx.Assets.UIImages.Logo_{0}.png?assembly=Ryujinx";
 
         private void UpdateLogoTheme(string theme)
         {
@@ -46,7 +47,7 @@ namespace Ryujinx.Ava.UI.ViewModels
             string themeName = isDarkTheme ? "Dark" : "Light";
 
             DiscordLogo = LoadBitmap(LogoPathFormat.Format("Discord", themeName));
-            GitLabLogo = LoadBitmap(LogoPathFormat.Format("GitLab", themeName));
+            ForgejoLogo = LoadBitmap(UnthemedLogoPathFormat.Format("Forgejo"));
         }
 
         private static Bitmap LoadBitmap(string uri) => new(Avalonia.Platform.AssetLoader.Open(new Uri(uri)));
@@ -55,7 +56,7 @@ namespace Ryujinx.Ava.UI.ViewModels
         {
             RyujinxApp.ThemeChanged -= Ryujinx_ThemeChanged;
 
-            GitLabLogo.Dispose();
+            ForgejoLogo.Dispose();
             DiscordLogo.Dispose();
 
             GC.SuppressFinalize(this);

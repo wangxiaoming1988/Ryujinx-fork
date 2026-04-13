@@ -295,17 +295,17 @@
                     <MenuItem
                         Name="SetupGuideMenuItem"
                         Header="{ext:Locale MenuBarHelpSetup}"
-                        Icon="{ext:Icon fa-brands fa-gitlab}"
+                        Icon="{ext:Icon fa-solid fa-circle-info}"
                         CommandParameter="{x:Static common:SharedConstants.SetupGuideWikiUrl}" />
                     <MenuItem
                         Name="LdnGuideMenuItem"
                         Header="{ext:Locale MenuBarHelpMultiplayer}"
-                        Icon="{ext:Icon fa-brands fa-gitlab}"
+                        Icon="{ext:Icon fa-solid fa-circle-info}"
                         CommandParameter="{x:Static common:SharedConstants.MultiplayerWikiUrl}" />
                     <MenuItem
                         Name="FaqMenuItem"
                         Header="{ext:Locale MenuBarHelpFaq}"
-                        Icon="{ext:Icon fa-brands fa-gitlab}"
+                        Icon="{ext:Icon fa-solid fa-circle-info}"
                         CommandParameter="{x:Static common:SharedConstants.FaqWikiUrl}" />
                 </MenuItem>
                 <Separator />

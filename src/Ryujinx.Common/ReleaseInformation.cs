@@ -29,8 +29,8 @@ namespace Ryujinx.Common
 
         public static string GetChangelogUrl(Version currentVersion, Version newVersion) =>
             IsCanaryBuild
-                ? $"https://git.ryujinx.app/ryubing/ryujinx/-/compare/Canary-{currentVersion}...Canary-{newVersion}"
-                : $"https://git.ryujinx.app/ryubing/ryujinx/-/releases/{newVersion}";
+                ? $"https://git.ryujinx.app/projects/Ryubing/compare/Canary-{currentVersion}...Canary-{newVersion}"
+                : $"https://git.ryujinx.app/projects/Ryubing/releases/tag/{newVersion}";
     }
 
 

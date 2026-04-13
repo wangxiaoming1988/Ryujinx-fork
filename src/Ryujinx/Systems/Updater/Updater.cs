@@ -79,7 +79,7 @@ namespace Ryujinx.Ava.Systems
             {
                 buildSizeClient.DefaultRequestHeaders.Add("Range", "bytes=0-0");
                 
-                // GitLab instance is located in Ukraine. Connection times will vary across the world.
+                // Forgejo instance is located in Ukraine. Connection times will vary across the world.
                 buildSizeClient.Timeout = TimeSpan.FromSeconds(10);
 
                 HttpResponseMessage message = await buildSizeClient.GetAsync(new Uri(_versionResponse.ArtifactUrl), HttpCompletionOption.ResponseHeadersRead);

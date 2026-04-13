@@ -169,9 +169,8 @@
     <EmbeddedResource Include="Assets\UIImages\Logo_Amiibo.png" />
     <EmbeddedResource Include="Assets\UIImages\Logo_Discord_Dark.png" />
     <EmbeddedResource Include="Assets\UIImages\Logo_Discord_Light.png" />
-    <EmbeddedResource Include="Assets\UIImages\Logo_GitLab_Dark.png" />
-    <EmbeddedResource Include="Assets\UIImages\Logo_GitLab_Light.png" />
     <EmbeddedResource Include="Assets\UIImages\Logo_Ryujinx.png" />
+    <EmbeddedResource Include="Assets\UIImages\Logo_Forgejo.png" />
     <EmbeddedResource Include="Assets\UIImages\Logo_Ryujinx_AntiAlias.png" />
   </ItemGroup>
   <ItemGroup>

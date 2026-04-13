@@ -8,12 +8,12 @@ namespace Ryujinx.Common
 
         public const string AmiiboTagsUrl = "https://raw.githubusercontent.com/Ryubing/Nfc/refs/heads/main/tags.json";
 
-        public const string FaqWikiUrl = "https://git.ryujinx.app/ryubing/ryujinx/-/wikis/FAQ-&-Troubleshooting";
+        public const string FaqWikiUrl = "https://git.ryujinx.app/projects/Ryubing/wiki/FAQ-%26-Troubleshooting";
 
         public const string SetupGuideWikiUrl =
-            "https://git.ryujinx.app/ryubing/ryujinx/-/wikis/Setup-&-Configuration-Guide";
+            "https://git.ryujinx.app/projects/Ryubing/wiki/Setup-%26-Configuration-Guide";
 
         public const string MultiplayerWikiUrl =
-            "https://git.ryujinx.app/ryubing/ryujinx/-/wikis/Multiplayer-(LDN-Local-Wireless)-Guide";
+            "https://git.ryujinx.app/projects/Ryubing/wiki/Multiplayer-(LDN-Local-Wireless)-Guide";
     }
 }
