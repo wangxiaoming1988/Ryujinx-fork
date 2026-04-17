@@ -48,4 +48,4 @@ documentation:
 
 ldn:
 - changed-files:
-  - any-glob-to-any-file: ['src/Ryujinx.HLE/HOS/Services/Ldn/**', 'src/Ryujinx/UI/Windows/LdnGamesListWindow.*', 'src/Ryujinx/UI/ViewModels/LdnGamesListViewModel.cs',]
+  - any-glob-to-any-file: ['src/Ryujinx.HLE/HOS/Services/Ldn/**', 'src/Ryujinx/UI/Windows/LdnGamesListWindow.*', 'src/Ryujinx/UI/ViewModels/LdnGamesListViewModel.cs']
