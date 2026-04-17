@@ -10,6 +10,10 @@ gpu:
 - changed-files:
   - any-glob-to-any-file: ['src/Ryujinx.Graphics.*/**', 'src/Spv.Generator/**', 'src/Ryujinx.ShaderTools/**']
 
+input:
+- changed-files:
+  - any-glob-to-any-file: ['src/Ryujinx.Input*/**', 'src/Ryujinx/UI/Views/Input/**']
+
 'graphics-backend:opengl':
 - changed-files:
   - any-glob-to-any-file: 'src/Ryujinx.Graphics.OpenGL/**'
@@ -18,17 +22,17 @@ gpu:
 - changed-files:
   - any-glob-to-any-file: ['src/Ryujinx.Graphics.Vulkan/**', 'src/Spv.Generator/**']
 
-'graphics-backend:metal':
-  - changed-files:
-      - any-glob-to-any-file: ['src/Ryujinx.Graphics.Metal/**', 'src/Ryujinx.Graphics.Metal.SharpMetalExtensions/**']
-
 gui:
 - changed-files:
-  - any-glob-to-any-file: ['src/Ryujinx/**', 'src/Ryujinx.UI.Common/**', 'src/Ryujinx.UI.LocaleGenerator/**']
+  - any-glob-to-any-file: ['src/Ryujinx/**', 'src/Ryujinx.UI.LocaleGenerator/**']
 
-horizon:
+'horizon/hle':
 - changed-files:
-  - any-glob-to-any-file: ['src/Ryujinx.HLE/**', 'src/Ryujinx.Horizon/**']
+  - any-glob-to-any-file: ['src/Ryujinx.HLE/**', 'src/Ryujinx.HLE.Generators/**', 'src/Ryujinx.Horizon/**']
+
+i18n:
+- changed-files:
+  - any-glob-to-any-file: ['assets/**/*.json', 'src/Ryujinx.UI.LocaleGenerator/**']
 
 kernel:
 - changed-files:
@@ -44,4 +48,4 @@ documentation:
 
 ldn:
 - changed-files:
-  - any-glob-to-any-file: 'src/Ryujinx.HLE/HOS/Services/Ldn/**'
+  - any-glob-to-any-file: ['src/Ryujinx.HLE/HOS/Services/Ldn/**', 'src/Ryujinx/UI/Windows/LdnGamesListWindow.*', 'src/Ryujinx/UI/ViewModels/LdnGamesListViewModel.cs',]
