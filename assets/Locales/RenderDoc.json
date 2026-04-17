@@ -22,7 +22,7 @@
         "tr_TR": "",
         "uk_UA": "",
         "zh_CN": "启动 RenderDoc 帧捕获",
-        "zh_TW": ""
+        "zh_TW": "啟動 RenderDoc 畫格擷取"
       }
     },
     {
@@ -47,7 +47,7 @@
         "tr_TR": "",
         "uk_UA": "",
         "zh_CN": "结束 RenderDoc 帧捕获",
-        "zh_TW": ""
+        "zh_TW": "停止 RenderDoc 畫格擷取"
       }
     },
     {
@@ -72,7 +72,7 @@
         "tr_TR": "",
         "uk_UA": "",
         "zh_CN": "丢弃 RenderDoc 帧捕获",
-        "zh_TW": ""
+        "zh_TW": "捨棄 RenderDoc 畫格擷取"
       }
     },
     {
@@ -97,7 +97,7 @@
         "tr_TR": "",
         "uk_UA": "",
         "zh_CN": "结束当前正在进行的 RenderDoc 帧捕获，并立即丢弃其结果。",
-        "zh_TW": ""
+        "zh_TW": "停止正在執行的 RenderDoc 畫格擷取，且立即捨棄其結果。"
       }
     }
   ]
