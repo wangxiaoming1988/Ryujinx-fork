@@ -563,7 +563,7 @@ namespace Ryujinx.Input.HLE
                     float low = Math.Min(1f, (float)((rightVibrationValue.AmplitudeLow * 0.85 + rightVibrationValue.AmplitudeHigh * 0.15) * controllerConfig.Rumble.StrongRumble));
                     float high = Math.Min(1f, (float)((leftVibrationValue.AmplitudeLow * 0.15 + leftVibrationValue.AmplitudeHigh * 0.85) * controllerConfig.Rumble.WeakRumble));
 
-                    _gamepad.Rumble(low, high, uint.MaxValue);
+                    _gamepad?.Rumble(low, high, uint.MaxValue);
 
                     Logger.Debug?.Print(LogClass.Hid, $"Effect for {controllerConfig.PlayerIndex} " +
                         $"L.low.amp={leftVibrationValue.AmplitudeLow}, " +

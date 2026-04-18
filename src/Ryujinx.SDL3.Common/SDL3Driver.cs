@@ -61,6 +61,14 @@ namespace Ryujinx.SDL3.Common
                 SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_JOY_CONS, "1");
                 SDL_SetHint(SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1");
 
+                // When hid_nintendo is loaded, it creates separate evdev devices for the gamepad
+                // and IMU which SDL3's evdev backend combines via UNIQ matching. Using HIDAPI
+                // instead conflicts with the kernel driver and breaks motion and hotplug.
+                if (OperatingSystem.IsLinux() && Directory.Exists("/sys/module/hid_nintendo"))
+                {
+                    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_SWITCH, "0");
+                }
+
                 // NOTE: As of SDL3 2.24.0, joycons are combined by default but the motion source only come from one of them.
                 // We disable this behavior for now.
                 SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_COMBINE_JOY_CONS, "0");
