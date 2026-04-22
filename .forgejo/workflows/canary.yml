@@ -95,7 +95,7 @@ jobs:
           rm libarmeilleure-jitsupport.dylib
           chmod +x Ryujinx.sh Ryujinx
           tar -czvf ../release_output/ryujinx-canary-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gz ../publish
-          tar -cJvf ../release_output/ryujinx-canary-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.gx ../publish
+          tar -cJvf ../release_output/ryujinx-canary-${{ steps.version_info.outputs.build_version }}-${{ matrix.platform.zip_os_name }}.tar.xz ../publish
           popd
         shell: bash
 
