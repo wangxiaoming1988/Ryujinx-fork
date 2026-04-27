@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ppy.SDL3-CS" />
+    <PackageReference Include="Ryujinx.SDL3-CS" />
   </ItemGroup>
 
 </Project>
