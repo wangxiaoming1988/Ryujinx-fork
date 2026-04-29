@@ -4,7 +4,7 @@
       "ID": "MenuBarActions_StartCapture",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "RenderDoc Frame-Aufnahme starten",
         "el_GR": "",
         "en_US": "Start RenderDoc Frame Capture",
         "es_ES": "Iniciar una captura de fotograma de RenderDoc",
@@ -29,7 +29,7 @@
       "ID": "MenuBarActions_EndCapture",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "RenderDoc Frame-Aufnahme beenden",
         "el_GR": "",
         "en_US": "End RenderDoc Frame Capture",
         "es_ES": "Detener la captura de fotograma de RenderDoc",
@@ -54,7 +54,7 @@
       "ID": "MenuBarActions_DiscardCapture",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "RenderDoc Frame-Aufnahme verwerfen",
         "el_GR": "",
         "en_US": "Discard RenderDoc Frame Capture",
         "es_ES": "Descartar la captura de fotograma de RenderDoc",
@@ -79,7 +79,7 @@
       "ID": "MenuBarActions_DiscardCapture_ToolTip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Beendet die jetzige RenderDoc Frame-Aufnahme, verwirft sofort das Ergebnis.",
         "el_GR": "",
         "en_US": "Ends the currently active RenderDoc Frame Capture, immediately discarding its result.",
         "es_ES": "Finaliza la captura de fotograma de RenderDoc actualmente activa y descarta inmediatamente su resultado.",

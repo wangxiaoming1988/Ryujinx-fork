@@ -4,7 +4,7 @@
       "ID": "MenuBarActionsOpenMiiEditor",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Mii-Editor",
         "el_GR": "",
         "en_US": "Mii Editor",
         "es_ES": "Editor de Mii",
@@ -254,7 +254,7 @@
       "ID": "MenuBarFileOpenFromFileError",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "Keine Anwendungen im ausgewählten Datei gefunden.",
+        "de_DE": "Keine Anwendungen in ausgewählter Datei gefunden.",
         "el_GR": "",
         "en_US": "No applications found in selected file.",
         "es_ES": "No se encontraron aplicaciones en el archivo seleccionado.",
@@ -379,7 +379,7 @@
       "ID": "MenuBarFileOpenScreenshotsFolder",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Screenshots-Ordner öffnen",
         "el_GR": "",
         "en_US": "Open Screenshots Folder",
         "es_ES": "Abrir Carpeta de Capturas de Pantalla",
@@ -579,7 +579,7 @@
       "ID": "MenuBarOptionsRestartEmulation",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Emulation neustarten",
         "el_GR": "",
         "en_US": "Restart Emulation",
         "es_ES": "Reiniciar Emulación",
@@ -1054,7 +1054,7 @@
       "ID": "MenuBarActionsTools",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Werkzeuge",
         "el_GR": "",
         "en_US": "Tools",
         "es_ES": "Herramientas",
@@ -1354,7 +1354,7 @@
       "ID": "MenuBarHelpMultiplayer",
       "Translations": {
         "ar_SA": "متعدد اللاعبين (LDN/LAN)",
-        "de_DE": "",
+        "de_DE": "Mehrspieler (LDN/LAN)",
         "el_GR": "Πολλαπλοί Παίκτες (LDN/LAN)",
         "en_US": "Multiplayer (LDN/LAN)",
         "es_ES": "Multijugador (LDN/LAN)",
@@ -1804,7 +1804,7 @@
       "ID": "GameListSortStatusNameAscending",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Titel: A-Z",
         "el_GR": "Όνομα: A-Z",
         "en_US": "Title: A-Z",
         "es_ES": "Título: A-Z",
@@ -1829,7 +1829,7 @@
       "ID": "GameListSortStatusNameDescending",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Titel: Z-A",
         "el_GR": "Τίτλος: Z-A",
         "en_US": "Title: Z-A",
         "es_ES": "Título: Z-A",
@@ -1954,7 +1954,7 @@
       "ID": "GameListHeaderTitleId",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Titel ID:",
         "el_GR": "",
         "en_US": "Title ID:",
         "es_ES": "ID del Titulo:",
@@ -2254,7 +2254,7 @@
       "ID": "GameListContextMenuCacheManagementNukePptc",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "PPTC Cache löschen",
         "el_GR": "",
         "en_US": "Purge PPTC Cache",
         "es_ES": "Purgar Caché PPTC",
@@ -2279,7 +2279,7 @@
       "ID": "GameListContextMenuCacheManagementPurgeShaderCache",
       "Translations": {
         "ar_SA": "تنظيف ذاكرة مرشحات الفيديو المؤقتة",
-        "de_DE": "Shader Cache löschen",
+        "de_DE": "Shader-Cache löschen",
         "el_GR": "Εκκαθάριση Προσωρινής Μνήμης Shader",
         "en_US": "Purge Shader Cache",
         "es_ES": "Limpiar Caché de Sombreadores",
@@ -2604,7 +2604,7 @@
       "ID": "GameListContextMenuCreateShortcutToolTip",
       "Translations": {
         "ar_SA": "أنشئ اختصار سطح مكتب لتشغيل التطبيق المحدد.",
-        "de_DE": "Erstelle eine Desktop-Verknüpfung die die gewählte Anwendung startet.",
+        "de_DE": "Erstelle eine Desktop-Verknüpfung, die die gewählte Anwendung startet.",
         "el_GR": "Δημιουργία συντόμευσης επιφάνειας εργασίας που ανοίγει την επιλεγμένη εφαρμογή.",
         "en_US": "Create a Desktop Shortcut that launches the selected Application.",
         "es_ES": "Crear un acceso directo en el escritorio que lance la aplicación seleccionada.",
@@ -2629,7 +2629,7 @@
       "ID": "GameListContextMenuCreateCustomConfiguration",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Eigene Konfiguration erstellen",
         "el_GR": "",
         "en_US": "Create Custom Configuration",
         "es_ES": "Crear Configuración Personalizada",
@@ -2654,7 +2654,7 @@
       "ID": "GameListContextMenuEditCustomConfiguration",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Eigene Konfiguration bearbeiten",
         "el_GR": "",
         "en_US": "Edit Custom Configuration",
         "es_ES": "Editar Configuración Personalizada",
@@ -2679,7 +2679,7 @@
       "ID": "GameListContextMenuCreateShortcutToolTipMacOS",
       "Translations": {
         "ar_SA": "أنشئ اختصار يُشغل التطبيق المحدد في مجلد تطبيقات macOS.",
-        "de_DE": "Erstellen Sie eine Verknüpfung im MacOS-Programme-Ordner, die die ausgewählte Anwendung startet.",
+        "de_DE": "Erstellt eine Verknüpfung im MacOS-Programme-Ordner, die die ausgewählte Anwendung startet.",
         "el_GR": "",
         "en_US": "Create a shortcut in macOS's Applications folder that launches the selected Application.",
         "es_ES": "Crea un acceso directo en la carpeta de Aplicaciones de macOS que inicie la Aplicación seleccionada.",
@@ -2704,7 +2704,7 @@
       "ID": "GameListContextMenuShowCompatEntry",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Kompatibilitätseintrag",
         "el_GR": "",
         "en_US": "Compatibility Entry",
         "es_ES": "Entrada de Compatibilidad",
@@ -2729,7 +2729,7 @@
       "ID": "GameListContextMenuShowCompatEntryToolTip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Zeigt das ausgewählte Spiel in der Kompatibilitätsliste an, die normalerweise über das Hilfe-Menü aufgerufen werden kann.",
         "el_GR": "",
         "en_US": "Shows the selected game in the Compatibility List, normally accessible via the Help menu.",
         "es_ES": "Mostra el juego seleccionado en la lista de compatibilidad, a la que normalmente se accede desde el menú Ayuda.",
@@ -2754,7 +2754,7 @@
       "ID": "CreateCustomConfigurationToolTip",
       "Translations": {
         "ar_SA": "ينشئ تكوينًا مستقلًا للعبة الحالية",
-        "de_DE": "Erstellt eine unabhängige Konfiguration für das aktuelle Spiel",
+        "de_DE": "Erstellt eine benutzerdefinierte Konfiguration für das ausgewählte Spiel",
         "el_GR": "Δημιουργεί μια ανεξάρτητη διαμόρφωση για το τρέχον παιχνίδι",
         "en_US": "Creates an independent configuration for the selected game",
         "es_ES": "Crea una configuración independiente para el juego actual",
@@ -2779,7 +2779,7 @@
       "ID": "EditCustomConfigurationToolTip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Bearbeitet deine benutzerdefinierte Konfiguration für das ausgewählte Spiel.",
         "el_GR": "",
         "en_US": "Edit your existing independent configuration for the selected game",
         "es_ES": "Editar su configuración independiente existente para el juego seleccionado",
@@ -2804,7 +2804,7 @@
       "ID": "GameListContextMenuShowGameData",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Spiel-Informationen",
         "el_GR": "",
         "en_US": "Game Info",
         "es_ES": "Información del Juego",
@@ -2904,7 +2904,7 @@
       "ID": "GameListContextMenuTrimXCI",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "XCI-Datei prüfen & trimmen",
         "el_GR": "",
         "en_US": "Check & Trim XCI File",
         "es_ES": "Verificar & Recortar Archivo XCI",
@@ -2929,7 +2929,7 @@
       "ID": "GameListContextMenuTrimXCIToolTip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Trimmt und prüft die XCI-Datei um Speicherplatz zu sparen.",
         "el_GR": "",
         "en_US": "Check and Trim XCI File to Save Disk Space",
         "es_ES": "Verificar y Recortar Archivo XCI para Ahorrar Espacio en Disco",
@@ -3004,7 +3004,7 @@
       "ID": "StatusBarXCIFileTrimming",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "XCI-Datei trimmen: '{0}'",
         "el_GR": "",
         "en_US": "Trimming XCI File '{0}'",
         "es_ES": "Recortando el Siguiente Archivo XCI: '{0}'",
@@ -3604,7 +3604,7 @@
       "ID": "SettingsTabGeneralDisableInputWhenOutOfFocus",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Eingabe deaktivieren wenn nicht fokussiert",
         "el_GR": "",
         "en_US": "Disable Input when Out of Focus",
         "es_ES": "Desactivar la Entrada al Perder el Foco",
@@ -4629,7 +4629,7 @@
       "ID": "SettingsTabSystemSystemTimeMatch",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Mit Systemzeit synchronisieren",
         "el_GR": "",
         "en_US": "Match System Time",
         "es_ES": "Usar Hora del Sistema",
@@ -4704,7 +4704,7 @@
       "ID": "SettingsTabSystemTurboMultiplier",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Turbo-Modus Multiplikator:",
         "el_GR": "",
         "en_US": "Turbo Mode Multiplier:",
         "es_ES": "Multiplicator del Modo Turbo:",
@@ -5154,7 +5154,7 @@
       "ID": "SettingsTabSystemIgnoreControllerApplet",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Controller-Applet ignorieren",
         "el_GR": "",
         "en_US": "Ignore Controller Applet",
         "es_ES": "Ignorar el Applet del Controlador",
@@ -6479,7 +6479,7 @@
       "ID": "SettingsButtonResetConfirm",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Ich möchte meine Einstellungen zurücksetzen.",
         "el_GR": "",
         "en_US": "I want to reset my settings.",
         "es_ES": "Quiero restablecer mi Configuración.",
@@ -12804,7 +12804,7 @@
       "ID": "DialogRebooterMessage",
       "Translations": {
         "ar_SA": "من فضلك انتظر، المحاكي في طور إعادة التشغيل",
-        "de_DE": "Bitte warten Sie, der Emulator wird neu gestartet",
+        "de_DE": "Bitte warte, der Emulator wird neu gestartet",
         "el_GR": "Παρακαλώ περιμένετε, ο εξομοιωτής επανεκκινείται",
         "en_US": "Please wait, the emulator is restarting",
         "es_ES": "Por favor, espere, el emulador se está reiniciando",
@@ -14379,7 +14379,7 @@
       "ID": "DialogUserProfileUnsavedChangesMessage",
       "Translations": {
         "ar_SA": "لقد قمت بإجراء تغييرات على الملف الشخصي لهذا المستخدم هذا ولم يتم حفظها.",
-        "de_DE": "Sie haben Änderungen an diesem Nutzerprofil vorgenommen, die nicht gespeichert wurden.",
+        "de_DE": "Du hast Änderungen an diesem Nutzerprofil vorgenommen, die nicht gespeichert wurden.",
         "el_GR": "Έχετε κάνει αλλαγές σε αυτό το προφίλ χρήστη που δεν έχουν αποθηκευτεί.",
         "en_US": "You have made changes to this user profile that have not been saved.",
         "es_ES": "Ha realizado cambios en este perfil de usuario que no han sido guardados.",
@@ -14404,7 +14404,7 @@
       "ID": "DialogUserProfileUnsavedChangesSubMessage",
       "Translations": {
         "ar_SA": "هل تريد تجاهل التغييرات؟",
-        "de_DE": "Möchten Sie Ihre Änderungen wirklich verwerfen?",
+        "de_DE": "Möchtest du deine Änderungen wirklich verwerfen?",
         "el_GR": "Θέλετε να απορρίψετε τις αλλαγές σας;",
         "en_US": "Do you want to discard your changes?",
         "es_ES": "¿Quieres descartar los cambios realizados?",
@@ -16104,7 +16104,7 @@
       "ID": "AddGameDirBoxTooltip",
       "Translations": {
         "ar_SA": "أدخل مسار الدليل أو استخدم زر \"إضافة\"...",
-        "de_DE": "Geben Sie einen Pfad ein oder nutzen Sie \"Hinzufügen\"...",
+        "de_DE": "Gebe einen Pfad ein oder nutze \"Hinzufügen\"...",
         "el_GR": "Εισαγάγετε διαδρομή ή χρησιμοποιήστε το \"Προσθήκη\"...",
         "en_US": "Enter a directory path or use the \"Add\" button...",
         "es_ES": "Escriba una ruta o use el botón \"Agregar\"...",
@@ -16654,7 +16654,7 @@
       "ID": "SkipUserProfilesTooltip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "Diese Option überspringt den Dialog 'Benutzerprofile verwalten' während des Spiels und verwendet ein voreingestelltes Profil.\n\nDie Profilumschaltung finden Sie unter 'Einstellungen' - 'Benutzerprofile verwalten'. Wählen Sie das gewünschte Profil aus, bevor Sie das Spiel laden.",
+        "de_DE": "Diese Option überspringt den Dialog 'Benutzerprofile verwalten' während des Spiels und verwendet ein voreingestelltes Profil.\n\nDie Profilumschaltung findest du unter 'Einstellungen' - 'Benutzerprofile verwalten'. Wähle das gewünschte Profil aus, bevor du das Spiel lädst.",
         "el_GR": "Αυτή η επιλογή παρακάμπτει το παράθυρο διαλόγου 'Διαχειριστής Προφίλ Χρήστη' κατά τη διάρκεια του παιχνιδιού, χρησιμοποιώντας ένα προεπιλεγμένο προφίλ.\n\nΗ εναλλαγή προφίλ βρίσκεται στις 'Ρυθμίσεις' - 'Διαχειριστής Προφίλ Χρήστη'. Επιλέξτε το επιθυμητό προφίλ πριν φορτώσετε το παιχνίδι.",
         "en_US": "This option skips the 'Manage User Profiles' dialog during gameplay, using a pre-selected profile.\n\nProfile switching is found in 'Options' - 'User Profiles'. Select the desired profile before loading the game.",
         "es_ES": "Esta opción omite el diálogo de 'Gestionar perfiles de usuario' durante el juego, utilizando un perfil preseleccionado.\n\nEl cambio de perfil se encuentra en 'Opciones' - 'Perfiles de Usuario'. Seleccione el perfil deseado antes de cargar el juego.",
@@ -16754,7 +16754,7 @@
       "ID": "ResolutionScaleTooltip",
       "Translations": {
         "ar_SA": "يضاعف دقة عرض اللعبة.\n\nقد لا تعمل بعض الألعاب مع هذا وتبدو منقطة حتى عند زيادة الدقة؛ بالنسبة لهذه الألعاب، قد تحتاج إلى العثور على تعديلات تزيل تنعيم الحواف أو تزيد من دقة العرض الداخلي. لاستخدام الأخير، من المحتمل أن ترغب في تحديد أصلي.\n\nيمكن تغيير هذا الخيار أثناء تشغيل اللعبة بالنقر فوق \"تطبيق\" أدناه؛ يمكنك ببساطة تحريك نافذة الإعدادات جانبًا والتجربة حتى تجد المظهر المفضل للعبة.\n\nضع في اعتبارك أن 4x مبالغة في أي إعداد تقريبًا.",
-        "de_DE": "Multipliziert die Rendering-Auflösung des Spiels.\n\nEinige wenige Spiele funktionieren damit nicht und sehen auch bei höherer Auflösung pixelig aus; für diese Spiele müssen Sie möglicherweise Mods finden, die Anti-Aliasing entfernen oder die interne Rendering-Auflösung erhöhen. Für die Verwendung von Letzterem sollten Sie Native wählen.\n\nSie können diese Option ändern, während ein Spiel läuft, indem Sie unten auf \"Übernehmen\" klicken; Sie können das Einstellungsfenster einfach zur Seite schieben und experimentieren, bis Sie Ihr bevorzugtes Aussehen für ein Spiel gefunden haben.\n\nDenken Sie daran, dass 4x für praktisch jedes Setup Overkill ist.",
+        "de_DE": "Multipliziert die Rendering-Auflösung des Spiels.\n\nEinige wenige Spiele funktionieren damit nicht und sehen auch bei höherer Auflösung pixelig aus; für diese Spiele musst du möglicherweise Mods finden, die Anti-Aliasing entfernen oder die interne Rendering-Auflösung erhöhen. Für die Verwendung von Letzterem solltest du Native wählen.\n\nDu kannst diese Option ändern, während ein Spiel läuft, indem du unten auf \"Übernehmen\" klickst; Du kannst das Einstellungsfenster einfach zur Seite schieben und experimentieren, bis das bevorzugte Aussehen für ein Spiel gefunden wurde.\n\nDenk daran, dass 4x für praktisch jedes Setup Overkill ist.",
         "el_GR": "",
         "en_US": "Multiplies the game's rendering resolution.\n\nA few games may not work with this and look pixelated even when the resolution is increased; for those games, you may need to find mods that remove anti-aliasing or that increase their internal rendering resolution. For using the latter, you'll likely want to select Native.\n\nThis option can be changed while a game is running by clicking \"Apply\" below; you can simply move the settings window aside and experiment until you find your preferred look for a game.\n\nKeep in mind 4x is overkill for virtually any setup.",
         "es_ES": "Multiplica la resolución de rendereo del juego.\n\nAlgunos juegos podrían no funcionar con esto y verse pixelado al aumentar la resolución; en esos casos, quizás sería necesario buscar mods que de anti-aliasing o que aumenten la resolución interna. Para usar este último, probablemente necesitarás seleccionar Nativa.\n\nEsta opción puede ser modificada mientras que un juego este corriendo haciendo click en \"Aplicar\" más abajo; simplemente puedes mover la ventana de configuración a un lado y experimentar hasta que encuentres tu estilo preferido para un juego.\n\nTener en cuenta que 4x es excesivo para prácticamente cualquier configuración.",
@@ -16829,7 +16829,7 @@
       "ID": "AspectRatioTooltip",
       "Translations": {
         "ar_SA": "يتم تطبيق نسبة العرض إلى الارتفاع على نافذة العارض.\n\nقم بتغيير هذا فقط إذا كنت تستخدم تعديل نسبة العرض إلى الارتفاع للعبتك، وإلا سيتم تمديد الرسومات.\n\nاتركه16:9 إذا لم تكن متأكدا.",
-        "de_DE": "Seitenverhältnis, das auf das Renderer-Fenster angewendet wird.\n\nÄndern Sie dies nur, wenn Sie einen Seitenverhältnis-Mod für Ihr Spiel verwenden, da sonst die Grafik gestreckt wird.\n\nLassen Sie es auf 16:9, wenn Sie unsicher sind.",
+        "de_DE": "Seitenverhältnis, das auf das Renderer-Fenster angewendet wird.\n\nÄnder dies nur, wenn ein Seitenverhältnis-Mod für das Spiel verwendet wird, da sonst die Grafik gestreckt wird.\n\nLass es auf 16:9, wenn du unsicher bist.",
         "el_GR": "",
         "en_US": "Aspect Ratio applied to the renderer window.\n\nOnly change this if you're using an aspect ratio mod for your game, otherwise the graphics will be stretched.\n\nLeave on 16:9 if unsure.",
         "es_ES": "Relación de aspecto aplicada a la ventana del renderizador.\n\nSolamente modificar esto si estás utilizando un mod de relación de aspecto para su juego, en cualquier otro caso los gráficos se estirarán.\n\nDejar en 16:9 si no sabe que hacer.",
@@ -18729,7 +18729,7 @@
       "ID": "ControllerAppletDescription",
       "Translations": {
         "ar_SA": "الإعدادات الحالية غير صالحة. افتح الإعدادات وأعد تكوين المدخلات الخاصة بك.",
-        "de_DE": "Ihre aktuelle Konfiguration ist ungültig. Öffnen Sie die Einstellungen und konfigurieren Sie Ihre Eingaben neu.",
+        "de_DE": "Ihre aktuelle Konfiguration ist ungültig. Öffne die Einstellungen und konfiguriere die Eingaben neu.",
         "el_GR": "",
         "en_US": "Your current configuration is invalid. Open settings and reconfigure your inputs.",
         "es_ES": "Tu configuración actual no es válida. Abre la configuración y vuelve a configurar tus entradas",
@@ -21279,7 +21279,7 @@
       "ID": "SettingsTabGraphicsBackendTooltip",
       "Translations": {
         "ar_SA": "حدد الواجهة الخلفية للرسومات التي سيتم استخدامها في المحاكي.\n\nيعد برنامج فولكان أفضل بشكل عام لجميع بطاقات الرسومات الحديثة، طالما أن برامج التشغيل الخاصة بها محدثة. يتميز فولكان أيضا بتجميع مظللات أسرع (أقل تقطيعا) على جميع بائعي وحدات معالجة الرسومات.\n\nقد يحقق أوبن جي أل نتائج أفضل على وحدات معالجة الرسومات إنفيديا القديمة، أو على وحدات معالجة الرسومات إي إم دي القديمة على لينكس، أو على وحدات معالجة الرسومات ذات ذاكرة الوصول العشوائي للفيديوالأقل، على الرغم من أن تعثرات تجميع المظللات ستكون أكبر.\n\nاضبط على فولكان إذا لم تكن متأكدا. اضبط على أوبن جي أل إذا كانت وحدة معالجة الرسومات الخاصة بك لا تدعم فولكان حتى مع أحدث برامج تشغيل الرسومات.",
-        "de_DE": "Wählen Sie das Grafik-Backend, das im Emulator verwendet werden soll.\n\nVulkan ist insgesamt besser für alle modernen Grafikkarten geeignet, sofern deren Treiber auf dem neuesten Stand sind. Vulkan bietet auch eine schnellere Shader-Kompilierung (weniger Stottern) auf allen GPU-Anbietern.\n\nOpenGL kann auf alten Nvidia-GPUs, alten AMD-GPUs unter Linux oder auf GPUs mit geringerem VRAM bessere Ergebnisse erzielen, obwohl die Shader-Kompilierung stärker stottert.\n\nSetzen Sie auf Vulkan, wenn Sie unsicher sind. Stellen Sie OpenGL ein, wenn Ihr Grafikprozessor selbst mit den neuesten Grafiktreibern Vulkan nicht unterstützt.",
+        "de_DE": "Wähle das Grafik-Backend, das im Emulator verwendet werden soll.\n\nVulkan ist insgesamt besser für alle modernen Grafikkarten geeignet, sofern deren Treiber auf dem neuesten Stand sind. Vulkan bietet auch eine schnellere Shader-Kompilierung (weniger Stottern) auf allen GPU-Anbietern.\n\nOpenGL kann auf alten Nvidia-GPUs, alten AMD-GPUs unter Linux oder auf GPUs mit geringerem VRAM bessere Ergebnisse erzielen, obwohl die Shader-Kompilierung stärker stottert.\n\nSetze auf Vulkan, wenn du unsicher bist. Stelle auf OpenGL ein, wenn der Grafikprozessor selbst mit den neuesten Grafiktreibern Vulkan nicht unterstützt.",
         "el_GR": "",
         "en_US": "Select the graphics backend that will be used in the emulator.\n\nVulkan is overall better for all modern graphics cards, as long as their drivers are up to date. Vulkan also features faster shader compilation (less stuttering) on all GPU vendors.\n\nOpenGL may achieve better results on old Nvidia GPUs, on old AMD GPUs on Linux, or on GPUs with lower VRAM, though shader compilation stutters will be greater.\n\nSet to Vulkan if unsure. Set to OpenGL if your GPU does not support Vulkan even with the latest graphics drivers.",
         "es_ES": "Seleccione el backend gráfico que utilizará el emulador.\n\nVulkan, en general, es mejor para todas las tarjetas gráficas modernas, mientras que sus controladores estén actualizados. Vulkan también cuenta con complicación más rápida de sombreadores (menos tirones) en todos los proveredores de GPU.\n\nOpenGL puede lograr mejores resultados en GPU Nvidia antiguas, GPU AMD antiguas en Linux o en GPUs con menor VRAM, aunque tirones de compilación de sombreadores serán mayores.\n\nSetear en Vulkan si no sabe que hacer. Setear en OpenGL si su GPU no tiene soporte para Vulkan aún con los últimos controladores gráficos.",
@@ -21329,7 +21329,7 @@
       "ID": "SettingsEnableTextureRecompressionTooltip",
       "Translations": {
         "ar_SA": "يضغط  تكستر ASTC من أجل تقليل استخدام ذاكرة الوصول العشوائي للفيديو.\n\nتتضمن الألعاب التي تستخدم تنسيق النسيج هذا Astral Chain وBayonetta 3 وFire Emblem Engage وMetroid Prime Remastered وSuper Mario Bros. Wonder وThe Legend of Zelda: Tears of the Kingdom.\n\nمن المحتمل أن تتعطل بطاقات الرسومات التي تحتوي على 4 جيجا بايت من ذاكرة الوصول العشوائي للفيديو أو أقل في مرحلة ما أثناء تشغيل هذه الألعاب.\n\nقم بالتمكين فقط في حالة نفاد ذاكرة الوصول العشوائي للفيديو في الألعاب المذكورة أعلاه. اتركه معطلا إذا لم تكن متأكدا.",
-        "de_DE": "Komprimiert ASTC-Texturen, um die VRAM-Nutzung zu reduzieren.\n\nZu den Spielen, die dieses Texturformat verwenden, gehören Astral Chain, Bayonetta 3, Fire Emblem Engage, Metroid Prime Remastered, Super Mario Bros. Wonder und The Legend of Zelda: Tears of the Kingdom.\n\nGrafikkarten mit 4GiB VRAM oder weniger werden beim Ausführen dieser Spiele wahrscheinlich irgendwann abstürzen.\n\nAktivieren Sie diese Option nur, wenn Ihnen bei den oben genannten Spielen der VRAM ausgeht. Lassen Sie es aus, wenn Sie unsicher sind.",
+        "de_DE": "Komprimiert ASTC-Texturen, um die VRAM-Nutzung zu reduzieren.\n\nZu den Spielen, die dieses Texturformat verwenden, gehören Astral Chain, Bayonetta 3, Fire Emblem Engage, Metroid Prime Remastered, Super Mario Bros. Wonder und The Legend of Zelda: Tears of the Kingdom.\n\nGrafikkarten mit 4GiB VRAM oder weniger werden beim Ausführen dieser Spiele wahrscheinlich irgendwann abstürzen.\n\nAktiviere diese Option nur, wenn Ihnen bei den oben genannten Spielen der VRAM ausgeht. Lass es aus, wenn du unsicher bist.",
         "el_GR": "",
         "en_US": "Compresses ASTC textures in order to reduce VRAM usage.\n\nGames using this texture format include Astral Chain, Bayonetta 3, Fire Emblem Engage, Metroid Prime Remastered, Super Mario Bros. Wonder and The Legend of Zelda: Tears of the Kingdom.\n\nGraphics cards with 4GiB VRAM or less will likely crash at some point while running these games.\n\nEnable only if you're running out of VRAM on the aforementioned games. Leave OFF if unsure.",
         "es_ES": "Comprimir texturas ASTC para reducir uso de VRAM.\n\nJuegos que utilizan este formato de textura incluyen Astral Chain, Bayonetta 3, Fire Emblem Engage, Metroid Prime Remastered, Super Mario Bros. Wonder y The Legend of Zelda: Tears of the Kingdom.\n\nTarjetas gráficas con 4GiB de VRAM o menos probalemente se caeran en algún momento mientras que estén corriendo estos juegos.\n\nActivar solo si está quedan sin VRAM en los juegos antes mencionados. Desactívalo si no sabes qué hacer.",
@@ -21979,7 +21979,7 @@
       "ID": "GraphicsAATooltip",
       "Translations": {
         "ar_SA": "يتم تطبيق تنعيم الحواف على عرض اللعبة.\n\nسوف يقوم FXAA بتعتيم معظم الصورة، بينما سيحاول SMAA العثور على حواف خشنة وتنعيمها.\n\nلا ينصح باستخدامه مع فلتر FSR لتكبير.\n\nيمكن تغيير هذا الخيار أثناء تشغيل اللعبة بالنقر فوق \"تطبيق\" أدناه؛ يمكنك ببساطة تحريك نافذة الإعدادات جانبا والتجربة حتى تجد المظهر المفضل للعبة.\n\nاتركه على لا شيء إذا لم تكن متأكدا.",
-        "de_DE": "Wendet Anti-Aliasing auf das Rendering des Spiels an.\n\nFXAA verwischt den größten Teil des Bildes, während SMAA versucht, gezackte Kanten zu finden und sie zu glätten.\n\nEs wird nicht empfohlen, diese Option in Verbindung mit dem FSR-Skalierungsfilter zu verwenden.\n\nDiese Option kann geändert werden, während ein Spiel läuft, indem Sie unten auf \"Anwenden\" klicken; Sie können das Einstellungsfenster einfach zur Seite schieben und experimentieren, bis Sie Ihr bevorzugtes Aussehen für ein Spiel gefunden haben.\n\nLassen Sie die Option auf NONE, wenn Sie unsicher sind.",
+        "de_DE": "Wendet Anti-Aliasing auf das Rendering des Spiels an.\n\nFXAA verwischt den größten Teil des Bildes, während SMAA versucht, gezackte Kanten zu finden und sie zu glätten.\n\nEs wird nicht empfohlen, diese Option in Verbindung mit dem FSR-Skalierungsfilter zu verwenden.\n\nDiese Option kann geändert werden, während ein Spiel läuft, indem du unten auf \"Anwenden\" klickst; Du können das Einstellungsfenster einfach zur Seite schieben und experimentieren, bis das bevorzugte Aussehen für ein Spiel gefunden wurde.\n\nLass die Option auf NONE, wenn du unsicher bist.",
         "el_GR": "",
         "en_US": "Applies anti-aliasing to the game render.\n\nFXAA will blur most of the image, while SMAA will attempt to find jagged edges and smooth them out.\n\nNot recommended to use in conjunction with the FSR scaling filter.\n\nThis option can be changed while a game is running by clicking \"Apply\" below; you can simply move the settings window aside and experiment until you find your preferred look for a game.\n\nLeave on NONE if unsure.",
         "es_ES": "Aplica antia-aliasing al rendereo del juego.\n\nFXAA desenfocará la mayor parte del la iamgen, mientras que SMAA intentará encontrar bordes irregulares y suavizarlos.\n\nNo se recomienda usar en conjunto con filtro de escala FSR.\n\nEsta opción puede ser modificada mientras que esté corriendo el juego haciendo click en \"Aplicar\" más abajo; simplemente puedes mover la ventana de configuración a un lado y experimentar hasta que encuentres tu estilo preferido para un juego.\n\nDejar en NADA si no está seguro.",
@@ -22054,7 +22054,7 @@
       "ID": "GraphicsScalingFilterTooltip",
       "Translations": {
         "ar_SA": "اختر فلتر التكبير الذي سيتم تطبيقه عند استخدام مقياس الدقة.\n\nيعمل Bilinear بشكل جيد مع الألعاب ثلاثية الأبعاد وهو خيار افتراضي آمن.\n\nيوصى باستخدام Nearest لألعاب البكسل الفنية.\n\nFSR 1.0 هو مجرد مرشح توضيحي، ولا ينصح باستخدامه مع FXAA أو SMAA.\n\nيمكن تغيير هذا الخيار أثناء تشغيل اللعبة بالنقر فوق \"تطبيق\" أدناه؛ يمكنك ببساطة تحريك نافذة الإعدادات جانبا والتجربة حتى تجد المظهر المفضل للعبة.\n\nاتركه على Bilinear إذا لم تكن متأكدا.",
-        "de_DE": "Wählen Sie den Skalierungsfilter, der bei der Auflösungsskalierung angewendet werden soll.\n\nBilinear eignet sich gut für 3D-Spiele und ist eine sichere Standardoption.\n\nNearest wird für Pixel-Art-Spiele empfohlen.\n\nFSR 1.0 ist lediglich ein Schärfungsfilter und wird nicht für die Verwendung mit FXAA oder SMAA empfohlen.\n\nDiese Option kann geändert werden, während ein Spiel läuft, indem Sie unten auf \"Anwenden\" klicken; Sie können das Einstellungsfenster einfach zur Seite schieben und experimentieren, bis Sie Ihr bevorzugtes Aussehen für ein Spiel gefunden haben.\n\nBleiben Sie auf BILINEAR, wenn Sie unsicher sind.",
+        "de_DE": "Wähle den Skalierungsfilter, der bei der Auflösungsskalierung angewendet werden soll.\n\nBilinear eignet sich gut für 3D-Spiele und ist eine sichere Standardoption.\n\nNearest wird für Pixel-Art-Spiele empfohlen.\n\nFSR 1.0 ist lediglich ein Schärfungsfilter und wird nicht für die Verwendung mit FXAA oder SMAA empfohlen.\n\nDiese Option kann geändert werden, während ein Spiel läuft, indem du unten auf \"Anwenden\" klicken; Du kannst das Einstellungsfenster einfach zur Seite schieben und experimentieren, bis das bevorzugtes Aussehen für ein Spiel gefunden wurde.\n\nBleibe auf BILINEAR, wenn du unsicher bist.",
         "el_GR": "",
         "en_US": "Choose the scaling filter that will be applied when using resolution scale.\n\nBilinear works well for 3D games and is a safe default option.\n\nNearest is recommended for pixel art games.\n\nFSR 1.0 is merely a sharpening filter, not recommended for use with FXAA or SMAA.\n\nArea scaling is recommended when downscaling resolutions that are larger than the output window. It can be used to achieve a supersampled anti-aliasing effect when downscaling by more than 2x.\n\nThis option can be changed while a game is running by clicking \"Apply\" below; you can simply move the settings window aside and experiment until you find your preferred look for a game.\n\nLeave on BILINEAR if unsure.",
         "es_ES": "Elija el filtro de escala que se aplicará al utilizar la escala de resolución.\n\nBilinear funciona bien para juegos 3D y es una opción predeterminada segura.\n\nSe recomienda el bilinear para juegos de pixel art.\n\nFSR 1.0 es simplemente un filtro de afilado, no se recomienda su uso con FXAA o SMAA.\n\nEsta opción se puede cambiar mientras se ejecuta un juego haciendo clic en \"Aplicar\" a continuación; simplemente puedes mover la ventana de configuración a un lado y experimentar hasta que encuentres tu estilo preferido para un juego.\n\nDéjelo en BILINEAR si no está seguro.",
@@ -22679,7 +22679,7 @@
       "ID": "MultiplayerDisableP2P",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "P2P-Netzwerk-Hosting deaktivieren (kann Latenz erhöhen)",
         "el_GR": "",
         "en_US": "Disable P2P Network Hosting (may increase latency)",
         "es_ES": "Desactivar el Hosteo de Red P2P (puede aumentar latencia)",
@@ -22704,7 +22704,7 @@
       "ID": "MultiplayerDisableP2PTooltip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Deaktiviert das P2P-Netzwerk-Hosting. Andere Teilnehmer werden über den Master-Server geleitet, anstatt eine direkte Verbindung zu dir herzustellen.",
         "el_GR": "",
         "en_US": "Disable P2P network hosting, peers will proxy through the master server instead of connecting to you directly.",
         "es_ES": "Desactivar el hosteo de red P2P, pares se conectarán a través del servidor maestro en lugar de conectarse directamente contigo.",
@@ -22729,7 +22729,7 @@
       "ID": "LdnPassphrase",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Netzwerk-Passphrase",
         "el_GR": "",
         "en_US": "Network Passphrase:",
         "es_ES": "Frase de Contraseña de la Red:",
@@ -22754,7 +22754,7 @@
       "ID": "LdnPassphraseTooltip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Du wirst nur gehostete Spiele sehen können, die dieselbe Passphrase wie du verwenden.",
         "el_GR": "",
         "en_US": "You will only be able to see hosted games with the same passphrase as you.",
         "es_ES": "Solo podrás ver los juegos hosteados con la misma frase de contraseña que tú.",
@@ -22779,7 +22779,7 @@
       "ID": "LdnPassphraseInputTooltip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Gib eine Passphrase im Format Ryujinx-<8 Hex-Zeichen> ein. Du wirst nur gehostete Spiele sehen können, die dieselbe Passphrase wie du verwenden.",
         "el_GR": "",
         "en_US": "Enter a passphrase in the format Ryujinx-<8 hex chars>. You will only be able to see hosted games with the same passphrase as you.",
         "es_ES": "Ingresar una frase de contraseña en formato Ryujinx-<8 caracteres hexadecimales>. Solamente podrás ver juegos hosteados con la misma frase de contraseña que tú.",
@@ -22804,7 +22804,7 @@
       "ID": "LdnPassphraseInputPublic",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "(öffentlich)",
         "el_GR": "",
         "en_US": "(public)",
         "es_ES": "(público)",
@@ -22829,7 +22829,7 @@
       "ID": "GenLdnPass",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Zufällig generieren",
         "el_GR": "",
         "en_US": "Generate Random",
         "es_ES": "Generar Aleatorio",
@@ -22854,7 +22854,7 @@
       "ID": "GenLdnPassTooltip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Generiert eine neue Passphrase, welche mit anderen Spielern geteilt werden kann.",
         "el_GR": "",
         "en_US": "Generates a new passphrase, which can be shared with other players.",
         "es_ES": "Genera una nueva frase de contraseña, que puede ser compartida con otros jugadores.",
@@ -22879,7 +22879,7 @@
       "ID": "ClearLdnPass",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Löschen",
         "el_GR": "",
         "en_US": "Clear",
         "es_ES": "Borrar",
@@ -22904,7 +22904,7 @@
       "ID": "ClearLdnPassTooltip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Löscht die jetzige Passphrase.",
         "el_GR": "",
         "en_US": "Clears the current passphrase, returning to the public network.",
         "es_ES": "Borra la frase de contraseña actual, regresando a la red pública.",
@@ -22929,7 +22929,7 @@
       "ID": "InvalidLdnPassphrase",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Ungültige Passphrase! Muss im Format \"Ryujinx-<8 Hex Zeichen>\" sein",
         "el_GR": "",
         "en_US": "Invalid Passphrase! Must be in the format \"Ryujinx-<8 hex chars>\"",
         "es_ES": "Frase de Contraseña Inválida! Debe ser en formato \"Ryujinx-<8 caracteres hexadecimales>\"",
@@ -22979,7 +22979,7 @@
       "ID": "SettingsTabSystemEnableCustomVSyncInterval",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Benutzerdefinierte Bildwiederholrate aktivieren (Experimentell)",
         "el_GR": "",
         "en_US": "Enable Custom Refresh Rate (Experimental)",
         "es_ES": "Activar Frecuencia de Actualización Personalizada (Experimental)",
@@ -23029,7 +23029,7 @@
       "ID": "SettingsTabSystemVSyncModeUnbounded",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Unbegrenzt",
         "el_GR": "",
         "en_US": "Unbounded",
         "es_ES": "Sin Límite",
@@ -23129,7 +23129,7 @@
       "ID": "SettingsTabSystemEnableCustomVSyncIntervalTooltip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "Ermöglicht es dem Benutzer, eine emulierte Bildwiederholfrequenz festzulegen. In einigen Titeln kann dies die Geschwindigkeit der Spiel-Logik erhöhen oder verringern. In anderen Titeln kann dies dazu führen, dass die FPS auf ein Vielfaches der Bildwiederholfrequenz begrenzt werden oder zu unvorhersehbarem Verhalten führen. Dies ist eine experimentelle Funktion, ohne Garantien dafür, wie sich das Gameplay auswirkt. \n\nLassen Sie diese Option deaktiviert, wenn Sie sich nicht sicher sind.",
+        "de_DE": "Ermöglicht es dem Benutzer, eine emulierte Bildwiederholfrequenz festzulegen. In einigen Titeln kann dies die Geschwindigkeit der Spiel-Logik erhöhen oder verringern. In anderen Titeln kann dies dazu führen, dass die FPS auf ein Vielfaches der Bildwiederholfrequenz begrenzt werden oder zu unvorhersehbarem Verhalten führen. Dies ist eine experimentelle Funktion, ohne Garantien dafür, wie sich das Gameplay auswirkt. \n\nLass diese Option deaktiviert, wenn du dir nicht sicher bist.",
         "el_GR": "",
         "en_US": "Allows the user to specify an emulated refresh rate. In some titles, this may speed up or slow down the rate of gameplay logic. In other titles, it may allow for capping FPS at some multiple of the refresh rate, or lead to unpredictable behavior. This is an experimental feature, with no guarantees for how gameplay will be affected. \n\nLeave OFF if unsure.",
         "es_ES": "Permite al usuario especificar una frecuencia de actualización emulada. En algunos títulos, esto puede acelerar o ralentizar la lógica del juego. En otros títulos, puede permitir limitar los FPS a algún múltiplo de la frecuencia de actualización, o provocar un comportamiento impredecible. Esta es una función experimental, sin garantías sobre cómo se verá afectada la jugabilidad.\n\nDéjalo DESACTIVADO si no estás seguro.",
@@ -24154,7 +24154,7 @@
       "ID": "SettingsTabDebugEnableGDBStub",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "GDB Stub aktivieren",
         "el_GR": "",
         "en_US": "Enable GDB Stub",
         "es_ES": "Activar Stub GDB",
@@ -24179,7 +24179,7 @@
       "ID": "SettingsTabDebugGDBStubToggleTooltip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Aktiviert den GDB Stub, welcher debugging an der Anwendung ermöglicht. Nur für Entwicklerzwecke!",
         "el_GR": "",
         "en_US": "Enables the GDB stub which makes it possible to debug the running application. For development use only!",
         "es_ES": "Activa el stub GDB, lo que permite depurar la aplicación en ejecución. ¡Solo para uso de desarrollo!",
@@ -24229,7 +24229,7 @@
       "ID": "SettingsTabDebugSuspendOnStart",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Anwendung beim Start anhalten.",
         "el_GR": "",
         "en_US": "Suspend Application on Start",
         "es_ES": "Suspender la Aplicación al Iniciar",
@@ -24254,7 +24254,7 @@
       "ID": "SettingsTabDebugSuspendOnStartTooltip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Hält die Anwendung vor der Ausführung des ersten Befehls an, um Debugging vom frühestmöglichen Zeitpunkt an zu ermöglichen.",
         "el_GR": "",
         "en_US": "Suspends the application before executing the first instruction, allowing for debugging from the earliest point.",
         "es_ES": "Suspende la aplicación antes de ejecutar la primera instrucción, permitiendo depurar desde el punto más temprano.",
@@ -24279,7 +24279,7 @@
       "ID": "LdnGameListOpen",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "LDN Spiele-Liste",
         "el_GR": "",
         "en_US": "LDN Game List",
         "es_ES": "Lista de Juegos LDN",
@@ -24304,7 +24304,7 @@
       "ID": "LdnGameListTitle",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "LDN-Spiele-Browser - {0} Spiele",
         "el_GR": "",
         "en_US": "LDN Game Browser - {0} games",
         "es_ES": "Navegador de Juegos LDN - {0} juegos",
@@ -24329,7 +24329,7 @@
       "ID": "LdnGameListSearchBoxWatermark",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Suche {0} LDN Spiele...",
         "el_GR": "",
         "en_US": "Search {0} LDN games...",
         "es_ES": "Buscar {0} Juegos LDN...",
@@ -24354,7 +24354,7 @@
       "ID": "LdnGameListInfoButtonToolTip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Was ist LDN?",
         "el_GR": "",
         "en_US": "What is LDN?",
         "es_ES": "¿Qué es LDN?",
@@ -24379,7 +24379,7 @@
       "ID": "LdnGameListRefreshToolTip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Verfügbare Spiele vom Server unter {0} aktualisieren.",
         "el_GR": "",
         "en_US": "Refresh available games from the server at {0}.",
         "es_ES": "Actualizar los juegos disponibles del servidor a las {0}.",
@@ -24404,7 +24404,7 @@
       "ID": "LdnGameListPlayerSortDisable",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Spieleranzahl - Deaktivieren",
         "el_GR": "",
         "en_US": "Player Count - Disable",
         "es_ES": "Contador de jugadores - Desactivar",
@@ -24429,7 +24429,7 @@
       "ID": "LdnGameListPlayerSortAscending",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Spieleranzahl - Aufsteigend",
         "el_GR": "",
         "en_US": "Player Count - Ascending",
         "es_ES": "Contador de jugadores - Ascendente",
@@ -24454,7 +24454,7 @@
       "ID": "LdnGameListPlayerSortDescending",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Spieleranzahl - Absteigend",
         "el_GR": "",
         "en_US": "Player Count - Descending",
         "es_ES": "Contador de jugadores - Descendente",
@@ -24479,7 +24479,7 @@
       "ID": "LdnGameListFiltersHeading",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Filter",
         "el_GR": "",
         "en_US": "Filters",
         "es_ES": "Filtros",
@@ -24504,7 +24504,7 @@
       "ID": "LdnGameListFiltersOnlyShowPublicGames",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Nur öffentliche Spiele anzeigen",
         "el_GR": "",
         "en_US": "Only show public games",
         "es_ES": "Solo mostrar juegos públicos",
@@ -24529,7 +24529,7 @@
       "ID": "LdnGameListFiltersOnlyShowJoinableGames",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Nur beitretbare Spiele anzeigen",
         "el_GR": "",
         "en_US": "Only show joinable games",
         "es_ES": "Solo mostrar juegos a los que se puede unir",
@@ -24604,7 +24604,7 @@
       "ID": "LdnGameListConnectionTypeMasterServerProxyToolTip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Verbindet durch RyuLDN-Server (langsamer)",
         "el_GR": "",
         "en_US": "Connects through the RyuLDN server (slower).",
         "es_ES": "Conexión a través del servidor RyuLDN (más lento).",
@@ -24629,7 +24629,7 @@
       "ID": "LdnGameListConnectionTypeP2PToolTip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Verbindet über Peer-to-Peer durch UPnP (schneller)",
         "el_GR": "",
         "en_US": "Connects via Peer-to-Peer via UPnP (faster).",
         "es_ES": "Conexión Peer-to-Peer a través de UPnP (más rápido).",
@@ -24654,7 +24654,7 @@
       "ID": "LdnGameListCreatedAt",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Erstellt: {0}",
         "el_GR": "",
         "en_US": "Created: {0}",
         "es_ES": "Creado: {0}",
@@ -24679,7 +24679,7 @@
       "ID": "LdnGameListPlayersAndPlayerCount",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Spieler ({0} von {1}:",
         "el_GR": "",
         "en_US": "Players ({0} out of {1}):",
         "es_ES": "Jugadores ({0} de {1}):",
@@ -24704,7 +24704,7 @@
       "ID": "LdnGameListJoinable",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Beitretbar",
         "el_GR": "",
         "en_US": "Joinable",
         "es_ES": "Unible",
@@ -24729,7 +24729,7 @@
       "ID": "LdnGameListJoinableToolTip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Spiel ist beitrittbar, wenn es öffentlich ist, oder du die Passphrase kennst.",
         "el_GR": "",
         "en_US": "Game is joinable if it is public or if you know the passphrase.",
         "es_ES": "El juego es unible si es público o si conoces la frase de contraseña.",
@@ -24754,7 +24754,7 @@
       "ID": "LdnGameListNotJoinable",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Nicht beitretbar",
         "el_GR": "",
         "en_US": "Not Joinable",
         "es_ES": "No se puede unir",
@@ -24779,7 +24779,7 @@
       "ID": "LdnGameListNotJoinableToolTip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Spiel läuft bereits.",
         "el_GR": "",
         "en_US": "Game is currently in progress.",
         "es_ES": "El juego está en curso.",
@@ -24804,7 +24804,7 @@
       "ID": "LdnGameListPublic",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Öffentlich",
         "el_GR": "",
         "en_US": "Public",
         "es_ES": "Público",
@@ -24829,7 +24829,7 @@
       "ID": "LdnGameListPublicToolTip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Jeder kann das Spiel beitreten.",
         "el_GR": "",
         "en_US": "Anyone can join this game.",
         "es_ES": "Cualquiera puede unirse a este juego.",
@@ -24854,7 +24854,7 @@
       "ID": "LdnGameListPrivate",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Privat",
         "el_GR": "",
         "en_US": "Private",
         "es_ES": "Privado",
@@ -24879,7 +24879,7 @@
       "ID": "LdnGameListPrivateToolTip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Du kannst dieses Spiel nur beitreten, wenn du die selbe LDN-Passphrase eingestellt hast.",
         "el_GR": "",
         "en_US": "You can only join this game if you also have the same LDN Passphrase in your settings.",
         "es_ES": "Solo puedes unirte a este juego si también tienes la misma frase de contraseña LDN en tus ajustes.",
