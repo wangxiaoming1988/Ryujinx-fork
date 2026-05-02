@@ -1,3 +1,4 @@
+using Ryujinx.Common.Logging;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -114,7 +115,7 @@ namespace Ryujinx.Graphics.Vulkan
                 cbs.AddDependant(this);
 
                 // We need to add a dependency on the command buffer to all objects this object
-                // references aswell.
+                // references as well.
                 if (_referencedObjs != null)
                 {
                     for (int i = 0; i < _referencedObjs.Length; i++)
@@ -176,6 +177,8 @@ namespace Ryujinx.Graphics.Vulkan
                 }
             }
 
+            // This can somehow become -1.
+            // Logger.Info?.PrintMsg(LogClass.Gpu, $"_referenceCount: {_referenceCount}");
             Debug.Assert(_referenceCount >= 0);
         }
 

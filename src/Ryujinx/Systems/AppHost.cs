@@ -62,7 +62,7 @@ using VSyncMode = Ryujinx.Common.Configuration.VSyncMode;
 
 namespace Ryujinx.Ava.Systems
 {
-    internal class AppHost
+    internal class AppHost : IDisposable
     {
         private const int CursorHideIdleTime = 5; // Hide Cursor seconds.
         private const float MaxResolutionScale = 4.0f; // Max resolution hotkeys can scale to before wrapping.
@@ -438,7 +438,7 @@ namespace Ryujinx.Ava.Systems
 
                         SaveBitmapAsPng(bitmapToSave, path);
 
-                        Logger.Notice.Print(LogClass.Application, $"Screenshot saved to {path}", "Screenshot");
+                        Logger.Notice.Print(LogClass.Application, $"Screenshot saved to '{path}'.", "Screenshot");
                     }
                 });
             }
@@ -611,27 +611,40 @@ namespace Ryujinx.Ava.Systems
 
             _isActive = false;
 
-            // NOTE: The render loop is allowed to stay alive until the renderer itself is disposed, as it may handle resource dispose.
-            // We only need to wait for all commands submitted during the main gpu loop to be processed.
-            _gpuDoneEvent.WaitOne();
-            _gpuDoneEvent.Dispose();
-
             DisplaySleep.Restore();
 
             NpadManager.Dispose();
             TouchScreenManager.Dispose();
             Device.Dispose();
+            
+            // NOTE: The render loop is allowed to stay alive until the renderer itself is disposed, as it may handle resource dispose.
+            // We only need to wait for all commands submitted during the main gpu loop to be processed.
+            // If the GPU has no work and is cancelled, we need to handle that as well.
 
+            WaitHandle.WaitAny(new[] { _gpuDoneEvent, _gpuCancellationTokenSource.Token.WaitHandle });
+            _gpuCancellationTokenSource.Dispose();
+            
+            // Waiting for work to be finished before we dispose.
+            if (_renderingStarted)
+            {
+                Device.Gpu.WaitUntilGpuReady();
+            }
+            
+            _gpuDoneEvent.Dispose();
+            
             DisposeGpu();
-
             AppExit?.Invoke(this, EventArgs.Empty);
         }
 
-        private void Dispose()
+        // MUST be public to inherit from IDisposable
+        public void Dispose()
         {
             if (Device.Processes != null)
-                MainWindowViewModel.UpdateGameMetadata(Device.Processes.ActiveApplication.ProgramIdText, _playTimer.Elapsed);
-
+            {
+                MainWindowViewModel.UpdateGameMetadata(Device.Processes.ActiveApplication?.ProgramIdText, 
+                    _playTimer.Elapsed);
+            }
+            
             ConfigurationState.Instance.System.IgnoreMissingServices.Event -= UpdateIgnoreMissingServicesState;
             ConfigurationState.Instance.Graphics.AspectRatio.Event -= UpdateAspectRatioState;
             ConfigurationState.Instance.System.EnableDockedMode.Event -= UpdateDockedModeState;
@@ -646,7 +659,6 @@ namespace Ryujinx.Ava.Systems
             _topLevel.PointerExited -= TopLevel_PointerExited;
 
             _gpuCancellationTokenSource.Cancel();
-            _gpuCancellationTokenSource.Dispose();
 
             _chrono.Stop();
             _playTimer.Stop();
@@ -672,6 +684,12 @@ namespace Ryujinx.Ava.Systems
             }
             else
             {
+                // No use waiting on something that never started work
+                if (_renderingStarted)
+                {
+                    Device.Gpu.WaitUntilGpuReady();
+                }
+                
                 Device.DisposeGpu();
             }
         }
@@ -686,7 +704,7 @@ namespace Ryujinx.Ava.Systems
             _cursorState = CursorStates.ForceChangeCursor;
         }
 
-        public async Task<bool> LoadGuestApplication(BlitStruct<ApplicationControlProperty>? customNacpData = null)
+        public async Task LoadGuestApplication(CancellationTokenSource cts, BlitStruct<ApplicationControlProperty>? customNacpData = null)
         {
             DiscordIntegrationModule.GuestAppStartedAt = Timestamps.Now;
 
@@ -715,7 +733,8 @@ namespace Ryujinx.Ava.Systems
                                 await UserErrorDialog.ShowUserErrorDialog(userError);
                                 Device.Dispose();
 
-                                return false;
+                                cts.Cancel();
+                                throw new OperationCanceledException(cts.Token);
                             }
                         }
 
@@ -724,10 +743,11 @@ namespace Ryujinx.Ava.Systems
                             await UserErrorDialog.ShowUserErrorDialog(userError);
                             Device.Dispose();
 
-                            return false;
+                            cts.Cancel();
+                            throw new OperationCanceledException(cts.Token);
                         }
 
-                        // Tell the user that we installed a firmware for them.
+                        // Tell the user that we installed firmware for them.
                         if (userError is UserError.NoFirmware)
                         {
                             firmwareVersion = ContentManager.GetCurrentFirmwareVersion();
@@ -747,7 +767,8 @@ namespace Ryujinx.Ava.Systems
                         await UserErrorDialog.ShowUserErrorDialog(userError);
                         Device.Dispose();
 
-                        return false;
+                        cts.Cancel();
+                        throw new OperationCanceledException(cts.Token);
                     }
                 }
             }
@@ -762,7 +783,8 @@ namespace Ryujinx.Ava.Systems
                 {
                     Device.Dispose();
 
-                    return false;
+                    cts.Cancel();
+                    throw new OperationCanceledException(cts.Token);
                 }
             }
             else if (Directory.Exists(ApplicationPath))
@@ -782,20 +804,24 @@ namespace Ryujinx.Ava.Systems
 
                     if (!Device.LoadCart(ApplicationPath, romFsFiles[0]))
                     {
+                        await ContentDialogHelper.CreateErrorDialog(
+                            "Please specify an unpacked game directory with a valid exefs or NSO/NRO.");
                         Device.Dispose();
 
-                        return false;
+                        cts.Cancel();
+                        throw new OperationCanceledException(cts.Token);
                     }
                 }
                 else
                 {
                     Logger.Info?.Print(LogClass.Application, "Loading as cart WITHOUT RomFS.");
-
                     if (!Device.LoadCart(ApplicationPath))
                     {
+                        await ContentDialogHelper.CreateErrorDialog(
+                            "Please specify an unpacked game directory with a valid exefs or NSO/NRO.");
                         Device.Dispose();
-
-                        return false;
+                        cts.Cancel();
+                        throw new OperationCanceledException(cts.Token);
                     }
                 }
             }
@@ -813,7 +839,8 @@ namespace Ryujinx.Ava.Systems
                             {
                                 Device.Dispose();
 
-                                return false;
+                                cts.Cancel();
+                                throw new OperationCanceledException(cts.Token);
                             }
 
                             break;
@@ -826,7 +853,8 @@ namespace Ryujinx.Ava.Systems
                             {
                                 Device.Dispose();
 
-                                return false;
+                                cts.Cancel();
+                                throw new OperationCanceledException(cts.Token);
                             }
 
                             break;
@@ -840,7 +868,8 @@ namespace Ryujinx.Ava.Systems
                             {
                                 Device.Dispose();
 
-                                return false;
+                                cts.Cancel();
+                                throw new OperationCanceledException(cts.Token);
                             }
 
                             break;
@@ -855,7 +884,8 @@ namespace Ryujinx.Ava.Systems
                                 {
                                     Device.Dispose();
 
-                                    return false;
+                                    cts.Cancel();
+                                    throw new OperationCanceledException(cts.Token);
                                 }
                             }
                             catch (ArgumentOutOfRangeException)
@@ -864,7 +894,8 @@ namespace Ryujinx.Ava.Systems
 
                                 Device.Dispose();
 
-                                return false;
+                                cts.Cancel();
+                                throw new OperationCanceledException(cts.Token);
                             }
 
                             break;
@@ -873,19 +904,18 @@ namespace Ryujinx.Ava.Systems
             }
             else
             {
-                Logger.Warning?.Print(LogClass.Application, "Please specify a valid XCI/NCA/NSP/PFS0/NRO file.");
+                Logger.Warning?.Print(LogClass.Application, "Please specify a valid XCI/NCA/NSP/PFS0/NSO/NRO file.");
 
                 Device.Dispose();
 
-                return false;
+                cts.Cancel();
+                throw new OperationCanceledException(cts.Token);
             }
 
             ApplicationLibrary.LoadAndSaveMetaData(Device.Processes.ActiveApplication.ProgramIdText,
                 appMetadata => appMetadata.UpdatePreGame()
             );
             _playTimer.Start();
-
-            return true;
         }
 
         internal void Resume()
@@ -895,7 +925,7 @@ namespace Ryujinx.Ava.Systems
             _viewModel.IsPaused = false;
             _playTimer.Start();
             _viewModel.Title = TitleHelper.ActiveApplicationTitle(Device?.Processes.ActiveApplication, Program.Version, !ConfigurationState.Instance.ShowOldUI);
-            Logger.Info?.Print(LogClass.Emulation, "Emulation was resumed");
+            Logger.Info?.Print(LogClass.Emulation, "Emulation was resumed.");
         }
 
         internal void Pause()
@@ -905,7 +935,7 @@ namespace Ryujinx.Ava.Systems
             _viewModel.IsPaused = true;
             _playTimer.Stop();
             _viewModel.Title = TitleHelper.ActiveApplicationTitle(Device?.Processes.ActiveApplication, Program.Version, !ConfigurationState.Instance.ShowOldUI, LocaleManager.Instance[LocaleKeys.Paused]);
-            Logger.Info?.Print(LogClass.Emulation, "Emulation was paused");
+            Logger.Info?.Print(LogClass.Emulation, "Emulation was paused.");
         }
 
         private void InitEmulatedSwitch()
@@ -1104,7 +1134,9 @@ namespace Ryujinx.Ava.Systems
                 // Make sure all commands in the run loop are fully executed before leaving the loop.
                 if (Device.Gpu.Renderer is ThreadedRenderer threaded)
                 {
+                    Logger.Info?.PrintMsg(LogClass.Gpu, "Flushing threaded commands...");
                     threaded.FlushThreadedCommands();
+                    Logger.Info?.PrintMsg(LogClass.Gpu, "Flushed!");
                 }
 
                 _gpuDoneEvent.Set();

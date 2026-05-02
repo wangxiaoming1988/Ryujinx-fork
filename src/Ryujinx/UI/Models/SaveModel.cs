@@ -57,8 +57,15 @@ namespace Ryujinx.Ava.UI.Models
             }
             else
             {
-                ApplicationMetadata appMetadata = ApplicationLibrary.LoadAndSaveMetaData(TitleIdString);
-                Title = appMetadata.Title ?? TitleIdString;
+                Gommon.Optional<ApplicationMetadata> appMetadata = ApplicationLibrary.LoadAndSaveMetaData(TitleIdString);
+                if (appMetadata != null)
+                {
+                    Title = appMetadata.Value.Title ?? TitleIdString;
+                }
+                else
+                {
+                    Title = "<INVALID>";
+                }
             }
 
             Task.Run(() =>

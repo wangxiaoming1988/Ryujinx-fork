@@ -82,7 +82,7 @@ namespace Ryujinx.Ava.Systems
 
         public static void Use(Optional<string> titleId)
         {
-            if (titleId.TryGet(out string tid))
+            if (titleId.TryGet(out string tid) && Switch.Shared.Processes.ActiveApplication is not null)
                 SwitchToPlayingState(
                     ApplicationLibrary.LoadAndSaveMetaData(tid),
                     Switch.Shared.Processes.ActiveApplication

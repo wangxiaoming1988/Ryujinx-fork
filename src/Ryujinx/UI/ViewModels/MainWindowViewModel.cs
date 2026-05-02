@@ -1760,11 +1760,6 @@ namespace Ryujinx.Ava.UI.ViewModels
 
             Logger.RestartTime();
 
-            SelectedIcon ??= ApplicationLibrary.GetApplicationIcon(application.Path,
-                ConfigurationState.Instance.System.Language, application.Id);
-
-            PrepareLoadScreen();
-
             RendererHostControl = new RendererHost();
 
             AppHost = new AppHost(
@@ -1778,18 +1773,34 @@ namespace Ryujinx.Ava.UI.ViewModels
                 UserChannelPersistence,
                 this,
                 TopLevel);
+            
+            CancellationTokenSource cts = new CancellationTokenSource();
 
-            if (!await AppHost.LoadGuestApplication(customNacpData))
+            try
             {
+                await AppHost.LoadGuestApplication(cts, customNacpData);
+            }
+            catch (OperationCanceledException exception)
+            {
+                Logger.Info?.Print(LogClass.Application,
+                    "LoadGuestApplication was interrupted !!! " + exception.Message);
                 AppHost.DisposeContext();
                 AppHost = null;
-
                 return;
             }
-
+            finally
+            {
+                cts.Dispose();
+            }
+            
             CanUpdate = false;
 
             application.Name ??= AppHost.Device.Processes.ActiveApplication.Name;
+            
+            SelectedIcon ??= ApplicationLibrary.GetApplicationIcon(application.Path,
+                ConfigurationState.Instance.System.Language, application.Id);
+
+            PrepareLoadScreen();
 
             LoadHeading = LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.LoadingHeading, application.Name);
 
@@ -1811,9 +1822,9 @@ namespace Ryujinx.Ava.UI.ViewModels
                 RendererHostControl.Focus();
             });
 
-        public static void UpdateGameMetadata(string titleId, TimeSpan playTime)
+        public static void UpdateGameMetadata(string titleId, TimeSpan playTime) 
             => ApplicationLibrary.LoadAndSaveMetaData(titleId, appMetadata => appMetadata.UpdatePostGame(playTime));
-
+        
         public void RefreshFirmwareStatus()
         {
             SystemVersion version = null;

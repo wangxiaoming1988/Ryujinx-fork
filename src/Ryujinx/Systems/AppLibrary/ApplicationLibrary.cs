@@ -849,7 +849,8 @@ namespace Ryujinx.Ava.Systems.AppLibrary
 
             foreach (ApplicationData installedApplication in Applications.Items)
             {
-                temporary += LoadAndSaveMetaData(installedApplication.IdString).TimePlayed;
+                // this should always exist... should...
+                temporary += LoadAndSaveMetaData(installedApplication.IdString).Value.TimePlayed;
             }
 
             TotalTimePlayed = temporary;
@@ -1159,15 +1160,22 @@ namespace Ryujinx.Ava.Systems.AppLibrary
             ApplicationCountUpdated?.Invoke(null, e);
         }
 
-        public static ApplicationMetadata LoadAndSaveMetaData(string titleId, Action<ApplicationMetadata> modifyFunction = null)
+        public static Gommon.Optional<ApplicationMetadata> LoadAndSaveMetaData(string titleId, Action<ApplicationMetadata> modifyFunction = null)
         {
+            if (titleId is null)
+            {
+                Logger.Warning?.PrintMsg(LogClass.Application, "Cannot save metadata because title ID is invalid.");
+                return null;
+            }
+            
             string metadataFolder = Path.Combine(AppDataManager.GamesDirPath, titleId, "gui");
             string metadataFile = Path.Combine(metadataFolder, "metadata.json");
 
             ApplicationMetadata appMetadata;
-
+            
             if (!File.Exists(metadataFile))
             {
+                Logger.Info?.Print(LogClass.Application, $"Metadata file does not exist. Creating metadata for {titleId}...");
                 Directory.CreateDirectory(metadataFolder);
 
                 appMetadata = new ApplicationMetadata();
@@ -1177,12 +1185,12 @@ namespace Ryujinx.Ava.Systems.AppLibrary
 
             try
             {
+                Logger.Debug?.Print(LogClass.Application, $"Deserializing metadata for {titleId}...");
                 appMetadata = JsonHelper.DeserializeFromFile(metadataFile, _serializerContext.ApplicationMetadata);
             }
             catch (JsonException)
             {
                 Logger.Warning?.Print(LogClass.Application, $"Failed to parse metadata json for {titleId}. Loading defaults.");
-
                 appMetadata = new ApplicationMetadata();
             }
 

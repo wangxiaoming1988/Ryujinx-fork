@@ -14,6 +14,7 @@ using Ryujinx.HLE.Loaders.Executables;
 using Ryujinx.HLE.Loaders.Processes.Extensions;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using Path = System.IO.Path;
 
@@ -27,10 +28,15 @@ namespace Ryujinx.HLE.Loaders.Processes
 
         private ulong _latestPid;
 
-        public ProcessResult ActiveApplication
+        public ProcessResult? ActiveApplication
         {
             get
             {
+                return _processesByPid.GetValueOrDefault(_latestPid);
+                
+                // Using this if statement locks up the UI and prevents a new game from loading.
+                // Haven't quite deduced why yet.
+                
                 if (!_processesByPid.TryGetValue(_latestPid, out ProcessResult value))
                     throw new RyujinxException(
                         $"The HLE Process map did not have a process with ID {_latestPid}. Are you missing firmware?");
@@ -144,7 +150,7 @@ namespace Ryujinx.HLE.Loaders.Processes
         public bool LoadUnpackedNca(string exeFsDirPath, string romFsPath = null)
         {
             ProcessResult processResult = new LocalFileSystem(exeFsDirPath).Load(_device, romFsPath);
-
+            
             if (processResult.ProcessId != 0 && _processesByPid.TryAdd(processResult.ProcessId, processResult))
             {
                 if (processResult.Start(_device))
