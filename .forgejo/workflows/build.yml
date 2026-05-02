@@ -94,7 +94,7 @@ jobs:
         shell: bash
 
       - name: Upload Ryujinx Windows artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ryujinx-${{ matrix.configuration }}-${{ steps.version_info.outputs.result }}+${{ steps.version_info.outputs.git_short_hash }}-${{ matrix.platform.zip_os_name }}
           path: artifact
@@ -133,7 +133,7 @@ jobs:
         shell: bash
 
       - name: Upload Ryujinx AppImage artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: forgejo.event_name == 'pull_request' && contains(matrix.platform.name, 'linux')
         with:
           name: ryujinx-${{ matrix.configuration }}-${{ steps.version_info.outputs.result }}+${{ steps.version_info.outputs.git_short_hash }}-${{ matrix.platform.zip_os_name }}-AppImage
@@ -197,7 +197,7 @@ jobs:
         shell: bash
 
       - name: Upload Ryujinx artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ryujinx-${{ matrix.configuration }}-${{ steps.version_info.outputs.result }}+${{ steps.version_info.outputs.git_short_hash }}-macos_universal
           path: "publish/*.tar.gz"
