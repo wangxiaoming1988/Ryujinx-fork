@@ -17,7 +17,7 @@
     <PackageVersion Include="Projektanker.Icons.Avalonia" Version="9.6.2" />
     <PackageVersion Include="Projektanker.Icons.Avalonia.FontAwesome" Version="9.6.2" />
     <PackageVersion Include="Projektanker.Icons.Avalonia.MaterialDesign" Version="9.6.2" />
-    <PackageVersion Include="Ryujinx.SDL3-CS" Version="2026.426.0" />
+    <PackageVersion Include="Ryujinx.SDL3-CS" Version="2026.501.0" />
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageVersion Include="Concentus" Version="2.2.2" />
