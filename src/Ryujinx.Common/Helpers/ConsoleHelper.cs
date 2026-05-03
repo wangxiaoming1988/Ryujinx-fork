@@ -16,6 +16,15 @@ namespace Ryujinx.Common.Helper
         [return: MarshalAs(UnmanagedType.Bool)]
         private static partial bool ShowWindow(nint hWnd, int nCmdShow);
 
+        [SupportedOSPlatform("windows")]
+        [LibraryImport("user32")]
+        private static partial nint GetForegroundWindow();
+
+        [SupportedOSPlatform("windows")]
+        [LibraryImport("user32")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static partial bool SetForegroundWindow(nint hWnd);
+
         public static bool SetConsoleWindowStateSupported => OperatingSystem.IsWindows();
 
         public static void SetConsoleWindowState(bool show)
@@ -43,6 +52,10 @@ namespace Ryujinx.Common.Helper
                 Logger.Warning?.Print(LogClass.Application, "Attempted to show/hide console window but console window does not exist");
                 return;
             }
+
+            SetForegroundWindow(hWnd);
+
+            hWnd = GetForegroundWindow();
 
             ShowWindow(hWnd, show ? SW_SHOW : SW_HIDE);
         }
