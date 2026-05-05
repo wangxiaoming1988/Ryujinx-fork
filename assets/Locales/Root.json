@@ -21426,6 +21426,31 @@
       }
     },
     {
+      "ID": "SettingsShowConsoleRestartMessage",
+      "Translations": {
+        "ar_SA": "",
+        "de_DE": "",
+        "el_GR": "",
+        "en_US": "The console will be available the next time Ryujinx starts.",
+        "es_ES": "La consola estará disponible la próxima vez que se inicie Ryujinx.",
+        "fr_FR": "La console sera disponible au prochain démarrage de Ryujinx.",
+        "he_IL": "",
+        "it_IT": "",
+        "ja_JP": "",
+        "ko_KR": "",
+        "no_NO": "",
+        "pl_PL": "",
+        "pt_BR": "",
+        "ru_RU": "",
+        "sv_SE": "",
+        "th_TH": "",
+        "tr_TR": "",
+        "uk_UA": "",
+        "zh_CN": "",
+        "zh_TW": ""
+      }
+    },
+    {
       "ID": "SettingsGpuBackendRestartMessage",
       "Translations": {
         "ar_SA": "تم تعديل إعدادات الواجهة الخلفية للرسومات أو وحدة معالجة الرسومات. سيتطلب هذا إعادة التشغيل ليتم تطبيقه",

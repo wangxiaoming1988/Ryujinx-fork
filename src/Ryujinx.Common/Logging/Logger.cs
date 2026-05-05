@@ -136,11 +136,7 @@ namespace Ryujinx.Common.Logging
 
             _time = Stopwatch.StartNew();
 
-            // Logger should log to console by default
-            AddTarget(new AsyncLogTargetWrapper(
-                new ConsoleLogTarget("console"),
-                1000,
-                AsyncLogTargetOverflowAction.Discard));
+            SetConsoleTargetEnabled(true);
 
             Notice = new Log(LogLevel.Notice);
 
@@ -171,6 +167,21 @@ namespace Ryujinx.Common.Logging
             _logTargets.Add(target);
 
             Updated += target.Log;
+        }
+
+        public static void SetConsoleTargetEnabled(bool enabled)
+        {
+            if (enabled)
+            {
+                AddTarget(new AsyncLogTargetWrapper(
+                    new ConsoleLogTarget("console"),
+                    1000,
+                    AsyncLogTargetOverflowAction.Discard));
+            }
+            else
+            {
+                RemoveTarget("console");
+            }
         }
 
         public static void RemoveTarget(string target)

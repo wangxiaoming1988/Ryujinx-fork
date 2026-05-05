@@ -656,9 +656,18 @@ namespace Ryujinx.Ava.UI.ViewModels
             get => ConfigurationState.Instance.UI.ShowConsole;
             set
             {
+                bool restartRequired = value && !ConsoleHelper.HasConsoleWindow;
+
                 ConfigurationState.Instance.UI.ShowConsole.Value = value;
 
                 ConfigurationState.Instance.ToFileFormat().SaveConfig(Program.ConfigurationPath);
+
+                if (restartRequired)
+                {
+                    NotificationHelper.ShowInformation(
+                        LocaleManager.Instance[LocaleKeys.SettingsAppRequiredRestartMessage],
+                        LocaleManager.Instance[LocaleKeys.SettingsShowConsoleRestartMessage]);
+                }
 
                 OnPropertyChanged();
             }
