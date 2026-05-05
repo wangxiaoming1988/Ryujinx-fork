@@ -214,7 +214,7 @@ jobs:
         env:
           COMMENTER_TOKEN: ${{ secrets.COMMENTER_TOKEN }}
         with:
-          token: 'n/a'
+          github-token: 'n/a'
           script: |
             const forgejo = getOctokit(process.env.COMMENTER_TOKEN, {
               baseUrl: 'https://git.ryujinx.app/api/v1'
