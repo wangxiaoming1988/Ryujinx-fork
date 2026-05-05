@@ -210,12 +210,12 @@ jobs:
       - build
       - build_macos
     steps:
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@v9
         with:
           script: |
             const forgejo = getOctokit(process.env.FORGEJO_TOKEN, {
               baseUrl: 'https://git.ryujinx.app/api/v1'
-            })
+            });
 
             const {owner, repo} = context.repo;
             const run_id = ${{forgejo.event.workflow_run.id}};
