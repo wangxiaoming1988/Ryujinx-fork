@@ -28,6 +28,7 @@ namespace Ryujinx.HLE.Loaders.Processes
 
         private ulong _latestPid;
 
+#nullable enable
         public ProcessResult? ActiveApplication
         {
             get
@@ -44,6 +45,7 @@ namespace Ryujinx.HLE.Loaders.Processes
                 return value;
             }
         }
+#nullable disable
 
         public ProcessLoader(Switch device)
         {
