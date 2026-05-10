@@ -5,7 +5,6 @@ using Ryujinx.Common.Logging;
 using Ryujinx.Common.Memory;
 using Ryujinx.Common.Utilities;
 using Ryujinx.Cpu;
-using Ryujinx.HLE.Exceptions;
 using Ryujinx.HLE.HOS.Ipc;
 using Ryujinx.HLE.HOS.Kernel.Threading;
 using Ryujinx.HLE.HOS.Services.Ldn.Types;
@@ -15,7 +14,6 @@ using Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator.Types;
 using Ryujinx.Horizon.Common;
 using Ryujinx.Memory;
 using System;
-using System.ComponentModel;
 using System.IO;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -68,10 +66,11 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
             {
                 if (localCommunicationId == localCommunicationIdChecked)
                 {
+                    Logger.NetLog?.PrintMsg(LogClass.ServiceLdn,"CheckLocalCommumicationIdPermission: Checked!");
                     return true;
                 }
             }
-
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn,"CheckLocalCommumicationIdPermission: Check failed!");
             return false;
         }
 
@@ -82,7 +81,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
             if (_nifmResultCode != ResultCode.Success)
             {
                 context.ResponseData.Write((int)NetworkState.Error);
-
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn,$"GetState: _nifmResultCode = {_nifmResultCode.ToString()}");
                 return ResultCode.Success;
             }
 
@@ -114,12 +113,14 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
 
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn,$"GetNetworkInfo: _nifmResultCode = {_nifmResultCode.ToString()}");
                 return _nifmResultCode;
             }
 
             ResultCode resultCode = GetNetworkInfoImpl(out NetworkInfo networkInfo);
             if (resultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn,$"GetState: resultCode = {resultCode.ToString()}");
                 return resultCode;
             }
 
@@ -135,18 +136,22 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
             if (_state == NetworkState.StationConnected)
             {
                 networkInfo = _station.NetworkInfo;
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn,"GetNetworkInfoImpl: _station");
             }
             else if (_state == NetworkState.AccessPointCreated)
             {
                 networkInfo = _accessPoint.NetworkInfo;
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn,"GetNetworkInfoImpl: _accessPoint");
             }
             else
             {
                 networkInfo = new NetworkInfo();
-
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn,"GetNetworkInfoImpl: Invalid state!");
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn,$"GetNetworkInfoImpl: networkInfo = {networkInfo}");
                 return ResultCode.InvalidState;
             }
 
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn,$"GetNetworkInfoImpl: networkInfo = {networkInfo}");
             return ResultCode.Success;
         }
 
@@ -198,7 +203,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                     }
                     else
                     {
-                        Logger.Info?.Print(LogClass.ServiceLdn, $"Console's LDN IP is \"{unicastAddress.Address}\".");
+                        Logger.NetLog?.Print(LogClass.ServiceLdn, $"Console's LDN IP is \"{unicastAddress.Address}\".");
 
                         context.ResponseData.Write(NetworkHelpers.ConvertIpv4Address(unicastAddress.Address));
                         context.ResponseData.Write(NetworkHelpers.ConvertIpv4Address(unicastAddress.IPv4Mask));
@@ -206,7 +211,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                 }
                 else
                 {
-                    Logger.Info?.Print(LogClass.ServiceLdn, $"LDN obtained proxy IP.");
+                    Logger.NetLog?.Print(LogClass.ServiceLdn, $"LDN obtained proxy IP.");
 
                     context.ResponseData.Write(config.ProxyIp);
                     context.ResponseData.Write(config.ProxySubnetMask);
@@ -227,7 +232,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
             // NOTE: Returns ResultCode.InvalidArgument if _disconnectReason is null, doesn't occur in our case.
 
             context.ResponseData.Write((short)_disconnectReason);
-
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"GetDisconnectReason: {_disconnectReason}");
             return ResultCode.Success;
         }
 
@@ -247,12 +252,14 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
         {
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"GetSecurityParameter: _nifmResultCode = {_nifmResultCode}");
                 return _nifmResultCode;
             }
 
             ResultCode resultCode = GetNetworkInfoImpl(out NetworkInfo networkInfo);
             if (resultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"GetSecurityParameter: resultCode = {resultCode}");
                 return resultCode;
             }
 
@@ -263,7 +270,8 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
             };
 
             context.ResponseData.WriteStruct(securityParameter);
-
+            
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"GetSecurityParameter: securityParameter = {securityParameter}");
             return ResultCode.Success;
         }
 
@@ -273,12 +281,14 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
         {
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"GetNetworkConfig: _nifmResultCode = {_nifmResultCode}");
                 return _nifmResultCode;
             }
 
             ResultCode resultCode = GetNetworkInfoImpl(out NetworkInfo networkInfo);
             if (resultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"GetNetworkConfig: resultCode = {resultCode}");
                 return resultCode;
             }
 
@@ -292,6 +302,8 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
             };
 
             context.ResponseData.WriteStruct(networkConfig);
+            
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"GetNetworkConfig: networkConfig = {networkConfig}");
 
             return ResultCode.Success;
         }
@@ -322,12 +334,14 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
 
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"GetNetworkInfoLatestUpdate: _nifmResultCode = {_nifmResultCode}");
                 return _nifmResultCode;
             }
 
             ResultCode resultCode = GetNetworkInfoImpl(out NetworkInfo networkInfo);
             if (resultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"GetNetworkInfoLatestUpdate: resultCode = {resultCode}");
                 return resultCode;
             }
 
@@ -378,6 +392,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
 
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"ScanImpl: _nifmResultCode = {_nifmResultCode}");
                 return _nifmResultCode;
             }
 
@@ -400,6 +415,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                         {
                             if (scanFilter.Ssid.Length <= 31)
                             {
+                                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"ScanImpl: resultCode = {resultCode}");
                                 return resultCode;
                             }
                         }
@@ -408,11 +424,13 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                         {
                             if (scanFilterFlag > ScanFilterFlag.All)
                             {
+                                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"ScanImpl: resultCode = {resultCode}");
                                 return resultCode;
                             }
 
                             if (_state - 3 >= NetworkState.AccessPoint)
                             {
+                                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "ScanImpl: Invalid state!");
                                 resultCode = ResultCode.InvalidState;
                             }
                             else
@@ -437,7 +455,8 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                     }
                 }
             }
-
+            
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"ScanImpl: resultCode = {resultCode}");
             return resultCode;
         }
 
@@ -462,6 +481,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                 }
             }
 
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"ScanInternal: availableGames = {availableGames}");
             return ResultCode.Success;
         }
 
@@ -502,7 +522,8 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                 throw new ArgumentException($"{GetType().FullName}: Protocol value is not 1 or 3!! Protocol value: {protocolValue}");
             }
             
-            Logger.Stub?.PrintStub(LogClass.ServiceLdn, $"Protocol value:  {protocolValue}");
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"SetProtocol: protocolValue = {protocolValue}");
+            Logger.Stub?.PrintStub(LogClass.ServiceLdn, new { protocolValue});
             return ResultCode.Success;
         }
 
@@ -512,11 +533,13 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
         {
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"OpenAccessPoint: _nifmResultCode = {_nifmResultCode}");
                 return _nifmResultCode;
             }
 
             if (_state != NetworkState.Initialized)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "OpenAccessPoint: Invalid state!");
                 return ResultCode.InvalidState;
             }
 
@@ -538,6 +561,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
         {
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"CloseAccessPoint: _nifmResultCode = {_nifmResultCode}");
                 return _nifmResultCode;
             }
 
@@ -547,6 +571,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
             }
             else
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "CloseAccessPoint: Invalid state!");
                 return ResultCode.InvalidState;
             }
 
@@ -596,11 +621,13 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
             bool isLocalCommunicationIdValid = CheckLocalCommunicationIdPermission(context, (ulong)networkConfig.IntentId.LocalCommunicationId);
             if (!isLocalCommunicationIdValid && NetworkClient.NeedsRealId)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "CreateNetworkImpl: Invalid object!");
                 return ResultCode.InvalidObject;
             }
 
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"CreateNetworkImpl: _nifmResultCode = {_nifmResultCode}");
                 return _nifmResultCode;
             }
 
@@ -629,16 +656,22 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                                     AddressList addressList = MemoryMarshal.Cast<byte, AddressList>(addressListBytes)[0];
 
                                     _accessPoint.CreateNetworkPrivate(securityConfig, securityParameter, userConfig, networkConfig, addressList);
+                                    Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"CreateNetworkImpl: Created private network! " +
+                                        $"| securityConfig = {securityConfig} | securityParameter = {securityParameter} " +
+                                        $"| userConfig = {userConfig} | networkConfig = {networkConfig} | addressList = {addressList}");
                                 }
                                 else
                                 {
                                     _accessPoint.CreateNetwork(securityConfig, userConfig, networkConfig);
+                                    Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"CreateNetworkImpl: Created network! " +
+                                        $"| securityConfig = {securityConfig} | userConfig = {userConfig} | networkConfig = {networkConfig}");
                                 }
 
                                 return ResultCode.Success;
                             }
                             else
                             {
+                                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "CreateNetworkImpl: Invalid state!");
                                 return ResultCode.InvalidState;
                             }
                         }
@@ -660,6 +693,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
         {
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"DestroyNetworkImpl: _nifmResultCode = {_nifmResultCode}");
                 return _nifmResultCode;
             }
 
@@ -676,9 +710,11 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
 
                 CloseAccessPoint();
 
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "DestroyNetworkImpl: Invalid state!");
                 return ResultCode.InvalidState;
             }
 
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "DestroyNetworkImpl: Invalid argument!");
             return ResultCode.InvalidArgument;
         }
 
@@ -695,14 +731,17 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
         {
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"RejectImpl: _nifmResultCode = {_nifmResultCode}");
                 return _nifmResultCode;
             }
 
             if (_state != NetworkState.AccessPointCreated)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "RejectImpl: Invalid state!");
                 return ResultCode.InvalidState; // Must be network host to reject nodes.
             }
 
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"RejectImpl: disconnectReason = {disconnectReason} | nodeId = {nodeId}");
             return NetworkClient.Reject(disconnectReason, nodeId);
         }
 
@@ -714,11 +753,13 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
 
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"SetAdvertiseData: _nifmResultCode = {_nifmResultCode}");
                 return _nifmResultCode;
             }
 
             if (bufferSize is 0 or > LdnConst.AdvertiseDataSizeMax)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "SetAdvertiseData: Invalid argument!");
                 return ResultCode.InvalidArgument;
             }
 
@@ -727,11 +768,12 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                 byte[] advertiseData = new byte[bufferSize];
 
                 context.Memory.Read(bufferPosition, advertiseData);
-
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"SetAdvertiseData: advertiseData = {advertiseData}");
                 return _accessPoint.SetAdvertiseData(advertiseData);
             }
             else
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "SetAdvertiseData: Invalid state!");
                 return ResultCode.InvalidState;
             }
         }
@@ -744,20 +786,24 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
 
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"SetStationAcceptPolicy: _nifmResultCode = {_nifmResultCode}");
                 return _nifmResultCode;
             }
 
             if (acceptPolicy > AcceptPolicy.WhiteList)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "SetStationAcceptPolicy: Invalid argument!");
                 return ResultCode.InvalidArgument;
             }
 
             if (_state is NetworkState.AccessPoint or NetworkState.AccessPointCreated)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"SetStationAcceptPolicy: acceptPolicy = {acceptPolicy}");
                 return _accessPoint.SetStationAcceptPolicy(acceptPolicy);
             }
             else
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "SetStationAcceptPolicy: Invalid state!");
                 return ResultCode.InvalidState;
             }
         }
@@ -768,6 +814,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
         {
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"AddAcceptFilterEntry: _nifmResultCode = {_nifmResultCode}");
                 return _nifmResultCode;
             }
 
@@ -782,6 +829,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
         {
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"ClearAcceptFilter: _nifmResultCode = {_nifmResultCode}");
                 return _nifmResultCode;
             }
 
@@ -796,11 +844,13 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
         {
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"OpenStation: _nifmResultCode = {_nifmResultCode}");
                 return _nifmResultCode;
             }
 
             if (_state != NetworkState.Initialized)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "OpenStation: Invalid state!");
                 return ResultCode.InvalidState;
             }
 
@@ -813,6 +863,8 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
 
             // NOTE: Calls nifm service and returns related result codes.
             //       Since we use our own implementation we can return ResultCode.Success.
+            
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"OpenStation: _station = {_station}");
 
             return ResultCode.Success;
         }
@@ -823,6 +875,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
         {
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"CloseStation: _nifmResultCode = {_nifmResultCode}");
                 return _nifmResultCode;
             }
 
@@ -832,11 +885,13 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
             }
             else
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "CloseStation: Invalid state!");
                 return ResultCode.InvalidState;
             }
 
             SetState(NetworkState.Initialized);
-
+            
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "CloseStation: Closed.");
             return ResultCode.Success;
         }
 
@@ -901,11 +956,13 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
             bool isLocalCommunicationIdValid = CheckLocalCommunicationIdPermission(context, (ulong)networkInfo.NetworkId.IntentId.LocalCommunicationId);
             if (!isLocalCommunicationIdValid && NetworkClient.NeedsRealId)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "ConnectImpl: Invalid object!");
                 return ResultCode.InvalidObject;
             }
 
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"ConnectImpl: _nifmResultCode = {_nifmResultCode}");
                 return _nifmResultCode;
             }
 
@@ -925,6 +982,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                         {
                             if (_state != NetworkState.Station)
                             {
+                                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "ConnectImpl: Invalid state!");
                                 resultCode = ResultCode.InvalidState;
                             }
                             else
@@ -932,16 +990,24 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                                 if (isPrivate)
                                 {
                                     resultCode = _station.ConnectPrivate(securityConfig, securityParameter, userConfig, localCommunicationVersion, optionUnknown, networkConfig);
+                                    Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"ConnectImpl: Private connection established! " +
+                                        $"| securityConfig = {securityConfig} | securityParameter = {securityParameter} | userConfig = {userConfig} " +
+                                        $"| localCommunicationVersion = {localCommunicationVersion} | optionUnknown = {optionUnknown} | networkConfig = {networkConfig}");
                                 }
                                 else
                                 {
                                     resultCode = _station.Connect(securityConfig, userConfig, localCommunicationVersion, optionUnknown, networkInfo);
+                                    Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"ConnectImpl: Connection established! " +
+                                        $"| securityConfig = {securityConfig} | userConfig = {userConfig} " +
+                                        $"| localCommunicationVersion = {localCommunicationVersion} | optionUnknown = {optionUnknown} | networkConfig = {networkConfig}");
                                 }
                             }
                         }
                     }
                 }
             }
+
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"ConnectImpl: resultCode = {resultCode}");
 
             return resultCode;
         }
@@ -957,6 +1023,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
         {
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"DisconnectImpl: _nifmResultCode = {_nifmResultCode}");
                 return _nifmResultCode;
             }
 
@@ -970,14 +1037,17 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
 
                     _disconnectReason = disconnectReason;
 
+                    Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"DisconnectImpl: _disconnectReason = {_disconnectReason}");
                     return ResultCode.Success;
                 }
 
                 CloseStation();
 
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "DisconnectImpl: Invalid state!");
                 return ResultCode.InvalidState;
             }
 
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "DisconnectImpl: Invalid argument!");
             return ResultCode.InvalidArgument;
         }
 
@@ -994,6 +1064,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
         {
             if (_nifmResultCode != ResultCode.Success)
             {
+                Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"Finalize: _disconnectReason = {_disconnectReason}");
                 return _nifmResultCode;
             }
 
@@ -1010,11 +1081,13 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                 _stateChangeEventHandle = 0;
             }
 
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"Finalize: resultCode = {resultCode}");
             return resultCode;
         }
 
         private ResultCode FinalizeImpl(bool isCausedBySystem)
         {
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, "FinalizeImpl");
             DisconnectReason disconnectReason;
 
             switch (_state)
@@ -1138,7 +1211,6 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                         NetworkClient.SetGameVersion(context.Device.Processes.ActiveApplication.ApplicationControlProperties.DisplayVersion);
 
                         resultCode = ResultCode.Success;
-
                         _nifmResultCode = resultCode;
 
                         SetState(NetworkState.Initialized);
@@ -1152,6 +1224,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator
                 }
             }
 
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"InitializeImpl: resultCode = {resultCode}");
             return resultCode;
         }
 

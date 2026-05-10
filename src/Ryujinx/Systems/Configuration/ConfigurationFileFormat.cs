@@ -17,7 +17,7 @@ namespace Ryujinx.Ava.Systems.Configuration
         /// <summary>
         /// The current version of the file format
         /// </summary>
-        public const int CurrentVersion = 71;
+        public const int CurrentVersion = 72;
 
         /// <summary>
         /// Version of the configuration file format
@@ -113,6 +113,11 @@ namespace Ryujinx.Ava.Systems.Configuration
         /// Enables printing FS access log messages
         /// </summary>
         public bool LoggingEnableFsAccessLog { get; set; }
+        
+        /// <summary>
+        /// Enables printing network log messages
+        /// </summary>
+        public bool LoggingEnableNetLog { get; set; }
 
         /// <summary>
         /// Enables log messages from Avalonia

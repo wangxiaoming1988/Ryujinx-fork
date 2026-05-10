@@ -119,6 +119,7 @@ namespace Ryujinx.Common.Logging
         public static Log? Error { get; private set; }
         public static Log? Guest { get; private set; }
         public static Log? AccessLog { get; private set; }
+        public static Log? NetLog { get; private set; }
         public static Log? Stub { get; private set; }
         public static Log? Trace { get; private set; }
         public static Log Notice { get; } // Always enabled
@@ -247,6 +248,7 @@ namespace Ryujinx.Common.Logging
                 case LogLevel.Error     : Error     = enabled ? new Log(LogLevel.Error)     : null; break;
                 case LogLevel.Guest     : Guest     = enabled ? new Log(LogLevel.Guest)     : null; break;
                 case LogLevel.AccessLog : AccessLog = enabled ? new Log(LogLevel.AccessLog) : null; break;
+                case LogLevel.NetLog    : NetLog    = enabled ? new Log(LogLevel.NetLog)    : null; break;
                 case LogLevel.Stub      : Stub      = enabled ? new Log(LogLevel.Stub)      : null; break;
                 case LogLevel.Trace     : Trace     = enabled ? new Log(LogLevel.Trace)     : null; break;
                 case LogLevel.Notice    : break;

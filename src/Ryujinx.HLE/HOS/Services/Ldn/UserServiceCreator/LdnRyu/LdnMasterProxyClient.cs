@@ -132,7 +132,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator.LdnRyu
 
         protected override void OnConnected()
         {
-            Logger.Info?.PrintMsg(LogClass.ServiceLdn, $"LDN TCP client connected a new session with Id {Id}");
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"LDN TCP client connected a new session with Id {Id}");
 
             UpdatePassphraseIfNeeded();
 
@@ -141,7 +141,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator.LdnRyu
 
         protected override void OnDisconnected()
         {
-            Logger.Info?.PrintMsg(LogClass.ServiceLdn, $"LDN TCP client disconnected a session with Id {Id}");
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"LDN TCP client disconnected a session with Id {Id}");
 
             _passphrase = null;
 
@@ -174,7 +174,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator.LdnRyu
 
         protected override void OnError(SocketError error)
         {
-            Logger.Info?.PrintMsg(LogClass.ServiceLdn, $"LDN TCP client caught an error with code {error}");
+            Logger.NetLog?.PrintMsg(LogClass.ServiceLdn, $"LDN TCP client caught an error with code {error}");
 
             _error.Set();
         }
@@ -428,7 +428,7 @@ namespace Ryujinx.HLE.HOS.Services.Ldn.UserServiceCreator.LdnRyu
                     }
                     else
                     {
-                        Logger.Info?.Print(LogClass.ServiceLdn, $"Created a wireless P2P network on port {request.ExternalProxyPort}.");
+                        Logger.NetLog?.Print(LogClass.ServiceLdn, $"Created a wireless P2P network on port {request.ExternalProxyPort}.");
                         _hostedProxy.Start();
 
                         (_, UnicastIPAddressInformation unicastAddress) = NetworkHelpers.GetLocalInterface();

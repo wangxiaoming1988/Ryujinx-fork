@@ -108,6 +108,9 @@ namespace Ryujinx.Headless
 
             if (NeedsOverride(nameof(LoggingEnableFsAccessLog)))
                 LoggingEnableFsAccessLog = configurationState.Logger.EnableFsAccessLog;
+            
+            if (NeedsOverride(nameof(LoggingEnableNetLog)))
+                LoggingEnableNetLog = configurationState.Logger.EnableNetLog;
 
             if (NeedsOverride(nameof(LoggingGraphicsDebugLevel)))
                 LoggingGraphicsDebugLevel = configurationState.Logger.GraphicsDebugLevel;
@@ -370,6 +373,9 @@ namespace Ryujinx.Headless
 
         [Option("enable-fs-access-logs", Required = false, Default = false, HelpText = "Enables printing FS access log messages.")]
         public bool LoggingEnableFsAccessLog { get; set; }
+        
+        [Option("enable-net-logs", Required = false, Default = false, HelpText = "Enables printing net log messages.")]
+        public bool LoggingEnableNetLog { get; set; }
 
         [Option("graphics-debug-level", Required = false, Default = GraphicsDebugLevel.None, HelpText = "Change Graphics API debug log level.")]
         public GraphicsDebugLevel LoggingGraphicsDebugLevel { get; set; }

@@ -26,6 +26,8 @@ namespace Ryujinx.Ava.Systems.Configuration
                 (_, e) => Logger.SetEnable(LogLevel.Guest, e.NewValue);
             ConfigurationState.Instance.Logger.EnableFsAccessLog.Event +=
                 (_, e) => Logger.SetEnable(LogLevel.AccessLog, e.NewValue);
+            ConfigurationState.Instance.Logger.EnableNetLog.Event +=
+                (_, e) => Logger.SetEnable(LogLevel.NetLog, e.NewValue);
 
             ConfigurationState.Instance.Logger.FilteredClasses.Event += (_, e) =>
             {

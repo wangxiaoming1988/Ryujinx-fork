@@ -47,6 +47,7 @@ namespace Ryujinx.Ava.Systems.Configuration
                 LoggingEnableTrace = Logger.EnableTrace,
                 LoggingEnableGuest = Logger.EnableGuest,
                 LoggingEnableFsAccessLog = Logger.EnableFsAccessLog,
+                LoggingEnableNetLog = Logger.EnableNetLog,
                 LoggingEnableAvalonia = Logger.EnableAvaloniaLog,
                 LoggingFilteredClasses = Logger.FilteredClasses,
                 LoggingGraphicsDebugLevel = Logger.GraphicsDebugLevel,
@@ -176,6 +177,7 @@ namespace Ryujinx.Ava.Systems.Configuration
             Logger.EnableTrace.Value = false;
             Logger.EnableGuest.Value = true;
             Logger.EnableFsAccessLog.Value = false;
+            Logger.EnableNetLog.Value = false;
             Logger.EnableAvaloniaLog.Value = false;
             Logger.FilteredClasses.Value = [];
             Logger.GraphicsDebugLevel.Value = GraphicsDebugLevel.None;

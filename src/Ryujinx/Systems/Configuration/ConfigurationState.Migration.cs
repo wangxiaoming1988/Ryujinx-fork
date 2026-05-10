@@ -1,4 +1,4 @@
-using Avalonia.Media;
+    using Avalonia.Media;
 using Gommon;
 using Ryujinx.Ava.Systems.Configuration.System;
 using Ryujinx.Ava.Systems.Configuration.UI;
@@ -68,6 +68,7 @@ namespace Ryujinx.Ava.Systems.Configuration
             Logger.EnableTrace.Value = cff.LoggingEnableTrace;
             Logger.EnableGuest.Value = cff.LoggingEnableGuest;
             Logger.EnableFsAccessLog.Value = cff.LoggingEnableFsAccessLog;
+            Logger.EnableNetLog.Value = cff.LoggingEnableNetLog;
             Logger.FilteredClasses.Value = cff.LoggingFilteredClasses;
             Logger.GraphicsDebugLevel.Value = cff.LoggingGraphicsDebugLevel;
 

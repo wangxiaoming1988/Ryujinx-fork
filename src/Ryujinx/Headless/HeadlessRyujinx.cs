@@ -254,6 +254,7 @@ namespace Ryujinx.Headless
             Logger.SetEnable(LogLevel.Trace, option.LoggingEnableTrace);
             Logger.SetEnable(LogLevel.Guest, !option.LoggingDisableGuest);
             Logger.SetEnable(LogLevel.AccessLog, option.LoggingEnableFsAccessLog);
+            Logger.SetEnable(LogLevel.NetLog, option.LoggingEnableFsAccessLog);
 
             if (!option.DisableFileLog)
             {

@@ -257,6 +257,11 @@ namespace Ryujinx.Ava.Systems.Configuration
             /// Enables printing FS access log messages
             /// </summary>
             public ReactiveObject<bool> EnableFsAccessLog { get; private set; }
+            
+            /// <summary>
+            /// Enables printing network log messages
+            /// </summary>
+            public ReactiveObject<bool> EnableNetLog { get; private set; }
 
             /// <summary>
             /// Enables log messages from Avalonia
@@ -289,6 +294,7 @@ namespace Ryujinx.Ava.Systems.Configuration
                 EnableTrace = new ReactiveObject<bool>();
                 EnableGuest = new ReactiveObject<bool>();
                 EnableFsAccessLog = new ReactiveObject<bool>();
+                EnableNetLog = new ReactiveObject<bool>();
                 EnableAvaloniaLog = new ReactiveObject<bool>();
                 FilteredClasses = new ReactiveObject<LogClass[]>();
                 EnableFileLog = new ReactiveObject<bool>();

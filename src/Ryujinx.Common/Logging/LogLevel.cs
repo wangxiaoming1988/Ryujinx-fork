@@ -12,6 +12,7 @@ namespace Ryujinx.Common.Logging
         Error,
         Guest,
         AccessLog,
+        NetLog,
         Notice,
         Trace,
     }

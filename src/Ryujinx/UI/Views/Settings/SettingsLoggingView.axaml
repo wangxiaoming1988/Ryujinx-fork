@@ -70,6 +70,10 @@
                                 ToolTip.Tip="{ext:Locale FileAccessLogTooltip}">
                         <TextBlock Text="{ext:Locale SettingsTabLoggingEnableFsAccessLogs}" />
                         </CheckBox>
+                        <CheckBox IsChecked="{Binding EnableNetLog}"
+                                  ToolTip.Tip="{ext:Locale NetLogTooltip}">
+                            <TextBlock Text="{ext:Locale SettingsTabLoggingEnableNetLogs}" />
+                        </CheckBox>
                         <CheckBox IsChecked="{Binding EnableDebug}"
                                   ToolTip.Tip="{ext:Locale DebugLogTooltip}">
                             <TextBlock Text="{ext:Locale SettingsTabLoggingEnableDebugLogs}" />
