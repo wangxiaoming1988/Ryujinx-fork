@@ -44,6 +44,22 @@ namespace Ryujinx.HLE.HOS.Services.Am.AppletAE.AllSystemAppletProxiesService.Lib
 
             return ResultCode.Success;
         }
+        
+        [CommandCmif(1)]
+        // PushOutData(object<nn::am::service::IStorage>)
+        public ResultCode PushOutData(ServiceCtx context)
+        {
+            IStorage appletData = GetObject<IStorage>(context, 0);
+            
+            if (appletData == null || appletData.Data.Length == 0) // is this necessary?
+            {
+                return ResultCode.NullObject;
+            }
+    
+            _appletStandalone.InputData.Enqueue(appletData.Data);
+
+            return ResultCode.Success;
+        }
 
         [CommandCmif(11)]
         // GetLibraryAppletInfo() -> nn::am::service::LibraryAppletInfo
