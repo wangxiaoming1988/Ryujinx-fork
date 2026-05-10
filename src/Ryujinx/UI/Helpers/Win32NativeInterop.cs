@@ -8,6 +8,12 @@ namespace Ryujinx.Ava.UI.Helpers
     internal partial class Win32NativeInterop
     {
         internal const int GWLP_WNDPROC = -4;
+        internal const int GWL_STYLE = -16;
+        internal const int GWL_EXSTYLE = -20;
+
+        internal const uint WS_OVERLAPPEDWINDOW = 0x00CF0000;
+        internal const uint WS_POPUP = 0x80000000;
+        internal const uint WS_VISIBLE = 0x10000000;
 
         [Flags]
         public enum ClassStyles : uint
@@ -107,8 +113,28 @@ namespace Ryujinx.Ava.UI.Helpers
            nint hInstance,
            nint lpParam);
 
+        [LibraryImport("user32.dll", SetLastError = true, EntryPoint = "GetWindowLongPtrW")]
+        public static partial nint GetWindowLongPtrW(nint hWnd, int nIndex);
+
         [LibraryImport("user32.dll", SetLastError = true)]
         public static partial nint SetWindowLongPtrW(nint hWnd, int nIndex, nint value);
+
+        [LibraryImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static partial bool SetWindowPos(
+            nint hWnd,
+            nint hWndInsertAfter,
+            int x,
+            int y,
+            int cx,
+            int cy,
+            uint uFlags);
+
+        internal const uint SWP_NOZORDER = 0x0004;
+        internal const uint SWP_NOACTIVATE = 0x0010;
+        internal const uint SWP_FRAMECHANGED = 0x0020;
+        internal const uint SWP_NOMOVE = 0x0002;
+        internal const uint SWP_NOSIZE = 0x0001;
 
         [LibraryImport("user32.dll", SetLastError = true)]
         public static partial ushort GetAsyncKeyState(int nVirtKey);

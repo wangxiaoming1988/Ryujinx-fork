@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using System.Runtime.Versioning;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using DynamicData;
@@ -2014,7 +2015,7 @@ namespace Ryujinx.Ava.UI.ViewModels
 
             LastFullscreenToggle = Environment.TickCount64;
 
-            if (WindowState is not WindowState.Normal)
+            if (WindowState is WindowState.FullScreen)
             {
                 WindowState = WindowState.Normal;
                 Window.TitleBar.ExtendsContentIntoTitleBar = !ConfigurationState.Instance.ShowOldUI;
@@ -2023,19 +2024,72 @@ namespace Ryujinx.Ava.UI.ViewModels
                 {
                     ShowMenuAndStatusBar = true;
                 }
+
+                if (OperatingSystem.IsWindows())
+                {
+                    RestoreWindowFromFullscreen();
+                }
             }
             else
             {
-                WindowState = WindowState.FullScreen;
                 Window.TitleBar.ExtendsContentIntoTitleBar = true;
 
                 if (IsGameRunning)
                 {
                     ShowMenuAndStatusBar = false;
                 }
+
+                if (OperatingSystem.IsWindows())
+                {
+                    MakeWindowFullscreen();
+                }
+                else
+                {
+                    WindowState = WindowState.FullScreen;
+                }
             }
 
             IsFullScreen = WindowState is WindowState.FullScreen;
+        }
+
+        private nint _savedWindowStyle;
+
+        [SupportedOSPlatform("windows")]
+        private void MakeWindowFullscreen()
+        {
+            nint hwnd = Window.TryGetPlatformHandle()?.Handle ?? nint.Zero;
+            if (hwnd == nint.Zero) return;
+
+            // Save current style and placement
+            _savedWindowStyle = Win32NativeInterop.GetWindowLongPtrW(hwnd, Win32NativeInterop.GWL_STYLE);
+
+            // Remove window chrome: WS_OVERLAPPEDWINDOW -> WS_POPUP | WS_VISIBLE
+            Win32NativeInterop.SetWindowLongPtrW(hwnd, Win32NativeInterop.GWL_STYLE,
+                unchecked((nint)(Win32NativeInterop.WS_POPUP | Win32NativeInterop.WS_VISIBLE)));
+
+            Avalonia.Platform.Screen? screen = Window.Screens.ScreenFromVisual(Window);
+            int w = screen?.Bounds.Width ?? 0;
+            int h = screen?.Bounds.Height ?? 0;
+
+            Win32NativeInterop.SetWindowPos(hwnd, nint.Zero, 0, 0, w, h,
+                Win32NativeInterop.SWP_NOZORDER | Win32NativeInterop.SWP_NOACTIVATE | Win32NativeInterop.SWP_FRAMECHANGED);
+
+            WindowState = WindowState.FullScreen;
+        }
+
+        [SupportedOSPlatform("windows")]
+        private void RestoreWindowFromFullscreen()
+        {
+            nint hwnd = Window.TryGetPlatformHandle()?.Handle ?? nint.Zero;
+            if (hwnd == nint.Zero) return;
+
+            // Restore original window style
+            Win32NativeInterop.SetWindowLongPtrW(hwnd, Win32NativeInterop.GWL_STYLE, _savedWindowStyle);
+
+            Win32NativeInterop.SetWindowPos(hwnd, nint.Zero, 0, 0, 0, 0,
+                Win32NativeInterop.SWP_NOZORDER | Win32NativeInterop.SWP_NOACTIVATE |
+                Win32NativeInterop.SWP_FRAMECHANGED | Win32NativeInterop.SWP_NOMOVE | Win32NativeInterop.SWP_NOSIZE);
+
         }
 
         public static void SaveConfig()
