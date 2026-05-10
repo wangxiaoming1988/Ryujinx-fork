@@ -1,13 +1,19 @@
 using Ryujinx.Common;
+using Ryujinx.Common.Logging;
 using Ryujinx.HLE.HOS.Services.Caps.Types;
 
 namespace Ryujinx.HLE.HOS.Services.Caps
 {
     [Service("caps:su")] // 6.0.0+
-    class IScreenShotApplicationService : IpcService
+    internal class IScreenShotApplicationService : IpcService
     {
-        public IScreenShotApplicationService(ServiceCtx context) { }
+        private const ulong ScreenshotDataSize = 0x384000;
+        private const ulong ApplicationDataSize = 0x404;
 
+        public IScreenShotApplicationService(ServiceCtx context)
+        {
+            _ = context;
+        }
         [CommandCmif(32)] // 7.0.0+
         // SetShimLibraryVersion(pid, u64, nn::applet::AppletResourceUserId)
         public ResultCode SetShimLibraryVersion(ServiceCtx context)
@@ -32,6 +38,15 @@ namespace Ryujinx.HLE.HOS.Services.Caps
 
             ulong screenshotDataPosition = context.Request.SendBuff[0].Position;
             ulong screenshotDataSize = context.Request.SendBuff[0].Size;
+
+            if (screenshotDataSize < ScreenshotDataSize)
+            {
+                Logger.Warning?.PrintMsg(
+                    LogClass.ServiceCaps,
+                    $"Invalid screenshot buffer size 0x{screenshotDataSize:X}; expected at least 0x{ScreenshotDataSize:X}.");
+
+                return ResultCode.NullInputBuffer;
+            }
 
             byte[] screenshotData = context.Memory.GetSpan(screenshotDataPosition, (int)screenshotDataSize, true).ToArray();
 
@@ -60,6 +75,24 @@ namespace Ryujinx.HLE.HOS.Services.Caps
             ulong screenshotDataPosition = context.Request.SendBuff[1].Position;
             ulong screenshotDataSize = context.Request.SendBuff[1].Size;
 
+            if (applicationDataSize != ApplicationDataSize)
+            {
+                Logger.Warning?.PrintMsg(
+                    LogClass.ServiceCaps,
+                    $"Invalid ApplicationData size 0x{applicationDataSize:X}; expected 0x{ApplicationDataSize:X}.");
+
+                return ResultCode.InvalidArgument;
+            }
+
+            if (screenshotDataSize < ScreenshotDataSize)
+            {
+                Logger.Warning?.PrintMsg(
+                    LogClass.ServiceCaps,
+                    $"Invalid screenshot buffer size 0x{screenshotDataSize:X}; expected at least 0x{ScreenshotDataSize:X}.");
+
+                return ResultCode.NullInputBuffer;
+            }
+
             // TODO: Parse the application data: At 0x00 it's UserData (Size of 0x400), at 0x404 it's a uint UserDataSize (Always empty for now).
             _ = context.Memory.GetSpan(applicationDataPosition, (int)applicationDataSize).ToArray();
 
@@ -87,6 +120,23 @@ namespace Ryujinx.HLE.HOS.Services.Caps
 
             ulong screenshotDataPosition = context.Request.SendBuff[1].Position;
             ulong screenshotDataSize = context.Request.SendBuff[1].Size;
+
+            if (userIdListSize != 0x88)
+            {
+                Logger.Warning?.PrintMsg(
+                    LogClass.ServiceCaps,
+                    $"Invalid UserIdList size 0x{userIdListSize:X}; expected 0x88.");
+                return ResultCode.InvalidArgument;
+            }
+
+            if (screenshotDataSize < ScreenshotDataSize)
+            {
+                Logger.Warning?.PrintMsg(
+                    LogClass.ServiceCaps,
+                    $"Invalid screenshot buffer size 0x{screenshotDataSize:X}; expected at least 0x{ScreenshotDataSize:X}.");
+
+                return ResultCode.NullInputBuffer;
+            }
 
             // TODO: Parse the UserIdList.
             _ = context.Memory.GetSpan(userIdListPosition, (int)userIdListSize).ToArray();
