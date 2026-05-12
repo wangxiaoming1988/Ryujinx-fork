@@ -176,9 +176,7 @@ namespace Ryujinx.Graphics.Vulkan
                     }
                 }
             }
-
-            // This can somehow become -1.
-            // Logger.Info?.PrintMsg(LogClass.Gpu, $"_referenceCount: {_referenceCount}");
+            
             Debug.Assert(_referenceCount >= 0);
         }
 

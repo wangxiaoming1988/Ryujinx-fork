@@ -622,15 +622,15 @@ namespace Ryujinx.Ava.Systems
             // If the GPU has no work and is cancelled, we need to handle that as well.
 
             WaitHandle.WaitAny(new[] { _gpuDoneEvent, _gpuCancellationTokenSource.Token.WaitHandle });
-            _gpuCancellationTokenSource.Dispose();
-            
-            // Waiting for work to be finished before we dispose.
+
             if (_renderingStarted)
             {
+                // Waiting for work to be finished before we dispose.
                 Device.Gpu.WaitUntilGpuReady();
             }
             
             _gpuDoneEvent.Dispose();
+            _gpuCancellationTokenSource.Dispose();
             
             DisposeGpu();
             AppExit?.Invoke(this, EventArgs.Empty);
@@ -1095,51 +1095,56 @@ namespace Ryujinx.Ava.Systems
 
             Device.Gpu.Renderer.RunLoop(() =>
             {
-                Device.Gpu.SetGpuThread();
-                Device.Gpu.InitializeShaderCache(_gpuCancellationTokenSource.Token);
-
-                _renderer.Window.ChangeVSyncMode(Device.VSyncMode);
-
-                while (_isActive)
+                try
                 {
-                    _ticks += _chrono.ElapsedTicks;
+                    Device.Gpu.SetGpuThread();
+                    Device.Gpu.InitializeShaderCache(_gpuCancellationTokenSource.Token);
 
-                    _chrono.Restart();
+                    _renderer.Window.ChangeVSyncMode(Device.VSyncMode);
 
-                    if (Device.WaitFifo())
+                    while (_isActive)
                     {
-                        Device.Statistics.RecordFifoStart();
-                        Device.ProcessFrame();
-                        Device.Statistics.RecordFifoEnd();
-                    }
+                        _ticks += _chrono.ElapsedTicks;
 
-                    while (Device.ConsumeFrameAvailable())
-                    {
-                        if (!_renderingStarted)
+                        _chrono.Restart();
+
+                        if (Device.WaitFifo())
                         {
-                            _renderingStarted = true;
-                            _viewModel.SwitchToRenderer(false);
-                            InitStatus();
+                            Device.Statistics.RecordFifoStart();
+                            Device.ProcessFrame();
+                            Device.Statistics.RecordFifoEnd();
                         }
 
-                        Device.PresentFrame(() => (RendererHost.EmbeddedWindow as EmbeddedWindowOpenGL)?.SwapBuffers());
-                    }
+                        while (Device.ConsumeFrameAvailable())
+                        {
+                            if (!_renderingStarted)
+                            {
+                                _renderingStarted = true;
+                                _viewModel.SwitchToRenderer(false);
+                                InitStatus();
+                            }
 
-                    if (_ticks >= _ticksPerFrame)
-                    {
-                        UpdateStatus();
+                            Device.PresentFrame(() =>
+                                (RendererHost.EmbeddedWindow as EmbeddedWindowOpenGL)?.SwapBuffers());
+                        }
+
+                        if (_ticks >= _ticksPerFrame)
+                        {
+                            UpdateStatus();
+                        }
                     }
                 }
-
-                // Make sure all commands in the run loop are fully executed before leaving the loop.
-                if (Device.Gpu.Renderer is ThreadedRenderer threaded)
+                finally
                 {
-                    Logger.Info?.PrintMsg(LogClass.Gpu, "Flushing threaded commands...");
-                    threaded.FlushThreadedCommands();
-                    Logger.Info?.PrintMsg(LogClass.Gpu, "Flushed!");
+                    // Make sure all commands in the run loop are fully executed before leaving the loop.
+                    if (Device.Gpu.Renderer is ThreadedRenderer threaded)
+                    {
+                        Logger.Info?.PrintMsg(LogClass.Gpu, "Flushing threaded commands...");
+                        threaded.FlushThreadedCommands();
+                        Logger.Info?.PrintMsg(LogClass.Gpu, "Flushed!");
+                    }
+                    _gpuDoneEvent.Set();
                 }
-
-                _gpuDoneEvent.Set();
             });
 
             (RendererHost.EmbeddedWindow as EmbeddedWindowOpenGL)?.MakeCurrent(true);
