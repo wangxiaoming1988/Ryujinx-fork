@@ -559,18 +559,29 @@ namespace Ryujinx.Input.HLE
                 {
                     VibrationValue leftVibrationValue = dualVibrationValue.Item1;
                     VibrationValue rightVibrationValue = dualVibrationValue.Item2;
-
+                    
                     float low = Math.Min(1f, (float)((rightVibrationValue.AmplitudeLow * 0.85 + rightVibrationValue.AmplitudeHigh * 0.15) * controllerConfig.Rumble.StrongRumble));
                     float high = Math.Min(1f, (float)((leftVibrationValue.AmplitudeLow * 0.15 + leftVibrationValue.AmplitudeHigh * 0.85) * controllerConfig.Rumble.WeakRumble));
+                    
+                    leftVibrationValue.AmplitudeLow *= controllerConfig.Rumble.WeakRumble;
+                    leftVibrationValue.AmplitudeHigh *= controllerConfig.Rumble.StrongRumble;
+                    rightVibrationValue.AmplitudeLow *= controllerConfig.Rumble.WeakRumble;
+                    rightVibrationValue.AmplitudeHigh *= controllerConfig.Rumble.StrongRumble;
 
-                    _gamepad?.Rumble(low, high, uint.MaxValue);
+                    if (_gamepad?.HDRumble(leftVibrationValue, rightVibrationValue) == false)
+                    {
+                        _gamepad?.Rumble(low, high, uint.MaxValue);
+                    }
 
                     Logger.Debug?.Print(LogClass.Hid, $"Effect for {controllerConfig.PlayerIndex} " +
                         $"L.low.amp={leftVibrationValue.AmplitudeLow}, " +
                         $"L.high.amp={leftVibrationValue.AmplitudeHigh}, " +
+                        $"L.low.freq={leftVibrationValue.FrequencyLow}, " +
+                        $"L.high.freq={leftVibrationValue.FrequencyHigh}, " +
                         $"R.low.amp={rightVibrationValue.AmplitudeLow}, " +
                         $"R.high.amp={rightVibrationValue.AmplitudeHigh} " +
-                        $"--> ({low}, {high})");
+                        $"R.low.freq={rightVibrationValue.FrequencyLow}, " +
+                        $"R.high.freq={rightVibrationValue.FrequencyHigh}");
                 }
             }
         }

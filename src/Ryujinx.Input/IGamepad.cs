@@ -1,5 +1,6 @@
 using Ryujinx.Common.Configuration.Hid;
 using Ryujinx.Common.Memory;
+using Ryujinx.HLE.HOS.Services.Hid;
 using System;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -73,6 +74,16 @@ namespace Ryujinx.Input
         void SetLed(uint packedRgb);
 
         public void ClearLed() => SetLed(0);
+
+        /// <summary>
+        /// Starts an HD vibration effect on the gamepad if available.
+        /// </summary>
+        /// <param name="left">The vibration data for the left side</param>
+        /// <param name="right">The vibration data for the right side</param>
+        bool HDRumble(VibrationValue left, VibrationValue right)
+        {
+            return false;
+        }
 
         /// <summary>
         /// Starts a rumble effect on the gamepad.
