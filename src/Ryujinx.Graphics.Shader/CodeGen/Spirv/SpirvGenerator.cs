@@ -60,6 +60,14 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Spirv
                 context.AddCapability(Capability.Float64);
             }
 
+            if (parameters.HostCapabilities.SupportsShaderNonUniformIndexing)
+            {
+                context.AddExtension("SPV_EXT_descriptor_indexing");
+                context.AddCapability(Capability.ShaderNonUniform);
+                context.AddCapability(Capability.SampledImageArrayNonUniformIndexing);
+                context.AddCapability(Capability.StorageImageArrayNonUniformIndexing);
+            }
+
             if (parameters.Definitions.TransformFeedbackEnabled && parameters.Definitions.LastInVertexPipeline)
             {
                 context.AddCapability(Capability.TransformFeedback);

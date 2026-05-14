@@ -9,6 +9,7 @@ namespace Ryujinx.Graphics.Shader.Translation
         public readonly bool SupportsShaderBallot;
         public readonly bool SupportsShaderBarrierDivergence;
         public readonly bool SupportsShaderFloat64;
+        public readonly bool SupportsShaderNonUniformIndexing;
         public readonly bool SupportsTextureShadowLod;
         public readonly bool SupportsViewportMask;
 
@@ -20,6 +21,7 @@ namespace Ryujinx.Graphics.Shader.Translation
             bool supportsShaderBallot,
             bool supportsShaderBarrierDivergence,
             bool supportsShaderFloat64,
+            bool supportsShaderNonUniformIndexing,
             bool supportsTextureShadowLod,
             bool supportsViewportMask)
         {
@@ -30,6 +32,7 @@ namespace Ryujinx.Graphics.Shader.Translation
             SupportsShaderBallot = supportsShaderBallot;
             SupportsShaderBarrierDivergence = supportsShaderBarrierDivergence;
             SupportsShaderFloat64 = supportsShaderFloat64;
+            SupportsShaderNonUniformIndexing = supportsShaderNonUniformIndexing;
             SupportsTextureShadowLod = supportsTextureShadowLod;
             SupportsViewportMask = supportsViewportMask;
         }

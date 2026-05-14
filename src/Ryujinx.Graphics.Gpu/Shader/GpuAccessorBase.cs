@@ -231,6 +231,8 @@ namespace Ryujinx.Graphics.Gpu.Shader
 
         public bool QueryHostSupportsShaderFloat64() => _context.Capabilities.SupportsShaderFloat64;
 
+        public bool QueryHostSupportsShaderNonUniformIndexing() => _context.Capabilities.SupportsShaderNonUniformIndexing;
+
         public bool QueryHostSupportsSnormBufferTextureFormat() => _context.Capabilities.SupportsSnormBufferTextureFormat;
 
         public bool QueryHostSupportsTextureGatherOffsets() => _context.Capabilities.SupportsTextureGatherOffsets;

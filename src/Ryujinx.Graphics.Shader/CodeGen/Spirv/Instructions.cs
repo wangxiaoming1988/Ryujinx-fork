@@ -587,6 +587,14 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Spirv
             return OperationResult.Invalid;
         }
 
+        private static void MarkNonUniform(CodeGenContext context, SpvInstruction inst)
+        {
+            if (context.HostCapabilities.SupportsShaderNonUniformIndexing)
+            {
+                context.Decorate(inst, Decoration.NonUniform);
+            }
+        }
+
         private static OperationResult GenerateImageAtomic(CodeGenContext context, AstOperation operation)
         {
             AstTextureOperation texOp = (AstTextureOperation)operation;
@@ -613,6 +621,7 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Spirv
                 SpvInstruction textureIndex = Src(AggregateType.S32);
 
                 image = context.AccessChain(imagePointerType, image, textureIndex);
+                MarkNonUniform(context, image);
             }
 
             int coordsCount = texOp.Type.Dimensions;
@@ -683,15 +692,21 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Spirv
 
             ImageDeclaration declaration = context.Images[texOp.GetTextureSetAndBinding()];
             SpvInstruction image = declaration.Image;
+            bool isIndexed = declaration.IsIndexed;
 
-            if (declaration.IsIndexed)
+            if (isIndexed)
             {
                 SpvInstruction textureIndex = Src(AggregateType.S32);
 
                 image = context.AccessChain(declaration.ImagePointerType, image, textureIndex);
+                MarkNonUniform(context, image);
             }
 
             image = context.Load(declaration.ImageType, image);
+            if (isIndexed)
+            {
+                MarkNonUniform(context, image);
+            }
 
             int coordsCount = texOp.Type.Dimensions;
 
@@ -740,15 +755,21 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Spirv
 
             ImageDeclaration declaration = context.Images[texOp.GetTextureSetAndBinding()];
             SpvInstruction image = declaration.Image;
+            bool isIndexed = declaration.IsIndexed;
 
-            if (declaration.IsIndexed)
+            if (isIndexed)
             {
                 SpvInstruction textureIndex = Src(AggregateType.S32);
 
                 image = context.AccessChain(declaration.ImagePointerType, image, textureIndex);
+                MarkNonUniform(context, image);
             }
 
             image = context.Load(declaration.ImageType, image);
+            if (isIndexed)
+            {
+                MarkNonUniform(context, image);
+            }
 
             int coordsCount = texOp.Type.Dimensions;
 
@@ -1878,35 +1899,56 @@ namespace Ryujinx.Graphics.Shader.CodeGen.Spirv
         private static SpvInstruction GenerateSampledImageLoad(CodeGenContext context, AstTextureOperation texOp, SamplerDeclaration declaration, ref int srcIndex)
         {
             SpvInstruction image = declaration.Image;
+            bool imageIndexed = declaration.IsIndexed;
 
-            if (declaration.IsIndexed)
+            if (imageIndexed)
             {
                 SpvInstruction textureIndex = context.Get(AggregateType.S32, texOp.GetSource(srcIndex++));
 
                 image = context.AccessChain(declaration.SampledImagePointerType, image, textureIndex);
+                MarkNonUniform(context, image);
             }
 
             if (texOp.IsSeparate)
             {
                 image = context.Load(declaration.ImageType, image);
+                if (imageIndexed)
+                {
+                    MarkNonUniform(context, image);
+                }
 
                 SamplerDeclaration samplerDeclaration = context.Samplers[texOp.GetSamplerSetAndBinding()];
 
                 SpvInstruction sampler = samplerDeclaration.Image;
+                bool samplerIndexed = samplerDeclaration.IsIndexed;
 
-                if (samplerDeclaration.IsIndexed)
+                if (samplerIndexed)
                 {
                     SpvInstruction samplerIndex = context.Get(AggregateType.S32, texOp.GetSource(srcIndex++));
 
                     sampler = context.AccessChain(samplerDeclaration.SampledImagePointerType, sampler, samplerIndex);
+                    MarkNonUniform(context, sampler);
                 }
 
                 sampler = context.Load(samplerDeclaration.ImageType, sampler);
+                if (samplerIndexed)
+                {
+                    MarkNonUniform(context, sampler);
+                }
+
                 image = context.SampledImage(declaration.SampledImageType, image, sampler);
+                if (imageIndexed || samplerIndexed)
+                {
+                    MarkNonUniform(context, image);
+                }
             }
             else
             {
                 image = context.Load(declaration.SampledImageType, image);
+                if (imageIndexed)
+                {
+                    MarkNonUniform(context, image);
+                }
             }
 
             return image;
