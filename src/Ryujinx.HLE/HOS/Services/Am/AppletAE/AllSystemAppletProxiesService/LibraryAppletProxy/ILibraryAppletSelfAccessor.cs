@@ -1,4 +1,5 @@
 using Ryujinx.Common;
+using Ryujinx.Common.Logging;
 using System;
 
 namespace Ryujinx.HLE.HOS.Services.Am.AppletAE.AllSystemAppletProxiesService.LibraryAppletProxy
@@ -60,6 +61,19 @@ namespace Ryujinx.HLE.HOS.Services.Am.AppletAE.AllSystemAppletProxiesService.Lib
 
             return ResultCode.Success;
         }
+        
+        [CommandCmif(10)]
+        // ExitProcessAndReturn -> nn::am::service::LibraryAppletInfo
+        public ResultCode ExitProcessAndReturn(ServiceCtx context)
+        {
+            // Exits the LibraryApplet and returns to running the title which launched this LibraryApplet (qlaunch for example).
+            // On success, official sw will enter an infinite loop with sleep-thread value 86400000000000.
+            // Since we don't currently support qlaunch, it's fine to stub it.
+            
+            Logger.Stub?.PrintStub(LogClass.Service);
+            return ResultCode.Success;
+        }
+
 
         [CommandCmif(11)]
         // GetLibraryAppletInfo() -> nn::am::service::LibraryAppletInfo
@@ -83,7 +97,8 @@ namespace Ryujinx.HLE.HOS.Services.Am.AppletAE.AllSystemAppletProxiesService.Lib
             AppletIdentifyInfo appletIdentifyInfo = new()
             {
                 AppletId = AppletId.QLaunch,
-                TitleId = 0x0100000000001000,
+                // 0x4 padding
+                TitleId = 0x0100000000001000, // qlaunch systemAppletMenu title ID
             };
 
             context.ResponseData.WriteStruct(appletIdentifyInfo);
