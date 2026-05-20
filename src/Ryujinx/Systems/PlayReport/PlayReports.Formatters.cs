@@ -1070,6 +1070,23 @@ namespace Ryujinx.Ava.Systems.PlayReport
             _ => FormattedValue.ForceReset
         };
 
+        private static FormattedValue TomodachiLifeLTD_Status(SingleValue value)
+        {
+            MessagePackObject messagePackObject = value.Matched.PackedValue;
+            MessagePackObjectDictionary messagePackObjectDictionary = messagePackObject.AsDictionary();
+            
+            int miiCount = messagePackObjectDictionary["MiiNum"].AsInt32();
+            int fountainLevel = messagePackObjectDictionary["FountainLevel"].AsInt32();
+            
+            return $"Looking after {"Mii".ToQuantity(miiCount)}, with an island level of {fountainLevel}";
+        }
+        
+        private static FormattedValue AnimalCrossingNewHorizons_AppCommon(SingleValue value)
+        {
+            MessagePackObject messagePackObject = value.Matched.PackedValue;
+            MessagePackObjectDictionary messagePackObjectDictionary = messagePackObject.AsDictionary();
 
+            return $"Living on {messagePackObjectDictionary["LandName"].AsString()} Island";
+        }
     }
 }

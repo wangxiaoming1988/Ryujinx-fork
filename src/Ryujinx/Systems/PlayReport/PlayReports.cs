@@ -119,6 +119,19 @@ namespace Ryujinx.Ava.Systems.PlayReport
                         "based on what game you first launch.\n\nNSO emulators do not print any Play Report information past the first game launch so it's all we got.")
                     .AddValueFormatter("launch_title_id", NsoEmulator_LaunchedGame)
             )
+            .AddSpec(
+                [ "010051f0207b2000", "0100ca502552a000" ], // Tomodachi Life: Living the Dream + Demo
+                spec => spec
+                    .WithDescription(
+                        "based on your total Mii count and island level.")
+                    .AddValueFormatter("Common", TomodachiLifeLTD_Status)
+            )
+            .AddSpec(
+                "01006f8002326000", // Animal Crossing New Horizons
+                spec => spec
+                    .WithDescription("based on your island name.")
+                    .AddValueFormatter("AppCmn", AnimalCrossingNewHorizons_AppCommon)
+            )
         );
 
         private static string Playing(string game) => $"Playing {game}";
