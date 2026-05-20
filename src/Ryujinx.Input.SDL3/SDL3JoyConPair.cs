@@ -1,4 +1,7 @@
+using Gommon;
 using Ryujinx.Common.Configuration.Hid;
+using Ryujinx.Common.Logging;
+using Ryujinx.HLE.HOS.Services.Hid;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -61,7 +64,14 @@ namespace Ryujinx.Input.SDL3
             return left.IsPressed(inputId) || right.IsPressed(inputId);
         }
 
-        public void Rumble(float lowFrequency, float highFrequency, uint durationMs)
+        public bool HDRumble(VibrationValue left, VibrationValue right)
+        {
+            // return _hdRumble?.HdRumble(left, right) ?? false;
+            // TODO: Track rumble and motion on both controllers
+            return false;
+        }
+
+        public bool Rumble(float lowFrequency, float highFrequency, uint durationMs)
         {
             if (lowFrequency != 0)
             {
@@ -78,6 +88,15 @@ namespace Ryujinx.Input.SDL3
                 left.Rumble(0, 0, durationMs);
                 right.Rumble(0, 0, durationMs);
             }
+
+            if (!SDL_GetError().IsNullOrEmpty())
+            {
+                Logger.Error?.PrintMsg(LogClass.Hid, SDL_GetError());
+                SDL_ClearError();
+                return false;
+            }
+
+            return true;
         }
 
         public void SetConfiguration(InputConfig configuration)

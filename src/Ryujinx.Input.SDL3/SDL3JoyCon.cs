@@ -162,7 +162,7 @@ namespace Ryujinx.Input.SDL3
 
         public void SetTriggerThreshold(float triggerThreshold)
         {
-
+            // No operations
         }
         
         public bool HDRumble(VibrationValue left, VibrationValue right)
@@ -170,10 +170,12 @@ namespace Ryujinx.Input.SDL3
             return _hdRumble?.HdRumble(left, right) ?? false;
         }
 
-        public void Rumble(float lowFrequency, float highFrequency, uint durationMs)
+        public bool Rumble(float lowFrequency, float highFrequency, uint durationMs)
         {
             if ((Features & GamepadFeaturesFlag.Rumble) == 0)
-                return;
+            {
+                return false;
+            }
 
             ushort lowFrequencyRaw = (ushort)(lowFrequency * ushort.MaxValue);
             ushort highFrequencyRaw = (ushort)(highFrequency * ushort.MaxValue);
@@ -192,6 +194,15 @@ namespace Ryujinx.Input.SDL3
                 if (!SDL_RumbleGamepad(_gamepadHandle, lowFrequencyRaw, highFrequencyRaw, durationMs))
                     Logger.Error?.Print(LogClass.Hid, "Rumble is not supported on this game controller.");
             }
+            
+            if (!String.IsNullOrEmpty(SDL_GetError()))
+            {
+                Logger.Error?.PrintMsg(LogClass.Hid, SDL_GetError());
+                SDL_ClearError();
+                return false;
+            }
+
+            return true;
         }
 
         public Vector3 GetMotionData(MotionInputId inputId)

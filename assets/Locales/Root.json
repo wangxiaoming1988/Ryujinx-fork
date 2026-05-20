@@ -12251,6 +12251,56 @@
       }
     },
     {
+      "ID": "ControllerSettingsRumbleUseHDRumble",
+      "Translations": {
+        "ar_SA": "",
+        "de_DE": "",
+        "el_GR": "",
+        "en_US": "Enable HD Rumble",
+        "es_ES": "Activa vibración HD",
+        "fr_FR": "",
+        "he_IL": "",
+        "it_IT": "",
+        "ja_JP": "",
+        "ko_KR": "",
+        "no_NO": "",
+        "pl_PL": "",
+        "pt_BR": "",
+        "ru_RU": "",
+        "sv_SE": "",
+        "th_TH": "",
+        "tr_TR": "",
+        "uk_UA": "",
+        "zh_CN": "",
+        "zh_TW": ""
+      }
+    },
+    {
+      "ID": "HDRumbleTooltip",
+      "Translations": {
+        "ar_SA": "",
+        "de_DE": "",
+        "el_GR": "",
+        "en_US": "Sends more data to the controller for better rumble.\n\nCurrently only supports first-party Nintendo Switch controllers.\n\nLeave ON if you're using JoyCons or a Pro Controller.",
+        "es_ES": "",
+        "fr_FR": "",
+        "he_IL": "",
+        "it_IT": "",
+        "ja_JP": "",
+        "ko_KR": "",
+        "no_NO": "",
+        "pl_PL": "",
+        "pt_BR": "",
+        "ru_RU": "",
+        "sv_SE": "",
+        "th_TH": "",
+        "tr_TR": "",
+        "uk_UA": "",
+        "zh_CN": "",
+        "zh_TW": ""
+      }
+    },
+    {
       "ID": "DialogMessageSaveNotAvailableMessage",
       "Translations": {
         "ar_SA": "لا توجد بيانات الحفظ لـ {0} [{1:x16}]",

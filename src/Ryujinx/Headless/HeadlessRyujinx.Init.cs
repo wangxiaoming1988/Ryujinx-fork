@@ -221,6 +221,7 @@ namespace Ryujinx.Headless
                             StrongRumble = 1f,
                             WeakRumble = 1f,
                             EnableRumble = false,
+                            UseHDRumble = true
                         },
                     };
                 }

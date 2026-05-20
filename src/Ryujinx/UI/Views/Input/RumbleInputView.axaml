@@ -53,6 +53,15 @@
                     Margin="5,0"
                     Text="{Binding WeakRumble, StringFormat=\{0:0.00\}}" />
             </StackPanel>
+            <CheckBox
+                Margin="5"
+                IsChecked="{Binding EnableHDRumble}">
+                <TextBlock
+                    Margin="0,3,0,0"
+                    VerticalAlignment="Center"
+                    Text="{ext:Locale ControllerSettingsRumbleUseHDRumble}"
+                    ToolTip.Tip="{ext:Locale HDRumbleTooltip}" />
+            </CheckBox>
         </StackPanel>
     </Grid>
 </UserControl>

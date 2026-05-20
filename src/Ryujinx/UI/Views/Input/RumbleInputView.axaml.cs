@@ -22,6 +22,7 @@ namespace Ryujinx.Ava.UI.Views.Input
             {
                 StrongRumble = config.StrongRumble,
                 WeakRumble = config.WeakRumble,
+                EnableHDRumble = config.UseHDRumble
             };
 
             InitializeComponent();
@@ -45,6 +46,7 @@ namespace Ryujinx.Ava.UI.Views.Input
                 GamepadInputConfig config = viewModel.Config;
                 config.StrongRumble = content.ViewModel.StrongRumble;
                 config.WeakRumble = content.ViewModel.WeakRumble;
+                config.UseHDRumble = content.ViewModel.EnableHDRumble;
             };
 
             await contentDialog.ShowAsync();

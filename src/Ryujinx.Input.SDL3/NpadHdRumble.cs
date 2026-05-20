@@ -1,3 +1,4 @@
+using Ryujinx.Common.Logging;
 using Ryujinx.HLE.HOS.Services.Hid;
 using SDL;
 using static SDL.SDL3;
@@ -11,8 +12,9 @@ namespace Ryujinx.Input.SDL3
     public unsafe class NpadHdRumble : IDisposable
     {
         private readonly SDL_hid_device* _hidHandle;
-
+        
         private int _globalCount;
+        private ulong _lastWriteTicks;
 
         private NpadHdRumble(SDL_hid_device* hidHandle)
         {
@@ -28,7 +30,7 @@ namespace Ryujinx.Input.SDL3
             }
 
             ushort product = SDL_GetGamepadProduct(gamepadHandle);
-            if (product != 0x2006 && product != 0x2007 && product != 0x2009 && product != 0x200e)
+            if (!Enum.IsDefined(typeof(HDRumbleSupported), product))
             {
                 return null;
             }
@@ -37,7 +39,7 @@ namespace Ryujinx.Input.SDL3
         }
 
         // Some of the code was translated from https://github.com/MIZUSHIKI/JoyShockLibrary-plus-HDRumble
-        private void WriteHdRumble(
+        private bool WriteHdRumble(
             int encLeftLowFreq, int encLeftLowAmp,
             int encLeftHighFreq, int encLeftHighAmp,
             int encRightLowFreq, int encRightLowAmp,
@@ -65,26 +67,35 @@ namespace Ryujinx.Input.SDL3
 
             fixed (byte* ptr = buf)
             {
-                SDL_hid_write(_hidHandle, ptr, (nuint)buf.Length);
+                if (SendHDRumble(ptr, (nuint)buf.Length) >= 0)
+                {
+                    return true;
+                }
+                
+                if (!String.IsNullOrEmpty(SDL_GetError()))
+                {
+                    Logger.Error?.PrintMsg(LogClass.Hid, SDL_GetError());
+                    SDL_ClearError();
+                }
+                return false;
             }
         }
-
 
         private static int EncodeLowFreq(float lowFreq)
         {
             float lf = Math.Clamp(lowFreq, 40.875885f, 626.286133f);
-            return (int)Math.Round(32 * Math.Log2(lf * 0.1f)) - 0x40;
+            return (int) Math.Round(32 * Math.Log2(lf * 0.1f) - 0x40);
         }
 
         private static int EncodeHighFreq(float highFreq)
         {
             float hf = Math.Clamp(highFreq, 81.75177f, 1252.572266f);
-            return ((int)Math.Round(32 * Math.Log2(hf * 0.1f)) - 0x60) * 4;
+            return (int) Math.Round((32 * Math.Log2(hf * 0.1f) - 0x60) * 4);
         }
 
         private static int EncodeLowAmp(float rawAmp)
         {
-            int encodedAmp = 0;
+            double encodedAmp = 0;
 
             if (rawAmp is > 0 and < 0.012f)
             {
@@ -92,15 +103,15 @@ namespace Ryujinx.Input.SDL3
             }
             else if (rawAmp is >= 0.012f and < 0.112f)
             {
-                encodedAmp = (int)Math.Round(4 * Math.Log2(rawAmp * 110f));
+                encodedAmp = 4 * Math.Log2(rawAmp * 110f);
             }
             else if (rawAmp is >= 0.112f and < 0.225f)
             {
-                encodedAmp = (int)Math.Round(16 * Math.Log2(rawAmp * 17f));
+                encodedAmp = 16 * Math.Log2(rawAmp * 17f);
             }
             else if (rawAmp is >= 0.225f and <= 1f)
             {
-                encodedAmp = (int)Math.Round(32 * Math.Log2(rawAmp * 8.7f));
+                encodedAmp = 32 * Math.Log2(rawAmp * 8.7f);
             }
 
             return (int)Math.Floor(encodedAmp / 2.0) + 64;
@@ -108,7 +119,7 @@ namespace Ryujinx.Input.SDL3
 
         private static int EncodeHighAmp(float rawAmp)
         {
-            int encodedAmp = 0;
+            double encodedAmp = 0;
 
             if (rawAmp is > 0 and < 0.012f)
             {
@@ -116,23 +127,23 @@ namespace Ryujinx.Input.SDL3
             }
             else if (rawAmp is >= 0.012f and < 0.112f)
             {
-                encodedAmp = (int)Math.Round(4 * Math.Log2(rawAmp * 110f));
+                encodedAmp = 4 * Math.Log2(rawAmp * 110f);
             }
             else if (rawAmp is >= 0.112f and < 0.225f)
             {
-                encodedAmp = (int)Math.Round(16 * Math.Log2(rawAmp * 17f));
+                encodedAmp = 16 * Math.Log2(rawAmp * 17f);
             }
             else if (rawAmp is >= 0.225f and <= 1f)
             {
-                encodedAmp = (int)Math.Round(32 * Math.Log2(rawAmp * 8.7f));
+                encodedAmp = 32 * Math.Log2(rawAmp * 8.7f);
             }
 
-            return encodedAmp * 2;
+            return (int) Math.Round(encodedAmp * 2);
         }
 
         public bool HdRumble(VibrationValue left, VibrationValue right)
         {
-            WriteHdRumble(EncodeLowFreq(left.FrequencyLow),
+            return WriteHdRumble(EncodeLowFreq(left.FrequencyLow),
                 EncodeLowAmp(left.AmplitudeLow),
                 EncodeHighFreq(left.FrequencyHigh),
                 EncodeHighAmp(left.AmplitudeHigh),
@@ -140,12 +151,53 @@ namespace Ryujinx.Input.SDL3
                 EncodeLowAmp(right.AmplitudeLow),
                 EncodeHighFreq(right.FrequencyHigh),
                 EncodeHighAmp(right.AmplitudeHigh));
-            return true;
+        }
+
+        private int SendHDRumble(byte* data, nuint length)
+        {
+            int result = 0;
+            ulong currentTicks = SDL_GetTicks();
+
+            // Ditch rumble if we haven't hit the poll-rate yet.
+            // TODO: figure out a better way to do this
+            // While the polling check makes the rumble accurate, it also causes it to miss signals.
+            if ((currentTicks - _lastWriteTicks) < 8) // https://docs.handheldlegend.com/s/progcc-3/doc/lag-comparison-aAR1mV3JLX
+            {
+                return result;
+            }
+            
+            SDL_LockJoysticks();
+            {
+                // Fun fact: Mario Kart 8 Deluxe sends rumble packets
+                // where the amplitude is zero, but the frequency isn't.
+                result = SDL_hid_write(_hidHandle, data, length);
+                if (result >= 0)
+                {
+                    _lastWriteTicks = currentTicks;
+                }
+            }
+            SDL_UnlockJoysticks();
+            
+            return result;
         }
 
         public void Dispose()
         {
             SDL_hid_close(_hidHandle);
         }
+    }
+
+    public enum HDRumbleSupported : ushort
+    {
+        JoyConLeft = 0x2006,
+        JoyConRight = 0x2007,
+        JoyconPair = 0x2008,
+        ProController = 0x2009,
+        JoyconGrip = 0x200e,
+        Joycon2Right = 0x2066,
+        Joycon2Left = 0x2067,
+        Joycon2Pair = 0x2068,
+        Switch2ProController = 0x2069,
+        GamecubeController = 0x2073
     }
 }
