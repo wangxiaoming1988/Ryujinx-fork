@@ -55,17 +55,39 @@ namespace Ryujinx.Ava
             {
                 if (!OperatingSystem.IsWindowsVersionAtLeast(10, 0, 19041))
                 {
-                    _ = Win32NativeInterop.MessageBoxA(nint.Zero, "You are running an outdated version of Windows.\n\nRyujinx supports Windows 10 version 20H1 and newer.\n", $"Ryujinx {Version}", MbIconwarning);
+                    Logger.Error?.PrintMsg(LogClass.Application, "Ryujinx is not intended to be run on an outdated version of Windows. Exiting...");
+                    _ = Win32NativeInterop.MessageBoxA(nint.Zero,
+                        "You are running an outdated version of Windows.\n\nRyujinx supports Windows 10 version 20H1 and newer.\n",
+                        $"Ryujinx {Version}", MbIconwarning);
                     return 0;
                 }
 
-                var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-                var programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+                string onedriveFiles = Environment.GetEnvironmentVariable("Onedrive");
+                string onedriveConsumerFiles = Environment.GetEnvironmentVariable("OnedriveConsumer");
+                string onedriveCommercialFiles = Environment.GetEnvironmentVariable("OnedriveCommercial");
+
+                // Apparently not everyone has OneDrive shoved onto their system.
+                if ((onedriveFiles is not null && Environment.CurrentDirectory.StartsWithIgnoreCase(onedriveFiles))
+                    || (onedriveConsumerFiles is not null && Environment.CurrentDirectory.StartsWithIgnoreCase(onedriveConsumerFiles))
+                    || (onedriveCommercialFiles is not null && Environment.CurrentDirectory.StartsWithIgnoreCase(onedriveCommercialFiles)))
+                {
+                    Logger.Error?.PrintMsg(LogClass.Application, "Ryujinx is not intended to be run from a OneDrive folder. Exiting...");
+                    _ = Win32NativeInterop.MessageBoxA(nint.Zero,
+                        "Ryujinx is not intended to be run from a OneDrive folder. Please move it out and relaunch.",
+                        $"Ryujinx {Version}", MbIconwarning);
+                    return 0;
+                }
+
+                string programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+                string programFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
 
                 if (Environment.CurrentDirectory.StartsWithIgnoreCase(programFiles) ||
                     Environment.CurrentDirectory.StartsWithIgnoreCase(programFilesX86))
                 {
-                    _ = Win32NativeInterop.MessageBoxA(nint.Zero, "Ryujinx is not intended to be run from the Program Files folder. Please move it out and relaunch.", $"Ryujinx {Version}", MbIconwarning);
+                    Logger.Error?.PrintMsg(LogClass.Application, "Ryujinx is not intended to be run from the Program Files folder. Exiting...");
+                    _ = Win32NativeInterop.MessageBoxA(nint.Zero,
+                        "Ryujinx is not intended to be run from the Program Files folder. Please move it out and relaunch.",
+                        $"Ryujinx {Version}", MbIconwarning);
                     return 0;
                 }
 
@@ -75,8 +97,68 @@ namespace Ryujinx.Ava
                 // ...but this reads like it checks if the current is in/has the Windows admin role? lol
                 if (new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator))
                 {
-                    _ = Win32NativeInterop.MessageBoxA(nint.Zero, "Ryujinx is not intended to be run as administrator.", $"Ryujinx {Version}", MbIconwarning);
+                    Logger.Error?.PrintMsg(LogClass.Application, "Ryujinx is not intended to be run as administrator. Exiting...");
+                    _ = Win32NativeInterop.MessageBoxA(nint.Zero, "Ryujinx is not intended to be run as administrator.",
+                        $"Ryujinx {Version}", MbIconwarning);
                     return 0;
+                }
+            }
+            else // Unix
+            {
+                // sudo check
+                [DllImport("libc")]
+                static extern uint geteuid();
+                bool root = geteuid().Equals(0);
+
+                if (OperatingSystem.IsMacOS())
+                {
+                    if (root)
+                    {
+                        Logger.Error?.PrintMsg(LogClass.Application, "Ryujinx is not intended to be run as administrator. Exiting...");
+                        macOSNativeInterop.SimpleMessageBox($"Ryujinx {Version}",
+                            "Ryujinx is not intended to be run as administrator.", "Ok");
+                        return 0;
+                    }
+                    
+                    string downloadFiles = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+                    
+                    if (Environment.CurrentDirectory.StartsWithIgnoreCase(downloadFiles))
+                    {
+                        Logger.Error?.PrintMsg(LogClass.Application, "Ryujinx is not intended to be run from the Downloads folder. Exiting...");
+                        macOSNativeInterop.SimpleMessageBox($"Ryujinx {Version}",
+                            "Ryujinx is not intended to be run from the Downloads folder.", "Ok");
+                        return 0;
+                    }
+                    
+                    string icloudFiles = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library/Mobile Documents/com~apple~CloudDocs");
+                    
+                    if (Environment.CurrentDirectory.StartsWithIgnoreCase(icloudFiles))
+                    {
+                        Logger.Error?.PrintMsg(LogClass.Application, "Ryujinx is not intended to be run from the iCloud folder. Exiting...");
+                        macOSNativeInterop.SimpleMessageBox($"Ryujinx {Version}",
+                            "Ryujinx is not intended to be run from the iCloud folder.", "Ok");
+                        return 0;
+                    }
+                }
+
+                if (OperatingSystem.IsLinux())
+                {
+                    if (root)
+                    {
+                        Logger.Error?.PrintMsg(LogClass.Application, "Ryujinx is not intended to be run as administrator. Exiting...");
+                        LinuxSDLInterop.SimpleMessageBox($"Ryujinx {Version}", "Ryujinx is not intended to be run as administrator.");
+                        return 0;
+                    }
+                    
+                    string container = Environment.GetEnvironmentVariable("container");
+                    
+                    if (container is not null && container.EqualsIgnoreCase("flatpak"))
+                    {
+                        Logger.Info?.PrintMsg(LogClass.Application, "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
+                        Logger.Warning?.PrintMsg(LogClass.Application, "This is very likely an unofficial build, Ryujinx does NOT have a flatpak!");
+                        Logger.Info?.PrintMsg(LogClass.Application, "Please visit https://ryujinx.app/ for our official builds.");
+                        Logger.Info?.PrintMsg(LogClass.Application, "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=");
+                    }
                 }
             }
 
@@ -311,7 +393,7 @@ namespace Ryujinx.Ava
                     "never" => HideCursorMode.Never,
                     "onidle" => HideCursorMode.OnIdle,
                     "always" => HideCursorMode.Always,
-                    _ => ConfigurationState.Instance.HideCursor,
+                    _ => ConfigurationState.Instance.HideCursor
                 };
 
             // Check if memoryManagerMode was overridden.
