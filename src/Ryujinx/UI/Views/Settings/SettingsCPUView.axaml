@@ -71,6 +71,11 @@
                         <TextBlock Text="{ext:Locale SettingsTabSystemUseHypervisor}"
                                    ToolTip.Tip="{ext:Locale UseHypervisorTooltip}" />
                     </CheckBox>
+                    <CheckBox
+                        IsChecked="{Binding GCLowLatency}"
+                        ToolTip.Tip="{ext:Locale GCLowLatencyTooltip}">
+                        <TextBlock Text="{ext:Locale SettingsTabSystemGCLowLatency}" />
+                    </CheckBox>
                 </StackPanel>
                 <Separator Height="1" />
                 <StackPanel

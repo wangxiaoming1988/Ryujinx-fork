@@ -46,6 +46,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -579,6 +580,12 @@ namespace Ryujinx.Ava.Systems
         {
             _isActive = false;
             _playTimer.Stop();
+            
+            GCSettings.LatencyMode = GCLatencyMode.Interactive;
+            if (ConfigurationState.Instance.System.GCLowLatency)
+            {
+                Logger.Info?.Print(LogClass.Application, "Garbage collector set to interactive mode.");
+            }
         }
 
         private void Exit()
@@ -662,6 +669,12 @@ namespace Ryujinx.Ava.Systems
 
             _chrono.Stop();
             _playTimer.Stop();
+            
+            GCSettings.LatencyMode = GCLatencyMode.Interactive;
+            if (ConfigurationState.Instance.System.GCLowLatency)
+            {
+                Logger.Info?.Print(LogClass.Application, "Garbage collector set to interactive mode.");
+            }
         }
 
         public void DisposeGpu()
@@ -915,7 +928,14 @@ namespace Ryujinx.Ava.Systems
             ApplicationLibrary.LoadAndSaveMetaData(Device.Processes.ActiveApplication.ProgramIdText,
                 appMetadata => appMetadata.UpdatePreGame()
             );
+            
             _playTimer.Start();
+
+            if (ConfigurationState.Instance.System.GCLowLatency)
+            {
+                GCSettings.LatencyMode = GCLatencyMode.LowLatency;
+                Logger.Info?.Print(LogClass.Application, "Garbage collector set to low latency mode.");
+            }
         }
 
         internal void Resume()
@@ -926,6 +946,12 @@ namespace Ryujinx.Ava.Systems
             _playTimer.Start();
             _viewModel.Title = TitleHelper.ActiveApplicationTitle(Device?.Processes.ActiveApplication, Program.Version, !ConfigurationState.Instance.ShowOldUI);
             Logger.Info?.Print(LogClass.Emulation, "Emulation was resumed.");
+            
+            if (ConfigurationState.Instance.System.GCLowLatency)
+            {
+                GCSettings.LatencyMode = GCLatencyMode.LowLatency;
+                Logger.Info?.Print(LogClass.Application, "Garbage collector set to low latency mode.");
+            }
         }
 
         internal void Pause()
@@ -936,6 +962,12 @@ namespace Ryujinx.Ava.Systems
             _playTimer.Stop();
             _viewModel.Title = TitleHelper.ActiveApplicationTitle(Device?.Processes.ActiveApplication, Program.Version, !ConfigurationState.Instance.ShowOldUI, LocaleManager.Instance[LocaleKeys.Paused]);
             Logger.Info?.Print(LogClass.Emulation, "Emulation was paused.");
+            
+            GCSettings.LatencyMode = GCLatencyMode.Interactive;
+            if (ConfigurationState.Instance.System.GCLowLatency)
+            {
+                Logger.Info?.Print(LogClass.Application, "Garbage collector set to interactive mode.");
+            }
         }
 
         private void InitEmulatedSwitch()

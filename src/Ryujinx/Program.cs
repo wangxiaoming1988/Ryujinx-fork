@@ -198,6 +198,12 @@ namespace Ryujinx.Ava
         public static AppBuilder BuildAvaloniaApp() =>
             AppBuilder.Configure<RyujinxApp>()
                 .UsePlatformDetect()
+                
+                // Vulkan UI rendering performs better, but its unpolished, and as such it lacks effective transparency.
+                // https://github.com/AvaloniaUI/Avalonia/issues/19378
+                // https://github.com/AvaloniaUI/Avalonia/issues/9610
+                // X11RenderingMode.Glx && X11RenderingMode.Egl, Win32RenderingMode.Vulkan have these issues.
+                
                 .With(new X11PlatformOptions
                 {
                     EnableMultiTouch = true,

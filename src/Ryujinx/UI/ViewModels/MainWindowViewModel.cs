@@ -2066,7 +2066,8 @@ namespace Ryujinx.Ava.UI.ViewModels
             // Remove window chrome: WS_OVERLAPPEDWINDOW -> WS_POPUP | WS_VISIBLE
             Win32NativeInterop.SetWindowLongPtrW(hwnd, Win32NativeInterop.GWL_STYLE,
                 unchecked((nint)(Win32NativeInterop.WS_POPUP | Win32NativeInterop.WS_VISIBLE)));
-
+            
+            // TODO: why is this nullable
             Avalonia.Platform.Screen? screen = Window.Screens.ScreenFromVisual(Window);
             int w = screen?.Bounds.Width ?? 0;
             int h = screen?.Bounds.Height ?? 0;

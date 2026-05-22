@@ -470,6 +470,11 @@ namespace Ryujinx.Ava.Systems.Configuration
         /// Uses Hypervisor over JIT if available
         /// </summary>
         public bool UseHypervisor { get; set; }
+        
+        /// <summary>
+        /// Enable or disable low-latency mode for garbage collection
+        /// </summary>
+        public bool GCLowLatency { get; set; }
 
         /// <summary>
         /// Enables or disables the GDB stub

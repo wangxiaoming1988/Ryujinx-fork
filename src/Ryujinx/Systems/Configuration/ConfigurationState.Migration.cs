@@ -112,6 +112,7 @@ namespace Ryujinx.Ava.Systems.Configuration
             System.IgnoreControllerApplet.Value = cff.IgnoreApplet;
             System.SkipUserProfilesManager.Value = cff.SkipUserProfiles;
             System.UseHypervisor.Value = cff.UseHypervisor;
+            System.GCLowLatency.Value = cff.GCLowLatency;
 
             UI.GuiColumns.FavColumn.Value = shouldLoadFromFile ? cff.GuiColumns.FavColumn : UI.GuiColumns.FavColumn.Value;
             UI.GuiColumns.IconColumn.Value = shouldLoadFromFile ? cff.GuiColumns.IconColumn : UI.GuiColumns.IconColumn.Value;
@@ -535,7 +536,8 @@ namespace Ryujinx.Ava.Systems.Configuration
                 {
                     if (cff.AudioBackend is AudioBackend.SDL2)
                         cff.AudioBackend = AudioBackend.SDL3;
-                })
+                }),
+                (72, static cff => cff.GCLowLatency = false)
             );
     }
 }

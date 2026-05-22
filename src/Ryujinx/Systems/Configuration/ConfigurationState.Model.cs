@@ -417,6 +417,11 @@ namespace Ryujinx.Ava.Systems.Configuration
             /// Uses Hypervisor over JIT if available
             /// </summary>
             public ReactiveObject<bool> UseHypervisor { get; private set; }
+            
+            /// <summary>
+            /// Enable or disable low-latency garbage collection
+            /// </summary>
+            public ReactiveObject<bool> GCLowLatency { get; private set; }
 
             public SystemSection()
             {
@@ -471,6 +476,8 @@ namespace Ryujinx.Ava.Systems.Configuration
                 AudioVolume.LogChangesToValue(nameof(AudioVolume));
                 UseHypervisor = new ReactiveObject<bool>();
                 UseHypervisor.LogChangesToValue(nameof(UseHypervisor));
+                GCLowLatency = new ReactiveObject<bool>();
+                GCLowLatency.LogChangesToValue(nameof(GCLowLatency));
             }
         }
 

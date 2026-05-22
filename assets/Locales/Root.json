@@ -201,6 +201,31 @@
       }
     },
     {
+      "ID": "SettingsTabSystemGCLowLatency",
+      "Translations": {
+        "ar_SA": "",
+        "de_DE": "",
+        "el_GR": "",
+        "en_US": "Use Low-latency Garbage Collector",
+        "es_ES": "Usa recolección de basura de baja latencia",
+        "fr_FR": "",
+        "he_IL": "",
+        "it_IT": "",
+        "ja_JP": "",
+        "ko_KR": "",
+        "no_NO": "",
+        "pl_PL": "",
+        "pt_BR": "",
+        "ru_RU": "",
+        "sv_SE": "",
+        "th_TH": "",
+        "tr_TR": "",
+        "uk_UA": "",
+        "zh_CN": "",
+        "zh_TW": ""
+      }
+    },
+    {
       "ID": "MenuBarFile",
       "Translations": {
         "ar_SA": "_ملف",
@@ -16548,6 +16573,31 @@
         "uk_UA": "Змінює спосіб відображення та доступу до гостьової пам’яті. Значно впливає на продуктивність емульованого ЦП.\n\nВстановіть «Неперевірений хост», якщо не впевнені.",
         "zh_CN": "更改模拟器内存映射和访问的方式，对模拟器 CPU 的性能影响很大。\n\n如果不确定，请设置为“跳过检查的本机映射”。",
         "zh_TW": "變更客體記憶體的映射和存取方式。這會極大地影響模擬 CPU 效能。\n\n如果不確定，請設定為主體略過檢查模式。"
+      }
+    },
+    {
+      "ID": "GCLowLatencyTooltip",
+      "Translations": {
+        "ar_SA": "",
+        "de_DE": "",
+        "el_GR": "",
+        "en_US": "Sets the garbage collector for the CLR to low-latency mode.\n\nThis may decrease stuttering at the cost of performance.\n\nLeave OFF if unsure.",
+        "es_ES": "",
+        "fr_FR": "",
+        "he_IL": "",
+        "it_IT": "",
+        "ja_JP": "",
+        "ko_KR": "",
+        "no_NO": "",
+        "pl_PL": "",
+        "pt_BR": "",
+        "ru_RU": "",
+        "sv_SE": "",
+        "th_TH": "",
+        "tr_TR": "",
+        "uk_UA": "",
+        "zh_CN": "",
+        "zh_TW": ""
       }
     },
     {

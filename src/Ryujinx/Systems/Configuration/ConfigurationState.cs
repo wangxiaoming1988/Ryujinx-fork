@@ -87,6 +87,7 @@ namespace Ryujinx.Ava.Systems.Configuration
                 IgnoreApplet = System.IgnoreControllerApplet,
                 SkipUserProfiles = System.SkipUserProfilesManager,
                 UseHypervisor = System.UseHypervisor,
+                GCLowLatency = System.GCLowLatency,
                 GuiColumns = new GuiColumns
                 {
                     FavColumn = UI.GuiColumns.FavColumn,

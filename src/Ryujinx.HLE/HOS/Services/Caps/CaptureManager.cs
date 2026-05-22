@@ -133,9 +133,9 @@ namespace Ryujinx.HLE.HOS.Services.Caps
 
             using SKBitmap bitmap = new(new SKImageInfo(ScreenshotWidth, ScreenshotHeight, SKColorType.Rgba8888));
 
-            IntPtr pixels = bitmap.GetPixels();
+            nint pixels = bitmap.GetPixels();
 
-            if (pixels == IntPtr.Zero)
+            if (pixels == 0)
             {
                 return ResultCode.InvalidArgument;
             }
