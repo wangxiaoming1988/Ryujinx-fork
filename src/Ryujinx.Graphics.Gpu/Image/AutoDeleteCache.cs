@@ -49,12 +49,9 @@ namespace Ryujinx.Graphics.Gpu.Image
         private const int MinCountForDeletion = 32;
         private const int MaxCapacity = 2048;
         private const ulong GiB = 1024 * 1024 * 1024;
-        private ulong MaxTextureSizeCapacity = 4UL * GiB;
+        private ulong MaxTextureSizeCapacity = 2 * GiB;
         private const ulong MinTextureSizeCapacity = 512 * 1024 * 1024;
         private const ulong DefaultTextureSizeCapacity = 1 * GiB;
-        private const ulong TextureSizeCapacity6GiB = 4 * GiB;
-        private const ulong TextureSizeCapacity8GiB = 6 * GiB;
-        private const ulong TextureSizeCapacity12GiB = 12 * GiB;
 
         private const float MemoryScaleFactor = 0.50f;
         private ulong _maxCacheMemoryUsage = DefaultTextureSizeCapacity;
@@ -73,31 +70,22 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <remarks>
         /// If the backend GPU has 0 memory capacity, the cache size defaults to `DefaultTextureSizeCapacity`.
         /// 
-        /// Reads the current Device total CPU Memory, to determine the maximum amount of Vram available. Capped to 50% of Current GPU Memory.
+        /// Reads the current Device total CPU Memory, to determine the maximum amount of VRAM available. Capped to 50% of Current GPU Memory.
         /// </remarks>
         /// <param name="context">The GPU context that the cache belongs to</param>
-        /// <param name="cpuMemorySize">The amount of physical CPU Memory Avaiable on the device.</param>
+        /// <param name="cpuMemorySize">The amount of physical CPU Memory available on the device.</param>
         public void Initialize(GpuContext context, ulong cpuMemorySize)
         {
             ulong cpuMemorySizeGiB = cpuMemorySize / GiB;
+            ulong MaximumGpuMemoryGiB = context.Capabilities.MaximumGpuMemory / GiB;
+            ulong TextureSizeCapacity = cpuMemorySize - (2 * GiB);
 
-            if (cpuMemorySizeGiB < 6 || context.Capabilities.MaximumGpuMemory == 0)
-            {
-                _maxCacheMemoryUsage = DefaultTextureSizeCapacity;
-                return;
-            }
-            else if (cpuMemorySizeGiB == 6)
-            {
-                MaxTextureSizeCapacity = TextureSizeCapacity6GiB;
-            }
-            else if (cpuMemorySizeGiB == 8)
-            {
-                MaxTextureSizeCapacity = TextureSizeCapacity8GiB;
-            }
-            else
-            {
-                MaxTextureSizeCapacity = TextureSizeCapacity12GiB;
-            }
+            MaxTextureSizeCapacity =
+                context.Capabilities.MaximumGpuMemory == 0 || cpuMemorySizeGiB < 6 && MaximumGpuMemoryGiB < 6
+                    ? DefaultTextureSizeCapacity
+                    : cpuMemorySizeGiB < 12
+                        ? TextureSizeCapacity
+                        : cpuMemorySize;
 
             ulong cacheMemory = (ulong)(context.Capabilities.MaximumGpuMemory * MemoryScaleFactor);
 
