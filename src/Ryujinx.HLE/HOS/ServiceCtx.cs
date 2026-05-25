@@ -16,7 +16,7 @@ namespace Ryujinx.HLE.HOS
         public IpcMessage Response { get; }
         public BinaryReader RequestData { get; }
         public BinaryWriter ResponseData { get; }
-        public ulong ClientProcessId => Request.HandleDesc.HasPId ? Request.HandleDesc.PId : Process.Pid;
+        public ulong ClientProcessId => Request.HandleDesc is { HasPId: true } ? Request.HandleDesc.PId : Process.Pid;
 
         public ServiceCtx(
             Switch device,
