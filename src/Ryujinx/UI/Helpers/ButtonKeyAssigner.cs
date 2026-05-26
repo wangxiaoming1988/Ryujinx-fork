@@ -1,5 +1,6 @@
 using Avalonia.Controls.Primitives;
 using Avalonia.Threading;
+using Ryujinx.Ava.Input;
 using Ryujinx.Input;
 using Ryujinx.Input.Assigner;
 using System;
@@ -25,6 +26,7 @@ namespace Ryujinx.Ava.UI.Helpers
 
         private bool _isWaitingForInput;
         private bool _shouldUnbind;
+        private IKeyboard _keyboard;
         public event EventHandler<ButtonAssignedEventArgs> ButtonAssigned;
 
         public ButtonKeyAssigner(ToggleButton toggleButton)
@@ -34,6 +36,9 @@ namespace Ryujinx.Ava.UI.Helpers
 
         public async void GetInputAndAssign(IButtonAssigner assigner, IKeyboard keyboard = null)
         {
+            _keyboard = keyboard;
+            ClearKeyboardState(_keyboard);
+
             Dispatcher.UIThread.Post(() =>
             {
                 ToggledButton.IsChecked = true;
@@ -82,6 +87,7 @@ namespace Ryujinx.Ava.UI.Helpers
                 _isWaitingForInput = false;
 
                 ToggledButton.IsChecked = false;
+                ClearKeyboardState(_keyboard);
 
                 if (pressedButton.HasValue && pressedButton.Value.AsHidType<Key>() == Key.BackSpace)
                 {
@@ -98,6 +104,15 @@ namespace Ryujinx.Ava.UI.Helpers
             _isWaitingForInput = false;
             ToggledButton.IsChecked = false;
             _shouldUnbind = shouldUnbind;
+            ClearKeyboardState(_keyboard);
+        }
+
+        private static void ClearKeyboardState(IKeyboard keyboard)
+        {
+            if (keyboard is AvaloniaKeyboard avaloniaKeyboard)
+            {
+                avaloniaKeyboard.Clear();
+            }
         }
     }
 }

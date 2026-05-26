@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using ConfigPhysicalKey = Ryujinx.Common.Configuration.Hid.PhysicalKey;
 
 namespace Ryujinx.Input
 {
@@ -25,5 +26,8 @@ namespace Ryujinx.Input
         /// <returns>True if the given key is pressed</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsPressed(Key key) => KeysState[(int)key];
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsPressed(ConfigPhysicalKey key) => KeysState[(int)key];
     }
 }

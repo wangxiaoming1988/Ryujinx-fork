@@ -24,7 +24,7 @@ namespace Ryujinx.Input.HLE
 
         private readonly Lock _lock = new();
 
-        private bool _blockInputUpdates;
+        private int _inputUpdateBlockCount;
 
         private const int MaxControllers = 9;
 
@@ -36,6 +36,7 @@ namespace Ryujinx.Input.HLE
         private bool _isDisposed;
 
         private List<InputConfig> _inputConfig;
+        private List<InputConfig> _requestedInputConfig;
         private bool _enableKeyboard;
         private bool _enableMouse;
         private Switch _device;
@@ -52,6 +53,7 @@ namespace Ryujinx.Input.HLE
             _gamepadDriver = gamepadDriver;
             _mouseDriver = mouseDriver;
             _inputConfig = [];
+            _requestedInputConfig = [];
 
             _gamepadDriver.OnGamepadConnected += HandleOnGamepadConnected;
             _gamepadDriver.OnGamepadDisconnected += HandleOnGamepadDisconnected;
@@ -89,29 +91,23 @@ namespace Ryujinx.Input.HLE
                     }
                 }
 
-                ReloadConfiguration(_inputConfig, _enableKeyboard, _enableMouse);
+                ReloadConfiguration(_requestedInputConfig, _enableKeyboard, _enableMouse);
             }
         }
 
-        private void HandleOnGamepadConnected(string id)
+        private void HandleOnGamepadConnected(string _)
         {
             // Force input reload
-            ReloadConfiguration(_inputConfig, _enableKeyboard, _enableMouse);
+            ReloadConfiguration(_requestedInputConfig, _enableKeyboard, _enableMouse);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool DriverConfigurationUpdate(ref NpadController controller, InputConfig config)
         {
-            IGamepadDriver targetDriver = _gamepadDriver;
-
-            if (config is StandardControllerInputConfig)
-            {
-                targetDriver = _gamepadDriver;
-            }
-            else if (config is StandardKeyboardInputConfig)
-            {
-                targetDriver = _keyboardDriver;
-            }
+            IGamepadDriver targetDriver =
+                config is StandardKeyboardInputConfig
+                    ? _keyboardDriver
+                    : _gamepadDriver;
 
             Debug.Assert(targetDriver != null, "Unknown input configuration!");
 
@@ -127,11 +123,13 @@ namespace Ryujinx.Input.HLE
         {
             lock (_lock)
             {
+                _requestedInputConfig = inputConfig?.ToList() ?? [];
+
                 NpadController[] oldControllers = _controllers.ToArray();
 
                 List<InputConfig> validInputs = [];
 
-                foreach (InputConfig inputConfigEntry in inputConfig)
+                foreach (InputConfig inputConfigEntry in _requestedInputConfig)
                 {
                     NpadController controller;
                     int index = (int)inputConfigEntry.PlayerIndex;
@@ -147,7 +145,16 @@ namespace Ryujinx.Input.HLE
                         controller = new(_cemuHookClient);
                     }
 
-                    bool isValid = DriverConfigurationUpdate(ref controller, inputConfigEntry);
+                    InputConfig activeConfig = inputConfigEntry;
+                    bool isValid = DriverConfigurationUpdate(ref controller, activeConfig);
+
+                    if (!isValid &&
+                        inputConfigEntry is StandardControllerInputConfig &&
+                        TryGetKeyboardFallback(inputConfigEntry, out StandardKeyboardInputConfig fallbackConfig))
+                    {
+                        activeConfig = fallbackConfig;
+                        isValid = DriverConfigurationUpdate(ref controller, activeConfig);
+                    }
 
                     if (!isValid)
                     {
@@ -157,7 +164,7 @@ namespace Ryujinx.Input.HLE
                     else
                     {
                         _controllers[index] = controller;
-                        validInputs.Add(inputConfigEntry);
+                        validInputs.Add(activeConfig);
                     }
                 }
 
@@ -169,7 +176,7 @@ namespace Ryujinx.Input.HLE
                     oldControllers[i] = null;
                 }
 
-                _inputConfig = inputConfig;
+                _inputConfig = validInputs;
                 _enableKeyboard = enableKeyboard;
                 _enableMouse = enableMouse;
 
@@ -177,16 +184,58 @@ namespace Ryujinx.Input.HLE
             }
         }
 
+        private bool TryGetKeyboardFallback(InputConfig inputConfig, out StandardKeyboardInputConfig fallbackConfig)
+        {
+            fallbackConfig = null;
+
+            ReadOnlySpan<string> keyboardIds = _keyboardDriver.GamepadsIds;
+
+            if (keyboardIds.IsEmpty)
+            {
+                return false;
+            }
+
+            string keyboardId = keyboardIds[0];
+
+            using IGamepad keyboard = _keyboardDriver.GetGamepad(keyboardId);
+
+            if (keyboard == null)
+            {
+                return false;
+            }
+
+            fallbackConfig = InputConfigDefaults.CreateDefaultKeyboardConfiguration(
+                keyboardId,
+                keyboard.Name,
+                inputConfig.ControllerType,
+                inputConfig.PlayerIndex);
+
+            return true;
+        }
+
+        private void ClearInputDriverStates()
+        {
+            foreach (InputConfig inputConfig in _inputConfig)
+            {
+                _controllers[(int)inputConfig.PlayerIndex]?.GamepadDriver?.Clear();
+            }
+        }
+
         public void UnblockInputUpdates()
         {
             lock (_lock)
             {
-                foreach (InputConfig inputConfig in _inputConfig)
+                if (_inputUpdateBlockCount == 0)
                 {
-                    _controllers[(int)inputConfig.PlayerIndex]?.GamepadDriver?.Clear();
+                    return;
                 }
 
-                _blockInputUpdates = false;
+                _inputUpdateBlockCount--;
+
+                if (_inputUpdateBlockCount == 0)
+                {
+                    ClearInputDriverStates();
+                }
             }
         }
 
@@ -195,7 +244,7 @@ namespace Ryujinx.Input.HLE
             get
             {
                 lock (_lock)
-                    return _blockInputUpdates;
+                    return _inputUpdateBlockCount > 0;
             }
         }
 
@@ -203,7 +252,7 @@ namespace Ryujinx.Input.HLE
         {
             lock (_lock)
             {
-                _blockInputUpdates = true;
+                _inputUpdateBlockCount++;
             }
         }
 
@@ -235,7 +284,7 @@ namespace Ryujinx.Input.HLE
                     bool isJoyconPair = false;
 
                     // Do we allow input updates and is a controller connected?
-                    if (!_blockInputUpdates && controller != null)
+                    if (_inputUpdateBlockCount == 0 && controller != null)
                     {
                         DriverConfigurationUpdate(ref controller, inputConfig);
 
@@ -273,7 +322,7 @@ namespace Ryujinx.Input.HLE
                     }
                 }
 
-                if (!_blockInputUpdates && _enableKeyboard)
+                if (_inputUpdateBlockCount == 0 && _enableKeyboard)
                 {
                     hleKeyboardInput = NpadController.GetHLEKeyboardInput(_keyboardDriver);
                 }
@@ -334,7 +383,7 @@ namespace Ryujinx.Input.HLE
             }
         }
 
-        internal InputConfig GetPlayerInputConfigByIndex(int index)
+        public InputConfig GetPlayerInputConfigByIndex(int index)
         {
             lock (_lock)
             {

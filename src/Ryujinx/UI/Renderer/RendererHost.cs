@@ -45,7 +45,6 @@ namespace Ryujinx.Ava.UI.Renderer
 
             Content = EmbeddedWindow;
         }
-
         public void Dispose()
         {
             if (EmbeddedWindow != null)

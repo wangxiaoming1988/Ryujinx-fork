@@ -1,5 +1,6 @@
 using Ryujinx.Ava.UI.ViewModels;
 using Ryujinx.Ava.UI.ViewModels.Input;
+using Ryujinx.Common.Logging;
 using Ryujinx.Input;
 using System;
 using System.Threading;
@@ -117,6 +118,11 @@ namespace Ryujinx.Ava.UI.Models.Input
 
         public void UpdateConfig(object config)
         {
+            KeyboardConfig = null;
+            GamepadConfig = null;
+            UiStickLeft = (0f, 0f);
+            UiStickRight = (0f, 0f);
+
             if (config is ControllerInputViewModel padConfig)
             {
                 GamepadConfig = padConfig.Config;
@@ -145,76 +151,86 @@ namespace Ryujinx.Ava.UI.Models.Input
                 leftBuffer = (0f, 0f);
                 rightBuffer = (0f, 0f);
 
-                switch (Type)
+                try
                 {
-                    case DeviceType.Keyboard:
-                        IKeyboard keyboard = (IKeyboard)Parent.AvaloniaKeyboardDriver.GetGamepad("0");
+                    switch (Type)
+                    {
+                        case DeviceType.Keyboard:
+                            IKeyboard keyboard = Parent?.AvaloniaKeyboardDriver?.GetGamepad("0") as IKeyboard;
 
-                        if (keyboard != null)
-                        {
-                            KeyboardStateSnapshot snapshot = keyboard.GetKeyboardStateSnapshot();
-
-                            if (snapshot.IsPressed((Key)KeyboardConfig.LeftStickRight))
+                            if (keyboard != null && KeyboardConfig != null)
                             {
-                                leftBuffer.Item1 += 1;
+                                KeyboardStateSnapshot snapshot = keyboard.GetKeyboardStateSnapshot();
+
+                                if (snapshot.IsPressed(KeyboardConfig.LeftStickRight))
+                                {
+                                    leftBuffer.Item1 += 1;
+                                }
+
+                                if (snapshot.IsPressed(KeyboardConfig.LeftStickLeft))
+                                {
+                                    leftBuffer.Item1 -= 1;
+                                }
+
+                                if (snapshot.IsPressed(KeyboardConfig.LeftStickUp))
+                                {
+                                    leftBuffer.Item2 += 1;
+                                }
+
+                                if (snapshot.IsPressed(KeyboardConfig.LeftStickDown))
+                                {
+                                    leftBuffer.Item2 -= 1;
+                                }
+
+                                if (snapshot.IsPressed(KeyboardConfig.RightStickRight))
+                                {
+                                    rightBuffer.Item1 += 1;
+                                }
+
+                                if (snapshot.IsPressed(KeyboardConfig.RightStickLeft))
+                                {
+                                    rightBuffer.Item1 -= 1;
+                                }
+
+                                if (snapshot.IsPressed(KeyboardConfig.RightStickUp))
+                                {
+                                    rightBuffer.Item2 += 1;
+                                }
+
+                                if (snapshot.IsPressed(KeyboardConfig.RightStickDown))
+                                {
+                                    rightBuffer.Item2 -= 1;
+                                }
+
+                                UiStickLeft = leftBuffer;
+                                UiStickRight = rightBuffer;
                             }
 
-                            if (snapshot.IsPressed((Key)KeyboardConfig.LeftStickLeft))
+                            break;
+
+                        case DeviceType.Controller:
+                            IGamepad controller = Parent?.SelectedGamepad;
+
+                            if (controller is IKeyboard)
                             {
-                                leftBuffer.Item1 -= 1;
+                            }
+                            else if (controller != null && GamepadConfig != null)
+                            {
+                                leftBuffer = controller.GetStick((StickInputId)GamepadConfig.LeftJoystick);
+                                rightBuffer = controller.GetStick((StickInputId)GamepadConfig.RightJoystick);
                             }
 
-                            if (snapshot.IsPressed((Key)KeyboardConfig.LeftStickUp))
-                            {
-                                leftBuffer.Item2 += 1;
-                            }
+                            break;
 
-                            if (snapshot.IsPressed((Key)KeyboardConfig.LeftStickDown))
-                            {
-                                leftBuffer.Item2 -= 1;
-                            }
-
-                            if (snapshot.IsPressed((Key)KeyboardConfig.RightStickRight))
-                            {
-                                rightBuffer.Item1 += 1;
-                            }
-
-                            if (snapshot.IsPressed((Key)KeyboardConfig.RightStickLeft))
-                            {
-                                rightBuffer.Item1 -= 1;
-                            }
-
-                            if (snapshot.IsPressed((Key)KeyboardConfig.RightStickUp))
-                            {
-                                rightBuffer.Item2 += 1;
-                            }
-
-                            if (snapshot.IsPressed((Key)KeyboardConfig.RightStickDown))
-                            {
-                                rightBuffer.Item2 -= 1;
-                            }
-
-                            UiStickLeft = leftBuffer;
-                            UiStickRight = rightBuffer;
-                        }
-
-                        break;
-
-                    case DeviceType.Controller:
-                        IGamepad controller = Parent.SelectedGamepad;
-
-                        if (controller != null)
-                        {
-                            leftBuffer = controller.GetStick((StickInputId)GamepadConfig.LeftJoystick);
-                            rightBuffer = controller.GetStick((StickInputId)GamepadConfig.RightJoystick);
-                        }
-
-                        break;
-
-                    case DeviceType.None:
-                        break;
-                    default:
-                        throw new ArgumentException($"Unable to poll device type \"{Type}\"");
+                        case DeviceType.None:
+                            break;
+                        default:
+                            throw new ArgumentException($"Unable to poll device type \"{Type}\"");
+                    }
+                }
+                catch (Exception ex) when (ex is ObjectDisposedException || ex is NullReferenceException || ex is NotSupportedException)
+                {
+                    Logger.Debug?.Print(LogClass.UI, $"StickVisualizer polling failed: {ex}");
                 }
 
                 UiStickLeft = leftBuffer;

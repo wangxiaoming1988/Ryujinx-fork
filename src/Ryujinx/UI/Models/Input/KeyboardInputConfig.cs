@@ -13,88 +13,88 @@ namespace Ryujinx.Ava.UI.Models.Input
         public PlayerIndex PlayerIndex { get; set; }
 
         [ObservableProperty]
-        public partial Key LeftStickUp { get; set; }
+        public partial PhysicalKey LeftStickUp { get; set; }
 
         [ObservableProperty]
-        public partial Key LeftStickDown { get; set; }
+        public partial PhysicalKey LeftStickDown { get; set; }
 
         [ObservableProperty]
-        public partial Key LeftStickLeft { get; set; }
+        public partial PhysicalKey LeftStickLeft { get; set; }
 
         [ObservableProperty]
-        public partial Key LeftStickRight { get; set; }
+        public partial PhysicalKey LeftStickRight { get; set; }
 
         [ObservableProperty]
-        public partial Key LeftStickButton { get; set; }
+        public partial PhysicalKey LeftStickButton { get; set; }
 
         [ObservableProperty]
-        public partial Key RightStickUp { get; set; }
+        public partial PhysicalKey RightStickUp { get; set; }
 
         [ObservableProperty]
-        public partial Key RightStickDown { get; set; }
+        public partial PhysicalKey RightStickDown { get; set; }
 
         [ObservableProperty]
-        public partial Key RightStickLeft { get; set; }
+        public partial PhysicalKey RightStickLeft { get; set; }
 
         [ObservableProperty]
-        public partial Key RightStickRight { get; set; }
+        public partial PhysicalKey RightStickRight { get; set; }
 
         [ObservableProperty]
-        public partial Key RightStickButton { get; set; }
+        public partial PhysicalKey RightStickButton { get; set; }
 
         [ObservableProperty]
-        public partial Key DpadUp { get; set; }
+        public partial PhysicalKey DpadUp { get; set; }
 
         [ObservableProperty]
-        public partial Key DpadDown { get; set; }
+        public partial PhysicalKey DpadDown { get; set; }
 
         [ObservableProperty]
-        public partial Key DpadLeft { get; set; }
+        public partial PhysicalKey DpadLeft { get; set; }
 
         [ObservableProperty]
-        public partial Key DpadRight { get; set; }
+        public partial PhysicalKey DpadRight { get; set; }
 
         [ObservableProperty]
-        public partial Key ButtonMinus { get; set; }
+        public partial PhysicalKey ButtonMinus { get; set; }
 
         [ObservableProperty]
-        public partial Key ButtonPlus { get; set; }
+        public partial PhysicalKey ButtonPlus { get; set; }
 
         [ObservableProperty]
-        public partial Key ButtonA { get; set; }
+        public partial PhysicalKey ButtonA { get; set; }
 
         [ObservableProperty]
-        public partial Key ButtonB { get; set; }
+        public partial PhysicalKey ButtonB { get; set; }
 
         [ObservableProperty]
-        public partial Key ButtonX { get; set; }
+        public partial PhysicalKey ButtonX { get; set; }
 
         [ObservableProperty]
-        public partial Key ButtonY { get; set; }
+        public partial PhysicalKey ButtonY { get; set; }
 
         [ObservableProperty]
-        public partial Key ButtonL { get; set; }
+        public partial PhysicalKey ButtonL { get; set; }
 
         [ObservableProperty]
-        public partial Key ButtonR { get; set; }
+        public partial PhysicalKey ButtonR { get; set; }
 
         [ObservableProperty]
-        public partial Key ButtonZl { get; set; }
+        public partial PhysicalKey ButtonZl { get; set; }
 
         [ObservableProperty]
-        public partial Key ButtonZr { get; set; }
+        public partial PhysicalKey ButtonZr { get; set; }
 
         [ObservableProperty]
-        public partial Key LeftButtonSl { get; set; }
+        public partial PhysicalKey LeftButtonSl { get; set; }
 
         [ObservableProperty]
-        public partial Key LeftButtonSr { get; set; }
+        public partial PhysicalKey LeftButtonSr { get; set; }
 
         [ObservableProperty]
-        public partial Key RightButtonSl { get; set; }
+        public partial PhysicalKey RightButtonSl { get; set; }
 
         [ObservableProperty]
-        public partial Key RightButtonSr { get; set; }
+        public partial PhysicalKey RightButtonSr { get; set; }
 
         public KeyboardInputConfig(InputConfig config)
         {
@@ -153,7 +153,7 @@ namespace Ryujinx.Ava.UI.Models.Input
                 Backend = InputBackendType.WindowKeyboard,
                 PlayerIndex = PlayerIndex,
                 ControllerType = ControllerType,
-                LeftJoycon = new LeftJoyconCommonConfig<Key>
+                LeftJoycon = new LeftJoyconCommonConfig<PhysicalKey>
                 {
                     DpadUp = DpadUp,
                     DpadDown = DpadDown,
@@ -165,7 +165,7 @@ namespace Ryujinx.Ava.UI.Models.Input
                     ButtonSl = LeftButtonSl,
                     ButtonSr = LeftButtonSr,
                 },
-                RightJoycon = new RightJoyconCommonConfig<Key>
+                RightJoycon = new RightJoyconCommonConfig<PhysicalKey>
                 {
                     ButtonA = ButtonA,
                     ButtonB = ButtonB,
@@ -177,7 +177,7 @@ namespace Ryujinx.Ava.UI.Models.Input
                     ButtonR = ButtonR,
                     ButtonZr = ButtonZr,
                 },
-                LeftJoyconStick = new JoyconConfigKeyboardStick<Key>
+                LeftJoyconStick = new JoyconConfigKeyboardStick<PhysicalKey>
                 {
                     StickUp = LeftStickUp,
                     StickDown = LeftStickDown,
@@ -185,7 +185,7 @@ namespace Ryujinx.Ava.UI.Models.Input
                     StickLeft = LeftStickLeft,
                     StickButton = LeftStickButton,
                 },
-                RightJoyconStick = new JoyconConfigKeyboardStick<Key>
+                RightJoyconStick = new JoyconConfigKeyboardStick<PhysicalKey>
                 {
                     StickUp = RightStickUp,
                     StickDown = RightStickDown,
@@ -197,6 +197,38 @@ namespace Ryujinx.Ava.UI.Models.Input
             };
 
             return config;
+        }
+
+        public void NotifyKeyLabelsChanged()
+        {
+            OnPropertiesChanged(nameof(LeftStickUp),
+                nameof(LeftStickDown),
+                nameof(LeftStickLeft),
+                nameof(LeftStickRight),
+                nameof(LeftStickButton),
+                nameof(RightStickUp),
+                nameof(RightStickDown),
+                nameof(RightStickLeft),
+                nameof(RightStickRight),
+                nameof(RightStickButton),
+                nameof(DpadUp),
+                nameof(DpadDown),
+                nameof(DpadLeft),
+                nameof(DpadRight),
+                nameof(ButtonMinus),
+                nameof(ButtonPlus),
+                nameof(ButtonA),
+                nameof(ButtonB),
+                nameof(ButtonX),
+                nameof(ButtonY),
+                nameof(ButtonL),
+                nameof(ButtonR),
+                nameof(ButtonZl),
+                nameof(ButtonZr),
+                nameof(LeftButtonSl),
+                nameof(LeftButtonSr),
+                nameof(RightButtonSl),
+                nameof(RightButtonSr));
         }
     }
 }

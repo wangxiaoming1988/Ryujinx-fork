@@ -88,19 +88,19 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
         public async void ShowMotionConfig()
         {
             await MotionInputView.Show(this);
-            ParentModel.IsModified = true;
+            ParentModel.RefreshModifiedState();
         }
 
         public async void ShowRumbleConfig()
         {
             await RumbleInputView.Show(this);
-            ParentModel.IsModified = true;
+            ParentModel.RefreshModifiedState();
         }
 
         public async void ShowLedConfig()
         {
             await LedInputView.Show(this);
-            ParentModel.IsModified = true;
+            ParentModel.RefreshModifiedState();
         }
 
         public void OnParentModelChanged()

@@ -9,25 +9,15 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using SDL;
 using static SDL.SDL3;
-
-using ConfigKey = Ryujinx.Common.Configuration.Hid.Key;
+using ConfigPhysicalKey = Ryujinx.Common.Configuration.Hid.PhysicalKey;
 
 namespace Ryujinx.Input.SDL3
 {
     class SDL3Keyboard : IKeyboard
     {
-        private readonly record struct ButtonMappingEntry(GamepadButtonInputId To, Key From)
-        {
-            public bool IsValid => To is not GamepadButtonInputId.Unbound && From is not Key.Unbound;
-        }
-
         private readonly Lock _userMappingLock = new();
-
-#pragma warning disable IDE0052 // Remove unread private member
-        private readonly SDL3KeyboardDriver _driver;
-#pragma warning restore IDE0052
         private StandardKeyboardInputConfig _configuration;
-        private readonly List<ButtonMappingEntry> _buttonsUserMapping;
+        private readonly List<KeyboardInputMappingHelper.KeyboardButtonMapping> _buttonsUserMapping;
 
 
         private static readonly SDL_Keycode[] _keysDriverMapping =
@@ -172,9 +162,8 @@ namespace Ryujinx.Input.SDL3
             SDL_Keycode.SDLK_0
         ];
 
-        public SDL3Keyboard(SDL3KeyboardDriver driver, string id, string name)
+        public SDL3Keyboard(string id, string name)
         {
-            _driver = driver;
             Id = id;
             Name = name;
             _buttonsUserMapping = [];
@@ -196,9 +185,9 @@ namespace Ryujinx.Input.SDL3
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private unsafe static int ToSDL3Scancode(Key key)
+        private unsafe static int ToSDL3Scancode(ConfigPhysicalKey key)
         {
-            if (key is >= Key.Unknown and <= Key.Menu)
+            if (key is >= ConfigPhysicalKey.Unknown and <= ConfigPhysicalKey.Menu)
             {
                 return -1;
             }
@@ -206,18 +195,18 @@ namespace Ryujinx.Input.SDL3
             return (int)SDL_GetScancodeFromKey(_keysDriverMapping[(int)key], null);
         }
 
-        private static SDL_Keymod GetKeyboardModifierMask(Key key)
+        private static SDL_Keymod GetKeyboardModifierMask(ConfigPhysicalKey key)
         {
             return key switch
             {
-                Key.ShiftLeft => SDL_Keymod.SDL_KMOD_LSHIFT,
-                Key.ShiftRight => SDL_Keymod.SDL_KMOD_RSHIFT,
-                Key.ControlLeft => SDL_Keymod.SDL_KMOD_LCTRL,
-                Key.ControlRight => SDL_Keymod.SDL_KMOD_RCTRL,
-                Key.AltLeft => SDL_Keymod.SDL_KMOD_LALT,
-                Key.AltRight => SDL_Keymod.SDL_KMOD_RALT,
-                Key.WinLeft => SDL_Keymod.SDL_KMOD_LGUI,
-                Key.WinRight => SDL_Keymod.SDL_KMOD_RGUI,
+                ConfigPhysicalKey.ShiftLeft => SDL_Keymod.SDL_KMOD_LSHIFT,
+                ConfigPhysicalKey.ShiftRight => SDL_Keymod.SDL_KMOD_RSHIFT,
+                ConfigPhysicalKey.ControlLeft => SDL_Keymod.SDL_KMOD_LCTRL,
+                ConfigPhysicalKey.ControlRight => SDL_Keymod.SDL_KMOD_RCTRL,
+                ConfigPhysicalKey.AltLeft => SDL_Keymod.SDL_KMOD_LALT,
+                ConfigPhysicalKey.AltRight => SDL_Keymod.SDL_KMOD_RALT,
+                ConfigPhysicalKey.WinLeft => SDL_Keymod.SDL_KMOD_LGUI,
+                ConfigPhysicalKey.WinRight => SDL_Keymod.SDL_KMOD_RGUI,
                 // NOTE: Menu key isn't supported by SDL3.
                 _ => SDL_Keymod.SDL_KMOD_NONE
             };
@@ -233,9 +222,9 @@ namespace Ryujinx.Input.SDL3
                 rawKeyboardState = SDL_GetKeyboardState(null);
             }
 
-            bool[] keysState = new bool[(int)Key.Count];
+            bool[] keysState = new bool[(int)ConfigPhysicalKey.Count];
 
-            for (Key key = 0; key < Key.Count; key++)
+            for (ConfigPhysicalKey key = 0; key < ConfigPhysicalKey.Count; key++)
             {
                 int index = ToSDL3Scancode(key);
                 if (index == -1)
@@ -265,36 +254,6 @@ namespace Ryujinx.Input.SDL3
             return value * ConvertRate;
         }
 
-        private static (short, short) GetStickValues(ref KeyboardStateSnapshot snapshot, JoyconConfigKeyboardStick<ConfigKey> stickConfig)
-        {
-            short stickX = 0;
-            short stickY = 0;
-
-            if (snapshot.IsPressed((Key)stickConfig.StickUp))
-            {
-                stickY += 1;
-            }
-
-            if (snapshot.IsPressed((Key)stickConfig.StickDown))
-            {
-                stickY -= 1;
-            }
-
-            if (snapshot.IsPressed((Key)stickConfig.StickRight))
-            {
-                stickX += 1;
-            }
-
-            if (snapshot.IsPressed((Key)stickConfig.StickLeft))
-            {
-                stickX -= 1;
-            }
-
-            Vector2 stick = Vector2.Normalize(new Vector2(stickX, stickY));
-
-            return ((short)(stick.X * short.MaxValue), (short)(stick.Y * short.MaxValue));
-        }
-
         public GamepadStateSnapshot GetMappedStateSnapshot()
         {
             KeyboardStateSnapshot rawState = GetKeyboardStateSnapshot();
@@ -307,9 +266,9 @@ namespace Ryujinx.Input.SDL3
                     return result;
                 }
 
-                foreach (ButtonMappingEntry entry in _buttonsUserMapping)
+                foreach (KeyboardInputMappingHelper.KeyboardButtonMapping entry in _buttonsUserMapping)
                 {
-                    if (entry.From == Key.Unknown || entry.From == Key.Unbound || entry.To == GamepadButtonInputId.Unbound)
+                    if (!entry.IsValid)
                     {
                         continue;
                     }
@@ -321,8 +280,8 @@ namespace Ryujinx.Input.SDL3
                     }
                 }
 
-                (short leftStickX, short leftStickY) = GetStickValues(ref rawState, _configuration.LeftJoyconStick);
-                (short rightStickX, short rightStickY) = GetStickValues(ref rawState, _configuration.RightJoyconStick);
+                (short leftStickX, short leftStickY) = KeyboardInputMappingHelper.GetStickValues(ref rawState, _configuration.LeftJoyconStick);
+                (short rightStickX, short rightStickY) = KeyboardInputMappingHelper.GetStickValues(ref rawState, _configuration.RightJoyconStick);
 
                 result.SetStick(StickInputId.Left, ConvertRawStickValue(leftStickX), ConvertRawStickValue(leftStickY));
                 result.SetStick(StickInputId.Right, ConvertRawStickValue(rightStickX), ConvertRawStickValue(rightStickY));
@@ -358,38 +317,15 @@ namespace Ryujinx.Input.SDL3
             {
                 _configuration = (StandardKeyboardInputConfig)configuration;
 
-                // First clear the buttons mapping
                 _buttonsUserMapping.Clear();
 
-                // Then configure left joycon
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.LeftStick, (Key)_configuration.LeftJoyconStick.StickButton));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.DpadUp, (Key)_configuration.LeftJoycon.DpadUp));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.DpadDown, (Key)_configuration.LeftJoycon.DpadDown));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.DpadLeft, (Key)_configuration.LeftJoycon.DpadLeft));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.DpadRight, (Key)_configuration.LeftJoycon.DpadRight));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.Minus, (Key)_configuration.LeftJoycon.ButtonMinus));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.LeftShoulder, (Key)_configuration.LeftJoycon.ButtonL));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.LeftTrigger, (Key)_configuration.LeftJoycon.ButtonZl));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.SingleRightTrigger0, (Key)_configuration.LeftJoycon.ButtonSr));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.SingleLeftTrigger0, (Key)_configuration.LeftJoycon.ButtonSl));
-
-                // Finally configure right joycon
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.RightStick, (Key)_configuration.RightJoyconStick.StickButton));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.A, (Key)_configuration.RightJoycon.ButtonA));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.B, (Key)_configuration.RightJoycon.ButtonB));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.X, (Key)_configuration.RightJoycon.ButtonX));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.Y, (Key)_configuration.RightJoycon.ButtonY));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.Plus, (Key)_configuration.RightJoycon.ButtonPlus));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.RightShoulder, (Key)_configuration.RightJoycon.ButtonR));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.RightTrigger, (Key)_configuration.RightJoycon.ButtonZr));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.SingleRightTrigger1, (Key)_configuration.RightJoycon.ButtonSr));
-                _buttonsUserMapping.Add(new ButtonMappingEntry(GamepadButtonInputId.SingleLeftTrigger1, (Key)_configuration.RightJoycon.ButtonSl));
+                _buttonsUserMapping.AddRange(KeyboardInputMappingHelper.BuildButtonMappings(_configuration));
             }
         }
 
         public void SetLed(uint packedRgb)
         {
-            Logger.Info?.Print(LogClass.UI, "SetLed called on an SDL3Keyboard");
+            Logger.Debug?.Print(LogClass.UI, "SetLed called on an SDL3Keyboard");
         }
 
         public void SetTriggerThreshold(float triggerThreshold)

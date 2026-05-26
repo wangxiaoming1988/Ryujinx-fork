@@ -2,6 +2,7 @@ using Ryujinx.Common;
 using Ryujinx.Common.Configuration.Hid;
 using Ryujinx.Common.Configuration.Hid.Controller;
 using Ryujinx.Common.Configuration.Hid.Controller.Motion;
+using Ryujinx.Common.Configuration.Hid.Keyboard;
 using Ryujinx.Common.Logging;
 using Ryujinx.HLE.HOS.Services.Hid;
 using System;
@@ -233,7 +234,9 @@ namespace Ryujinx.Input.HLE
             _gamepad?.Dispose();
 
             Id = config.Id;
-            _gamepad = GamepadDriver.GetGamepad(Id);
+            _gamepad = config is StandardKeyboardInputConfig && GamepadDriver is IKeyboardModeDriver keyboardModeDriver
+                ? keyboardModeDriver.GetKeyboard(Id, KeyboardInputMode.Physical)
+                : GamepadDriver.GetGamepad(Id);
 
             UpdateUserConfiguration(config);
 

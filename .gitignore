@@ -72,6 +72,9 @@ ipch/
 _ReSharper*/
 *.[Rr]e[Ss]harper
 
+# .NET
+.dotnet-home/
+
 # TeamCity is a build add-in
 _TeamCity*
 

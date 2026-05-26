@@ -50,7 +50,7 @@ namespace Ryujinx.Input.SDL3
                 return null;
             }
 
-            return new SDL3Keyboard(this, _keyboardIdentifers[0], "All keyboards");
+            return new SDL3Keyboard(_keyboardIdentifers[0], "All keyboards");
         }
 
         public IEnumerable<IGamepad> GetGamepads()

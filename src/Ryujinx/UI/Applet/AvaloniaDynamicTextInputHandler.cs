@@ -15,6 +15,7 @@ namespace Ryujinx.Ava.UI.Applet
     class AvaloniaDynamicTextInputHandler : IDynamicTextInputHandler
     {
         private MainWindow _parent;
+        private AvaloniaKeyboardDriver _avaloniaKeyboardDriver;
         private readonly OffscreenTextBox _hiddenTextBox;
         private bool _canProcessInput;
         private IDisposable _textChangedSubscription;
@@ -27,6 +28,7 @@ namespace Ryujinx.Ava.UI.Applet
 
             if (_parent.InputManager.KeyboardDriver is AvaloniaKeyboardDriver avaloniaKeyboardDriver)
             {
+                _avaloniaKeyboardDriver = avaloniaKeyboardDriver;
                 avaloniaKeyboardDriver.KeyPressed += AvaloniaDynamicTextInputHandler_KeyPressed;
                 avaloniaKeyboardDriver.KeyRelease += AvaloniaDynamicTextInputHandler_KeyRelease;
                 avaloniaKeyboardDriver.TextInput += AvaloniaDynamicTextInputHandler_TextInput;
@@ -65,7 +67,7 @@ namespace Ryujinx.Ava.UI.Applet
 
         private void AvaloniaDynamicTextInputHandler_KeyRelease(object sender, KeyEventArgs e)
         {
-            HidKey key = (HidKey)AvaloniaKeyboardMappingHelper.ToInputKey(e.Key);
+            HidKey key = (HidKey)AvaloniaKeyboardMappingHelper.ToInputKey(e.PhysicalKey, e.Key);
 
             if (!(KeyReleasedEvent?.Invoke(key)).GetValueOrDefault(true))
             {
@@ -85,7 +87,7 @@ namespace Ryujinx.Ava.UI.Applet
 
         private void AvaloniaDynamicTextInputHandler_KeyPressed(object sender, KeyEventArgs e)
         {
-            HidKey key = (HidKey)AvaloniaKeyboardMappingHelper.ToInputKey(e.Key);
+            HidKey key = (HidKey)AvaloniaKeyboardMappingHelper.ToInputKey(e.PhysicalKey, e.Key);
 
             if (!(KeyPressedEvent?.Invoke(key)).GetValueOrDefault(true))
             {
@@ -115,11 +117,11 @@ namespace Ryujinx.Ava.UI.Applet
 
         public void Dispose()
         {
-            if (_parent.InputManager.KeyboardDriver is AvaloniaKeyboardDriver avaloniaKeyboardDriver)
+            if (_avaloniaKeyboardDriver != null)
             {
-                avaloniaKeyboardDriver.KeyPressed -= AvaloniaDynamicTextInputHandler_KeyPressed;
-                avaloniaKeyboardDriver.KeyRelease -= AvaloniaDynamicTextInputHandler_KeyRelease;
-                avaloniaKeyboardDriver.TextInput -= AvaloniaDynamicTextInputHandler_TextInput;
+                _avaloniaKeyboardDriver.KeyPressed -= AvaloniaDynamicTextInputHandler_KeyPressed;
+                _avaloniaKeyboardDriver.KeyRelease -= AvaloniaDynamicTextInputHandler_KeyRelease;
+                _avaloniaKeyboardDriver.TextInput -= AvaloniaDynamicTextInputHandler_TextInput;
             }
 
             _textChangedSubscription?.Dispose();
