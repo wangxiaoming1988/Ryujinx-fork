@@ -155,9 +155,7 @@ namespace Ryujinx.Input.SDL3
                 result |= GamepadFeaturesFlag.Led;
             }
             SDL_UnlockProperties(propID);
-
-            // NOTE: Do not call SDL_DestroyProperties here. These properties are owned
-            // internally by SDL and are freed when SDL_CloseGamepad is called (in Dispose).
+            SDL_DestroyProperties(propID);
 
             return result;
         }

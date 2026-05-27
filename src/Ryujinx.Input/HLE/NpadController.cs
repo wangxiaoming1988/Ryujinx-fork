@@ -561,24 +561,25 @@ namespace Ryujinx.Input.HLE
                     !controllerConfig.Rumble.EnableRumble)
                 {
                     return;
+
                 }
-                
+
                 VibrationValue leftVibrationValue = dualVibrationValue.Item1;
                 VibrationValue rightVibrationValue = dualVibrationValue.Item2;
-                
+
                 leftVibrationValue.AmplitudeLow *= controllerConfig.Rumble.WeakRumble;
                 leftVibrationValue.AmplitudeHigh *= controllerConfig.Rumble.StrongRumble;
                 rightVibrationValue.AmplitudeLow *= controllerConfig.Rumble.WeakRumble;
                 rightVibrationValue.AmplitudeHigh *= controllerConfig.Rumble.StrongRumble;
-                
+
                 if (!controllerConfig.Rumble.UseHDRumble || _gamepad?.HDRumble(leftVibrationValue, rightVibrationValue) == false)
                 {
                     float low = Math.Min(1f, (float)((rightVibrationValue.AmplitudeLow * 0.85 + rightVibrationValue.AmplitudeHigh * 0.15)));
                     float high = Math.Min(1f, (float)((leftVibrationValue.AmplitudeLow * 0.15 + leftVibrationValue.AmplitudeHigh * 0.85)));
                     _gamepad?.Rumble(low, high, 0xFFFFFFFF);
                 }
-                
-                Logger.Debug?.Print(LogClass.Hid, $"Effect for {controllerConfig.PlayerIndex} " + 
+
+                Logger.Debug?.Print(LogClass.Hid, $"Effect for {controllerConfig.PlayerIndex} " +
                     // Value=value/multiplier * multiplier (result)
                     $"L.low.amp={leftVibrationValue.AmplitudeLow / controllerConfig.Rumble.WeakRumble} * {controllerConfig.Rumble.WeakRumble} ({leftVibrationValue.AmplitudeLow}), " +
                     $"L.high.amp={leftVibrationValue.AmplitudeHigh / controllerConfig.Rumble.WeakRumble} * {controllerConfig.Rumble.WeakRumble} ({leftVibrationValue.AmplitudeHigh}), " +

@@ -331,18 +331,28 @@ namespace Ryujinx.Input.SDL3
 
         public IEnumerable<IGamepad> GetGamepads()
         {
-            string[] ids;
-            lock (_lock)
+            lock (_gamepadsIds)
             {
-                ids = _gamepadsIds.Values
-                    .Concat(_joyConsIds.Values)
-                    .Concat(_linkedJoyConsIds.Values)
-                    .ToArray();
+                foreach (var gamepad in _gamepadsIds)
+                {
+                    yield return GetGamepad(gamepad.Value);
+                }
             }
 
-            foreach (string id in ids)
+            lock (_joyConsIds)
             {
-                yield return GetGamepad(id);
+                foreach (var gamepad in _joyConsIds)
+                {
+                    yield return GetGamepad(gamepad.Value);
+                }
+            }
+            
+            lock (_linkedJoyConsIds)
+            {
+                foreach (var gamepad in _linkedJoyConsIds)
+                {
+                    yield return GetGamepad(gamepad.Value);
+                }
             }
         }
     }
