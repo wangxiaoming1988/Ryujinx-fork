@@ -443,6 +443,7 @@ namespace Ryujinx.HLE.HOS.Applets
                     if ((newCalc.Flags & KeyboardCalcFlags.SetInputText) != 0)
                     {
                         _textValue = newCalc.InputText;
+                        _cursorBegin = _textValue.Length;
                         updateText = true;
 
                         Logger.Debug?.Print(LogClass.ServiceAm, $"Input text set to {_textValue}");
