@@ -23,7 +23,6 @@ using Ryujinx.Input.SDL3;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -80,10 +79,6 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 Rainbow.Reset();
 
                 field = value;
-
-                if ((field?.Features & GamepadFeaturesFlag.Led) != 0 &&
-                    ConfigViewModel is ControllerInputViewModel { Config.UseRainbowLed: true })
-                    Rainbow.Updated += (ref Color color) => field.SetLed((uint)color.ToArgb());
 
                 OnPropertiesChanged(nameof(HasLed), nameof(CanClearLed));
             }
