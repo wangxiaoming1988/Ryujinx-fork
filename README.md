@@ -40,8 +40,14 @@
 
 ## Usage
 
-To run this emulator, your PC must be equipped with at least 8GiB of RAM;
-failing to meet this requirement may result in a poor gameplay experience or unexpected crashes.
+To run this emulator, your PC must be equipped with at least:
+- 8GiB of RAM 
+- 6 cores
+- A GPU released within the last 10 years.
+- OpenGL 4.6 | Vulkan 1.4
+- Windows 10 version 20H1 | macOS Big Sur (Apple Silicon)
+
+Failing to meet these requirements may result in a poor gameplay experience or unexpected crashes.
 
 ## Latest build
 
