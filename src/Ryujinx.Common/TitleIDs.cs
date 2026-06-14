@@ -147,6 +147,7 @@ namespace Ryujinx.Common
             "0100c1f0051b6000", // Donkey Kong Country: Tropical Freeze
             "0100ed000d390000", // Dr. Kawashima's Brain Training
             "010067b017588000", // Endless Ocean Luminous
+            "01003da010e8a000", // Miitopia
             "01006b5012b32000", // Part Time UFO
             "0100704000B3A000", // Snipperclips
             "01006a800016e000", // Super Smash Bros. Ultimate
