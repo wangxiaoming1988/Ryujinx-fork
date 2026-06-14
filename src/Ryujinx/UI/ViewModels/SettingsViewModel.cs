@@ -109,6 +109,31 @@ namespace Ryujinx.Ava.UI.ViewModels
             }
         }
 
+        public bool StartGamesInFullscreen
+        {
+            get => ConfigurationState.Instance.UI.StartFullscreen;
+            set
+            {
+                if (ConfigurationState.Instance.UI.StartFullscreen.Value != value)
+                {
+                    ConfigurationState.Instance.UI.StartFullscreen.Value = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+        public bool StartGamesWithoutUi
+        {
+            get => ConfigurationState.Instance.UI.StartNoUI;
+            set
+            {
+                if (ConfigurationState.Instance.UI.StartNoUI.Value != value)
+                {
+                    ConfigurationState.Instance.UI.StartNoUI.Value = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public int GraphicsBackendMultithreadingIndex
         {
             get;
@@ -638,6 +663,8 @@ namespace Ryujinx.Ava.UI.ViewModels
             HideCursor = (int)config.HideCursor.Value;
             UpdateCheckerType = (int)config.UpdateCheckerType.Value;
             FocusLostActionType = (int)config.FocusLostActionType.Value;
+            StartGamesInFullscreen = config.UI.StartFullscreen;
+            StartGamesWithoutUi = config.UI.StartNoUI;
 
             GameDirectories.Clear();
             GameDirectories.AddRange(config.UI.GameDirs.Value);
@@ -758,6 +785,8 @@ namespace Ryujinx.Ava.UI.ViewModels
             config.FocusLostActionType.Value = (FocusLostType)FocusLostActionType;
             config.UI.GameDirs.Value = [.. GameDirectories];
             config.UI.AutoloadDirs.Value = [.. AutoloadDirectories];
+            config.UI.StartFullscreen.Value = StartGamesInFullscreen;
+            config.UI.StartNoUI.Value = StartGamesWithoutUi;
 
             config.UI.BaseStyle.Value = BaseStyleIndex switch
             {

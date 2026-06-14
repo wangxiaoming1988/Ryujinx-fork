@@ -77,6 +77,7 @@ namespace Ryujinx.Ava.UI.Views.Main
                 .Select(it =>
                     new CheckBox
                     {
+                        Margin = new Thickness(10, 0, 0, 0),
                         Content = $".{it.FileName}",
                         IsChecked = it.FileType.GetConfigValue(ConfigurationState.Instance.UI.ShownFileTypes),
                         Command = Commands.Create(() => Window.ToggleFileType(it.FileName))
@@ -98,8 +99,7 @@ namespace Ryujinx.Ava.UI.Views.Main
 
                 MenuItem menuItem = new()
                 {
-                    Padding = new Thickness(15, 0, 0, 0),
-                    Margin = new Thickness(3, 0, 3, 0),
+                    Padding = new Thickness(10, 0, 0, 0),
                     HorizontalAlignment = HorizontalAlignment.Stretch,
                     Header = code == currentLanguageCode ? $"{languageName}  ✔" : languageName,
                     Command = Commands.Create(() => MainWindowViewModel.ChangeLanguage(code))
