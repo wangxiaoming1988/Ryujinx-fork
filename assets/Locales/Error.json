@@ -1,6 +1,56 @@
 {
   "Locales": [
     {
+      "ID": "NoApplicationFoundInFile",
+      "Translations": {
+        "ar_SA": "",
+        "de_DE": "Keine Anwendungen in ausgewählter Datei gefunden.",
+        "el_GR": "",
+        "en_US": "No applications found in selected file.",
+        "es_ES": "No se encontraron aplicaciones en el archivo seleccionado.",
+        "fr_FR": "Aucune application trouvée dans le fichier sélectionné.",
+        "he_IL": "",
+        "it_IT": "Nessuna applicazione trovata nel file selezionato.",
+        "ja_JP": "",
+        "ko_KR": "선택한 파일에서 앱을 찾을 수 없습니다.",
+        "no_NO": "Ingen apper ble funnet i valgt fil.",
+        "pl_PL": "",
+        "pt_BR": "Nenhum aplicativo encontrado no arquivo selecionado.",
+        "ru_RU": "Приложений в выбранном файле не найдены",
+        "sv_SE": "Inga applikationer hittades i vald fil.",
+        "th_TH": "ไม่พบแอปพลิเคชั่นจากไฟล์ที่เลือก",
+        "tr_TR": "",
+        "uk_UA": "У вибраному файлі не знайдено жодних додатків.",
+        "zh_CN": "未发现应用",
+        "zh_TW": "未能從已選擇的檔案中找到應用程式。"
+      }
+    },
+    {
+      "ID": "NoUnpackedApplicationFoundInFolder",
+      "Translations": {
+        "ar_SA": "",
+        "de_DE": "",
+        "el_GR": "",
+        "en_US": "Please select an unpacked application folder with a valid ExeFS or NSO/NRO.",
+        "es_ES": "",
+        "fr_FR": "Veuillez sélectionner un répertoire d’application décompressée contenant un ExeFS valide ou NSO/NRO.",
+        "he_IL": "",
+        "it_IT": "",
+        "ja_JP": "",
+        "ko_KR": "",
+        "no_NO": "",
+        "pl_PL": "",
+        "pt_BR": "",
+        "ru_RU": "Пожалуйста, выберите папку распакованного приложения с корректным ExeFS или NSO/NRO",
+        "sv_SE": "",
+        "th_TH": "",
+        "tr_TR": "",
+        "uk_UA": "",
+        "zh_CN": "",
+        "zh_TW": ""
+      }
+    },
+    {
       "ID": "NoKeysFound",
       "Translations": {
         "ar_SA": "المفاتيح غير موجودة.",

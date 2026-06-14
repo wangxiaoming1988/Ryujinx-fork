@@ -24,6 +24,9 @@ namespace Ryujinx.Common.Helper
 
         public static bool IsTypeAssociationSupported => (OperatingSystem.IsLinux() || OperatingSystem.IsWindows());
 
+        // NOTE: On macOS, users have a more robust file association system (via Right-Click > Get Info > "Open with:" > Ryujinx > "Change All...)
+        // Custom file association isn't strictly necessary and will not provide any additional benefit to macOS users.
+
         public static bool AreMimeTypesRegistered
         {
             get
@@ -37,8 +40,6 @@ namespace Ryujinx.Common.Helper
                 {
                     return AreMimeTypesRegisteredWindows();
                 }
-
-                // TODO: Add macOS support.
 
                 return false;
             }
@@ -173,8 +174,6 @@ namespace Ryujinx.Common.Helper
                 return InstallWindowsMimeTypes();
             }
 
-            // TODO: Add macOS support.
-
             return false;
         }
 
@@ -189,8 +188,6 @@ namespace Ryujinx.Common.Helper
             {
                 return InstallWindowsMimeTypes(true);
             }
-
-            // TODO: Add macOS support.
 
             return false;
         }

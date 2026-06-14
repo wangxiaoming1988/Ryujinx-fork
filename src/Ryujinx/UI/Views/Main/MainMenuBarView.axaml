@@ -7,6 +7,7 @@
     mc:Ignorable="d"
     xmlns:viewModels="clr-namespace:Ryujinx.Ava.UI.ViewModels"
     xmlns:controls="clr-namespace:Ryujinx.Ava.UI.Controls"
+    xmlns:i="clr-namespace:Projektanker.Icons.Avalonia;assembly=Projektanker.Icons.Avalonia"
     xmlns:common="clr-namespace:Ryujinx.Common;assembly=Ryujinx.Common"
     xmlns:renderDocApi="clr-namespace:Ryujinx.Graphics.RenderDocApi;assembly=Ryujinx.Graphics.RenderDocApi"
     x:DataType="viewModels:MainWindowViewModel"
@@ -29,50 +30,53 @@
                     <DockPanel Margin="0" HorizontalAlignment="Stretch" />
                 </ItemsPanelTemplate>
             </Menu.ItemsPanel>
-            <MenuItem VerticalAlignment="Center" Header="{ext:Locale MenuBarFile}">
+            <MenuItem VerticalAlignment="Center" Header="{ext:Locale MenuBar_File_FileLabel}">
                 <MenuItem
-                    Command="{Binding OpenFile}"
-                    Header="{ext:Locale MenuBarFileOpenFromFile}"
+                    Command="{Binding LoadApplicationFromFile}"
+                    Header="{ext:Locale MenuBar_File_LoadApplicationFromFileButton}"
                     Icon="{ext:Icon fa-solid fa-file}"
-                    IsEnabled="{Binding EnableNonGameRunningControls}" />
+                    IsEnabled="{Binding EnableNonGameRunningControls}"
+                    InputGesture="{Binding LoadApplicationFromFileGesture}" />
                 <MenuItem
-                    Command="{Binding OpenFolder}"
-                    Header="{ext:Locale MenuBarFileOpenUnpacked}"
+                    Command="{Binding LoadUnpackedGameFromFolder}"
+                    Header="{ext:Locale MenuBar_File_LoadUnpackedGameFromFolderButton}"
                     Icon="{ext:Icon fa-solid fa-folder-open}"
-                    IsEnabled="{Binding EnableNonGameRunningControls}" />
+                    IsEnabled="{Binding EnableNonGameRunningControls}"
+                    InputGesture="{Binding LoadUnpackedGameFromFolderFileGesture}" />
                 <MenuItem
-                    Command="{Binding LoadTitleUpdatesFromFolder}"
-                    Header="{ext:Locale MenuBarFileLoadTitleUpdatesFromFolder}"
-                    Icon="{ext:Icon fa-solid fa-diagram-predecessor}"
-                    IsEnabled="{Binding EnableNonGameRunningControls}" />
-                <MenuItem
-                    Command="{Binding LoadDlcFromFolder}"
-                    Header="{ext:Locale MenuBarFileLoadDlcFromFolder}"
-                    Icon="{ext:Icon fa-solid fa-puzzle-piece}"
+                    Command="{Binding LoadTitleUpdatesAndDLCFromFolder}"
+                    Header="{ext:Locale MenuBar_File_LoadTitleUpdatesAndDLCFromFolderButton}"
+                    Icon="{ext:Icon fa-solid fa-inbox}"
                     IsEnabled="{Binding EnableNonGameRunningControls}" />
                 <Separator />
                 <MenuItem
                     Command="{Binding OpenRyujinxFolder}"
-                    Header="{ext:Locale MenuBarFileOpenEmuFolder}"
+                    Header="{ext:Locale MenuBar_File_OpenRyuijnxFolderButton}"
                     Icon="{ext:Icon fa-solid fa-folder-closed}" />
                 <MenuItem
                     Command="{Binding OpenLogsFolder}"
-                    Header="{ext:Locale MenuBarFileOpenLogsFolder}"
-                    Icon="{ext:Icon fa-solid fa-terminal}" />
+                    Header="{ext:Locale MenuBar_File_OpenLogsFolderButton}"
+                    Icon="{ext:Icon fa-solid fa-folder-closed}" />
                 <MenuItem
                     Command="{Binding OpenScreenshotsFolder}"
-                    Header="{ext:Locale MenuBarFileOpenScreenshotsFolder}"
-                    Icon="{ext:Icon fa-solid fa-image}" />
-                <Separator IsVisible="{Binding ManageFileTypesVisible}" />
-                <MenuItem Header="{ext:Locale MenuBar_File_ManageFileTypes}" IsVisible="{Binding ManageFileTypesVisible}" Icon="{ext:Icon fa-solid fa-clipboard}">
-                    <MenuItem Name="InstallFileTypesMenuItem" Header="{ext:Locale MenuBar_File_InstallFileTypes}" IsEnabled="{Binding AreMimeTypesRegistered, Converter={x:Static BoolConverters.Not}}" Icon="{ext:Icon fa-solid fa-square-plus}" />
-                    <MenuItem Name="UninstallFileTypesMenuItem" Header="{ext:Locale MenuBar_File_UninstallFileTypes}" IsEnabled="{Binding AreMimeTypesRegistered}" Icon="{ext:Icon fa-solid fa-square-minus}" />
+                    Header="{ext:Locale MenuBar_File_OpenScreenshotsFolderButton}"
+                    Icon="{ext:Icon fa-solid fa-folder-closed}" />
+                <Separator IsVisible="{Binding FileTypeAssociationsVisible}" />
+                <MenuItem
+                    Command="{Binding ToggleFileTypeAssociationsCommand}"
+                    Header="{Binding FileTypeAssociationsMenuHeader}"
+                    IsVisible="{Binding FileTypeAssociationsVisible}"
+                    IsEnabled="{Binding EnableNonGameRunningControls}"
+                    ToolTip.Tip="{ext:Locale MenuBar_File_FileTypeAssociationsToolTip}">
+                    <MenuItem.Icon>
+                        <i:Icon Value="{Binding FileTypeAssociationsIcon}" />
+                    </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
                 <MenuItem
                     Name="CloseRyujinxMenuItem"
-                    Header="{ext:Locale MenuBarFileExit}"
-                    Icon="{ext:Icon fa-solid fa-power-off}" />
+                    Header="{ext:Locale MenuBar_File_ExitButton}"
+                    Icon="{ext:Icon fa-solid fa-arrow-right-from-bracket}" />
             </MenuItem>
             <MenuItem VerticalAlignment="Center" Header="{ext:Locale MenuBar_Options_OptionsLabel}">
                 <MenuItem

@@ -741,10 +741,10 @@ namespace Ryujinx.Ava.UI.Windows
         {
             string[] messages =
             [
-                numDlcRemoved > 0 ? string.Format(LocaleManager.Instance[LocaleKeys.AutoloadDlcRemovedMessage], numDlcRemoved): null,
-                numDlcAdded > 0 ? string.Format(LocaleManager.Instance[LocaleKeys.AutoloadDlcAddedMessage], numDlcAdded): null,
-                numUpdatesRemoved > 0 ? string.Format(LocaleManager.Instance[LocaleKeys.AutoloadUpdateRemovedMessage], numUpdatesRemoved): null,
-                numUpdatesAdded > 0 ? string.Format(LocaleManager.Instance[LocaleKeys.AutoloadUpdateAddedMessage], numUpdatesAdded) : null
+                numDlcRemoved > 0 ? string.Format(LocaleManager.Instance[LocaleKeys.Dialog_ContentLoading_DLCRemovedMessage], numDlcRemoved): null,
+                numDlcAdded > 0 ? string.Format(LocaleManager.Instance[LocaleKeys.Dialog_ContentLoading_DLCAddedMessage], numDlcAdded): null,
+                numUpdatesRemoved > 0 ? string.Format(LocaleManager.Instance[LocaleKeys.Dialog_ContentLoading_UpdatesRemovedMessage], numUpdatesRemoved): null,
+                numUpdatesAdded > 0 ? string.Format(LocaleManager.Instance[LocaleKeys.Dialog_ContentLoading_UpdatesAddedMessage], numUpdatesAdded) : null
             ];
 
             string msg = String.Join("\r\n", messages);

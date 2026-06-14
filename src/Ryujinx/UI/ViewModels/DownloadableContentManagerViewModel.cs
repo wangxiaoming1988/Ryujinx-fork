@@ -250,7 +250,7 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         private Task ShowNewDlcAddedDialog(int numAdded)
         {
-            string msg = string.Format(LocaleManager.Instance[LocaleKeys.DlcWindowDlcAddedMessage], numAdded);
+            string msg = string.Format(LocaleManager.Instance[LocaleKeys.Dialog_ContentLoading_DLCAddedMessage], numAdded);
             return Dispatcher.UIThread.InvokeAsync(async () =>
             {
                 await ContentDialogHelper.ShowTextDialog(

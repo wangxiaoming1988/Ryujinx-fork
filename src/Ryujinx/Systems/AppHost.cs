@@ -818,8 +818,7 @@ namespace Ryujinx.Ava.Systems
 
                     if (!Device.LoadCart(ApplicationPath, romFsFiles[0]))
                     {
-                        await ContentDialogHelper.CreateErrorDialog(
-                            "Please specify an unpacked game directory with a valid exefs or NSO/NRO.");
+                        await ContentDialogHelper.CreateErrorDialog(LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.Error_NoUnpackedApplicationFoundInFolder));
                         Device.Dispose();
 
                         cts.Cancel();
@@ -831,8 +830,7 @@ namespace Ryujinx.Ava.Systems
                     Logger.Info?.Print(LogClass.Application, "Loading as cart WITHOUT RomFS.");
                     if (!Device.LoadCart(ApplicationPath))
                     {
-                        await ContentDialogHelper.CreateErrorDialog(
-                            "Please specify an unpacked game directory with a valid exefs or NSO/NRO.");
+                        await ContentDialogHelper.CreateErrorDialog(LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.Error_NoUnpackedApplicationFoundInFolder));
                         Device.Dispose();
                         cts.Cancel();
                         throw new OperationCanceledException(cts.Token);

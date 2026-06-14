@@ -45,6 +45,10 @@
         <KeyBinding Gesture="Ctrl+Shift+R" Command="{Binding ReloadRenderDocApi}" />
         <KeyBinding Gesture="Ctrl+Shift+C" Command="{Binding ToggleCapture}" />
         <KeyBinding Gesture="Ctrl+M" Command="{Binding SimulateWakeUpMessage}" />
+        <KeyBinding Gesture="Cmd+O" Command="{Binding LoadApplicationFromFile}" />
+        <KeyBinding Gesture="Ctrl+O" Command="{Binding LoadApplicationFromFile}" />
+        <KeyBinding Gesture="Cmd+Shift+O" Command="{Binding LoadUnpackedGameFromFolder}" />
+        <KeyBinding Gesture="Ctrl+Shift+O" Command="{Binding LoadUnpackedGameFromFolder}" />
     </Window.KeyBindings>
     <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch" RowDefinitions="*">
         <helpers:OffscreenTextBox IsEnabled="False" Opacity="0" Name="HiddenTextBox" IsHitTestVisible="False" IsTabStop="False" />

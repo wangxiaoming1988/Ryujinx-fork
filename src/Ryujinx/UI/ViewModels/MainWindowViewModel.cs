@@ -136,9 +136,6 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         [ObservableProperty] public partial float VolumeBeforeMute { get; set; }
 
-        [ObservableProperty]
-        public partial bool AreMimeTypesRegistered { get; set; } = FileAssociationHelper.AreMimeTypesRegistered;
-
         [ObservableProperty] public partial Cursor Cursor { get; set; }
 
         [ObservableProperty] public partial string Title { get; set; }
@@ -218,6 +215,11 @@ namespace Ryujinx.Ava.UI.ViewModels
                 .Subscribe();
 
             _rendererWaitEvent = new AutoResetEvent(false);
+
+            LocaleManager.Instance.PropertyChanged += (sender, args) =>
+                {
+                    RefreshFileTypeAssociationToggle();
+                };
 
             if (Program.PreviewerDetached)
             {
@@ -679,11 +681,6 @@ namespace Ryujinx.Ava.UI.ViewModels
             get => ConsoleHelper.SetConsoleWindowStateSupported;
         }
 
-        public bool ManageFileTypesVisible
-        {
-            get => FileAssociationHelper.IsTypeAssociationSupported;
-        }
-
         public Glyph Glyph
         {
             get => (Glyph)ConfigurationState.Instance.UI.GameListViewMode.Value;
@@ -939,6 +936,71 @@ namespace Ryujinx.Ava.UI.ViewModels
             }
 
             return false;
+        }
+
+        public bool FileTypeAssociationsVisible
+        {
+            get => FileAssociationHelper.IsTypeAssociationSupported;
+        }
+
+        private void RefreshFileTypeAssociationToggle()
+            {
+                OnPropertyChanged(nameof(FileTypeAssociationsMenuHeader));
+                OnPropertyChanged(nameof(FileTypeAssociationsIcon));
+            }
+
+        private bool _areMimeTypesRegistered = FileAssociationHelper.AreMimeTypesRegistered;
+
+        public bool AreMimeTypesRegistered
+        {
+            get => _areMimeTypesRegistered;
+            set
+            {
+                if (_areMimeTypesRegistered != value)
+                {
+                    _areMimeTypesRegistered = value;
+                    RefreshFileTypeAssociationToggle();
+                }
+            }
+        }
+
+        public string FileTypeAssociationsMenuHeader =>
+            AreMimeTypesRegistered
+                ? LocaleManager.Instance[LocaleKeys.MenuBar_File_RemoveFileTypeAssociationsButton]
+                : LocaleManager.Instance[LocaleKeys.MenuBar_File_AssociateFileTypesButton];
+
+        public string FileTypeAssociationsIcon =>
+            AreMimeTypesRegistered
+                ? "fa-solid fa-link-slash"
+                : "fa-solid fa-link";
+
+        [RelayCommand]
+        private async Task ToggleFileTypeAssociations()
+        {
+            if (AreMimeTypesRegistered)
+                await RemoveFileTypeAssociations();
+            else
+                await AssociateFileTypes();
+        }
+
+        [RelayCommand]
+        private async Task AssociateFileTypes()
+        {
+            AreMimeTypesRegistered = FileAssociationHelper.Install();
+            if (AreMimeTypesRegistered)
+                await ContentDialogHelper.CreateInfoDialog(LocaleManager.Instance[LocaleKeys.Dialog_FileTypeAssociations_AssociationSuccessMessage], string.Empty, LocaleManager.Instance[LocaleKeys.InputDialogOk], string.Empty, string.Empty);
+            else
+                await ContentDialogHelper.CreateErrorDialog(LocaleManager.Instance[LocaleKeys.Dialog_FileTypeAssociations_AssociationFailedMessage]);
+        }
+
+        [RelayCommand]
+        private async Task RemoveFileTypeAssociations()
+        {
+            AreMimeTypesRegistered = !FileAssociationHelper.Uninstall();
+            if (!AreMimeTypesRegistered)
+                await ContentDialogHelper.CreateInfoDialog(LocaleManager.Instance[LocaleKeys.Dialog_FileTypeAssociations_RemoveAssociationSuccessMessage], string.Empty, LocaleManager.Instance[LocaleKeys.InputDialogOk], string.Empty, string.Empty);
+            else
+                await ContentDialogHelper.CreateErrorDialog(LocaleManager.Instance[LocaleKeys.Dialog_FileTypeAssociations_RemoveAssociationFailedMessage]);
         }
 
         public async Task HandleFirmwareInstallation(string filename)
@@ -1597,11 +1659,14 @@ namespace Ryujinx.Ava.UI.ViewModels
             AppHost.Device.System.SimulateWakeUpMessage();
         }
 
-        public async Task OpenFile()
+        public KeyGesture LoadApplicationFromFileGesture => KeyGesture.Parse(OperatingSystem.IsMacOS() ? "Cmd+O" : "Ctrl+O");
+        public KeyGesture LoadUnpackedGameFromFolderFileGesture => KeyGesture.Parse(OperatingSystem.IsMacOS() ? "Cmd+Shift+O" : "Ctrl+Shift+O");
+
+        public async Task LoadApplicationFromFile()
         {
             Optional<IStorageFile> result = await StorageProvider.OpenSingleFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = LocaleManager.Instance[LocaleKeys.LoadApplicationFromFileDialogTitle],
+                Title = LocaleManager.Instance[LocaleKeys.Dialog_FileMenu_LoadApplicationFromFileFilePickerTitle],
                 FileTypeFilter = new List<FilePickerFileType>
                 {
                     new(LocaleManager.Instance[LocaleKeys.AllSupportedFormats])
@@ -1667,35 +1732,17 @@ namespace Ryujinx.Ava.UI.ViewModels
                 else
                 {
                     await ContentDialogHelper.CreateErrorDialog(
-                        LocaleManager.Instance[LocaleKeys.MenuBarFileOpenFromFileError]);
+                        LocaleManager.Instance[LocaleKeys.Error_NoApplicationFoundInFile]);
                 }
             }
         }
 
-        public async Task LoadDlcFromFolder()
-        {
-            await LoadContentFromFolder(
-                LocaleKeys.AutoloadDlcAddedMessage,
-                LocaleKeys.AutoloadDlcRemovedMessage,
-                ApplicationLibrary.AutoLoadDownloadableContents,
-                LocaleKeys.LoadDLCFromFolderDialogTitle);
-        }
-
-        public async Task LoadTitleUpdatesFromFolder()
-        {
-            await LoadContentFromFolder(
-                LocaleKeys.AutoloadUpdateAddedMessage,
-                LocaleKeys.AutoloadUpdateRemovedMessage,
-                ApplicationLibrary.AutoLoadTitleUpdates,
-                LocaleKeys.LoadTitleUpdatesFromFolderDialogTitle);
-        }
-
-        public async Task OpenFolder()
+        public async Task LoadUnpackedGameFromFolder()
         {
             Optional<IStorageFolder> result = await StorageProvider.OpenSingleFolderPickerAsync(
                 new FolderPickerOpenOptions
                 {
-                    Title = LocaleManager.Instance[LocaleKeys.LoadUnpackedGameFromFolderDialogTitle]
+                    Title = LocaleManager.Instance[LocaleKeys.Dialog_FileMenu_LoadUnpackedApplicationFromFolderFilePickerTitle]
                 });
 
             if (result.TryGet(out IStorageFolder value))
@@ -1707,6 +1754,36 @@ namespace Ryujinx.Ava.UI.ViewModels
 
                 await LoadApplication(applicationData);
             }
+        }
+
+        private async Task<IReadOnlyList<string>?> PickFolders(LocaleKeys titleKey)
+        {
+            return (await StorageProvider.OpenMultiFolderPickerAsync(new FolderPickerOpenOptions 
+            { 
+                Title = LocaleManager.Instance[titleKey] 
+            })).TryGet(out IReadOnlyList<IStorageFolder> folders)
+                ? folders.Select(f => f.Path.LocalPath).ToList()
+                : null;
+        }
+
+        public async Task LoadTitleUpdatesAndDLCFromFolder()
+        {
+            if (await PickFolders(LocaleKeys.Dialog_FileMenu_LoadUpdatesAndDLCFromFolderFilePickerTitle) is not { } dirs)
+                return;
+
+            int updAdded = ApplicationLibrary.AutoLoadTitleUpdates(dirs.ToList(), out _);
+            int dlcAdded = ApplicationLibrary.AutoLoadDownloadableContents(dirs.ToList(), out _);
+
+            await Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                await ContentDialogHelper.ShowTextDialog(
+                    LocaleManager.Instance[LocaleKeys.RyujinxConfirm],
+                    string.Format(LocaleManager.Instance[LocaleKeys.Dialog_ContentLoading_UpdatesAddedMessage], updAdded) + "\n\n" +
+                    string.Format(LocaleManager.Instance[LocaleKeys.Dialog_ContentLoading_DLCAddedMessage], dlcAdded),
+                    string.Empty, string.Empty, string.Empty,
+                    LocaleManager.Instance[LocaleKeys.InputDialogOk],
+                    (int)Symbol.Checkmark);
+            });
         }
 
         public static bool InitializeUserConfig(ApplicationData application)
