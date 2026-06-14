@@ -1069,7 +1069,6 @@ namespace Ryujinx.Ava.Systems.PlayReport
 
             _ => FormattedValue.ForceReset
         };
-
         private static FormattedValue TomodachiLifeLTD_Status(SingleValue value)
         {
             MessagePackObject messagePackObject = value.Matched.PackedValue;
@@ -1077,8 +1076,9 @@ namespace Ryujinx.Ava.Systems.PlayReport
             
             int miiCount = messagePackObjectDictionary["MiiNum"].AsInt32();
             int fountainLevel = messagePackObjectDictionary["FountainLevel"].AsInt32();
-            
-            return $"Looking after {"Mii".ToQuantity(miiCount)}, with an island level of {fountainLevel}";
+
+            // Fountain Level should be kept consistent throughout code, so I basically made sure of it
+            return $"Looking after {"Mii".ToQuantity(miiCount)}, with a fountain level of {fountainLevel}";
         }
         
         private static FormattedValue AnimalCrossingNewHorizons_AppCommon(SingleValue value)

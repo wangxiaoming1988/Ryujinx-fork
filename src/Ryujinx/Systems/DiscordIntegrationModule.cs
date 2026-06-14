@@ -46,7 +46,7 @@ namespace Ryujinx.Ava.Systems
                     LargeImageText = TruncateToByteLength(_description)
                 },
                 Details = "Main Menu",
-                State = "Idling",
+                State = "Waiting",
                 Timestamps = EmulatorStartedAt
             };
 
