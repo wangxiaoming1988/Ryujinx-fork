@@ -439,7 +439,7 @@ namespace Ryujinx.Graphics.Vulkan
                 features2.Features.MultiViewport && !(IsMoltenVk && Vendor == Vendor.Amd), // Workaround for AMD on MoltenVK issue
                 featuresRobustness2.NullDescriptor || IsMoltenVk,
                 supportsPushDescriptors,
-                IsMoltenVk ? 16 : propertiesPushDescriptor.MaxPushDescriptors, // In case an old version of MoltenVK is used, apply a limit to prevent vertex explosions.
+                IsMoltenVk ? 16 : propertiesPushDescriptor.MaxPushDescriptors, // Prevents vertex explosions on MoltenVK.
                 featuresPrimitiveTopologyListRestart.PrimitiveTopologyListRestart,
                 featuresPrimitiveTopologyListRestart.PrimitiveTopologyPatchListRestart,
                 supportsTransformFeedback,

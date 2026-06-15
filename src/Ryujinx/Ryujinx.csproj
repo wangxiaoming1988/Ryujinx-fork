@@ -28,14 +28,14 @@
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>partial</TrimMode>
   </PropertyGroup>
-
+  
   <!--
     FluentAvalonia, used in the Avalonia UI, requires a workaround for the json serializer used internally when using .NET 8+ System.Text.Json.
     See:
       https://github.com/amwx/FluentAvalonia/issues/481
       https://devblogs.microsoft.com/dotnet/system-text-json-in-dotnet-8/
   -->
-
+  
   <PropertyGroup>
     <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
   </PropertyGroup>
@@ -73,7 +73,7 @@
     <PackageReference Include="Silk.NET.Vulkan.Extensions.KHR" />
     <PackageReference Include="SPB" />
   </ItemGroup>
-
+  
   <ItemGroup>
     <ProjectReference Include="..\Ryujinx.Graphics.RenderDocApi\Ryujinx.Graphics.RenderDocApi.csproj" />
     <ProjectReference Include="..\Ryujinx.Graphics.Vulkan/Ryujinx.Graphics.Vulkan.csproj" />

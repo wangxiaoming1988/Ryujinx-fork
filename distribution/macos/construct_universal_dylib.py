@@ -47,12 +47,14 @@ def get_new_name(
     input_component = str(input_dylib_path).replace(str(input_directory), "")[1:]
     return Path(os.path.join(output_directory, input_component))
 
-def get_archs(dylib_path: Path) -> list[str]:
-    res = subprocess.check_output([LIPO, "-info", str(dylib_path)]).decode("utf-8")
-    if res.startswith("Non-fat file"):
-        return [res.split(":")[-1].strip()]
-    else:
-        return res.split("are:")[-1].strip().split()
+
+def is_fat_file(dylib_path: Path) -> str:
+    res = subprocess.check_output([LIPO, "-info", str(dylib_path.absolute())]).decode(
+        "utf-8"
+    )
+
+    return not res.split("\n")[0].startswith("Non-fat file")
+
 
 def construct_universal_dylib(
     arm64_input_dylib_path: Path, x86_64_input_dylib_path: Path, output_dylib_path: Path
@@ -67,12 +69,11 @@ def construct_universal_dylib(
             os.path.basename(arm64_input_dylib_path.resolve()), output_dylib_path
         )
     else:
-        arm64_archs = get_archs(arm64_input_dylib_path)
-        x86_64_archs = get_archs(x86_64_input_dylib_path) if x86_64_input_dylib_path.exists() else []
-
-        if "arm64" in arm64_archs and "x86_64" in arm64_archs:
-            shutil.copy2(arm64_input_dylib_path, output_dylib_path)
-        elif x86_64_archs:
+        if is_fat_file(arm64_input_dylib_path) or not x86_64_input_dylib_path.exists():
+            with open(output_dylib_path, "wb") as dst:
+                with open(arm64_input_dylib_path, "rb") as src:
+                    dst.write(src.read())
+        else:
             subprocess.check_call(
                 [
                     LIPO,
