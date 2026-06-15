@@ -1,10 +1,23 @@
 using System;
+using System.Runtime.InteropServices;
 using UnicornEngine.Const;
 
 namespace Ryujinx.Tests.Unicorn
 {
     public class UnicornAArch32 : IDisposable
     {
+        struct UcArmCpReg
+        {
+            public uint Cp;
+            public uint Is64;
+            public uint Sec;
+            public uint CRn;
+            public uint CRm;
+            public uint Opc1;
+            public uint Opc2;
+            public uint Val;
+        }
+        
         internal readonly UnicornEngine.Unicorn Uc;
         private bool _isDisposed;
 
@@ -38,7 +51,7 @@ namespace Ryujinx.Tests.Unicorn
 
         public int Fpscr
         {
-            get => (int)GetRegister(Arm.UC_ARM_REG_FPSCR) | ((int)GetRegister(Arm.UC_ARM_REG_FPSCR_NZCV));
+            get => (int)GetRegister(Arm.UC_ARM_REG_FPSCR);
             set => SetRegister(Arm.UC_ARM_REG_FPSCR, (uint)value);
         }
 
@@ -85,8 +98,22 @@ namespace Ryujinx.Tests.Unicorn
         public UnicornAArch32()
         {
             Uc = new UnicornEngine.Unicorn(Common.UC_ARCH_ARM, Common.UC_MODE_LITTLE_ENDIAN);
-
-            SetRegister(Arm.UC_ARM_REG_C1_C0_2, GetRegister(Arm.UC_ARM_REG_C1_C0_2) | 0xf00000);
+            
+            UcArmCpReg reg = new()
+            {
+                Cp = 15,
+                Is64 = 0,
+                Sec = 0,
+                CRn = 13,
+                Opc1 = 0,
+                CRm = 0,
+                Opc2 = 2
+            };
+            
+            GetRegister(Arm.UC_ARM_REG_CP_REG, ref reg);
+            reg.Val |= 0xf00000;
+            SetRegister(Arm.UC_ARM_REG_CP_REG, reg);
+            
             SetRegister(Arm.UC_ARM_REG_FPEXC, 0x40000000);
         }
 
@@ -204,6 +231,17 @@ namespace Ryujinx.Tests.Unicorn
             SetVector(Arm.UC_ARM_REG_D0 + index * 2, value);
         }
 
+        public void GetRegister<T>(int register, ref T obj) where T : unmanaged
+        {
+            Span<T> span = new(ref obj);
+            Span<byte> dataSpan = MemoryMarshal.Cast<T, byte>(span);
+            byte[] data = dataSpan.ToArray();
+            
+            Uc.RegRead(register, data);
+            
+            data.AsSpan().CopyTo(dataSpan);
+        }
+        
         public uint GetRegister(int register)
         {
             byte[] data = new byte[4];
@@ -213,6 +251,13 @@ namespace Ryujinx.Tests.Unicorn
             return BitConverter.ToUInt32(data, 0);
         }
 
+        public void SetRegister<T>(int register, T obj) where T : unmanaged
+        {
+            byte[] data = MemoryMarshal.Cast<T, byte>(new Span<T>(ref obj)).ToArray();
+
+            Uc.RegWrite(register, data);
+        }
+        
         public void SetRegister(int register, uint value)
         {
             byte[] data = BitConverter.GetBytes(value);

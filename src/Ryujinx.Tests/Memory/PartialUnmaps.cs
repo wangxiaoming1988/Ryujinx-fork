@@ -7,6 +7,7 @@ using Ryujinx.Common.Memory;
 using Ryujinx.Common.Memory.PartialUnmaps;
 using Ryujinx.Cpu;
 using Ryujinx.Cpu.Jit;
+using Ryujinx.Cpu.Signal;
 using Ryujinx.Memory;
 using Ryujinx.Memory.Tracking;
 using System;
@@ -60,6 +61,8 @@ namespace Ryujinx.Tests.Memory
                 new JitMemoryAllocator(),
                 new MockMemoryManager(),
                 AddressTable<ulong>.CreateForArm(true, MemoryManagerType.SoftwarePageTable));
+            
+            NativeSignalHandler.InitializeSignalHandler();
         }
 
         [Test]
