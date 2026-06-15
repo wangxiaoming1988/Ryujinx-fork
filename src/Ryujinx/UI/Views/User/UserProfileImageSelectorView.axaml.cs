@@ -4,10 +4,12 @@ using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 using FluentAvalonia.UI.Controls;
 using FluentAvalonia.UI.Navigation;
+using Gommon;
 using Ryujinx.Ava.Common.Locale;
 using Ryujinx.Ava.UI.Controls;
 using Ryujinx.Ava.UI.Models;
 using Ryujinx.Ava.UI.ViewModels;
+using Ryujinx.Ava.Utilities;
 using Ryujinx.HLE.FileSystem;
 using SkiaSharp;
 using System.Collections.Generic;
@@ -62,7 +64,7 @@ namespace Ryujinx.Ava.UI.Views.User
 
         private async void Import_OnClick(object sender, RoutedEventArgs e)
         {
-            IReadOnlyList<IStorageFile> result = await ((Window)this.GetVisualRoot()!).StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            Optional<IStorageFile> result = await ((Window)this.GetVisualRoot()!).StorageProvider.OpenSingleFilePickerAsync(new FilePickerOpenOptions
             {
                 AllowMultiple = false,
                 FileTypeFilter = new List<FilePickerFileType>
@@ -76,9 +78,9 @@ namespace Ryujinx.Ava.UI.Views.User
                 },
             });
 
-            if (result.Count > 0)
+            if (result.HasValue)
             {
-                _profile.Image = ProcessProfileImage(File.ReadAllBytes(result[0].Path.LocalPath));
+                _profile.Image = ProcessProfileImage(File.ReadAllBytes(result.Value.Path.LocalPath));
                 _parent.GoBack();
             }
         }

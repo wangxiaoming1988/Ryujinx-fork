@@ -13,6 +13,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using static Ryujinx.Ava.Utilities.StorageProviderExtensions;
 
 namespace Ryujinx.Ava.UI.ViewModels
 {
@@ -128,7 +129,7 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public async void Add()
         {
-            IReadOnlyList<IStorageFile> result = await _storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            IReadOnlyList<IStorageFile> result = await CoreDumpable(() => _storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
             {
                 Title = LocaleManager.Instance[LocaleKeys.SelectDlcDialogTitle],
                 AllowMultiple = true,
@@ -141,7 +142,7 @@ namespace Ryujinx.Ava.UI.ViewModels
                         MimeTypes = ["application/x-nx-nsp"],
                     },
                 },
-            });
+            }));
 
             int totalDlcAdded = 0;
             foreach (IStorageFile file in result)

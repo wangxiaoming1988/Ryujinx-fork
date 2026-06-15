@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using static Ryujinx.Ava.Utilities.StorageProviderExtensions;
 
 namespace Ryujinx.Ava.UI.ViewModels
 {
@@ -288,11 +289,11 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public async void Add()
         {
-            IReadOnlyList<IStorageFolder> result = await _storageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+            IReadOnlyList<IStorageFolder> result = await CoreDumpable(() => _storageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
             {
                 Title = LocaleManager.Instance[LocaleKeys.SelectModDialogTitle],
                 AllowMultiple = true,
-            });
+            }));
 
             foreach (IStorageFolder folder in result)
             {

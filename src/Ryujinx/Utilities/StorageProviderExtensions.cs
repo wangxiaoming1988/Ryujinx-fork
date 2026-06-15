@@ -29,7 +29,7 @@ namespace Ryujinx.Ava.Utilities
                     .Then(files => files.Count > 0 ? Optional.Of(files) : default);
         }
 
-        private static async Task<T> CoreDumpable<T>(Func<Task<T>> picker)
+        public static async Task<T> CoreDumpable<T>(Func<Task<T>> picker)
         {
             OsUtils.SetCoreDumpable(true);
             try
