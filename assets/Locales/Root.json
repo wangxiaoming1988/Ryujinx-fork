@@ -169,7 +169,7 @@
         "ru_RU": "",
         "sv_SE": "",
         "th_TH": "",
-        "tr_TR": "",
+        "tr_TR": "Düşük geçikmeli çöp toplayıcıyı kullan ",
         "uk_UA": "",
         "zh_CN": "使用低延迟垃圾回收器",
         "zh_TW": ""
@@ -269,7 +269,7 @@
         "ru_RU": "Запускать игры скрывая интерфейс",
         "sv_SE": "Starta spel med dolt användargränssnitt",
         "th_TH": "เริ่มเกมโดยซ่อน UI",
-        "tr_TR": "",
+        "tr_TR": "Oyunları arayüz olmadan başlatzsa",
         "uk_UA": "Запускати ігри з прихованим інтерфейсом",
         "zh_CN": "启动游戏时隐藏 UI",
         "zh_TW": "開啟遊戲時隱藏 UI"
@@ -594,7 +594,7 @@
         "ru_RU": "FAQ & Устранение неполадок",
         "sv_SE": "FAQ & Felsökning",
         "th_TH": "",
-        "tr_TR": "",
+        "tr_TR": "SSS & Rehberler",
         "uk_UA": "FAQ & Усунення несправностей",
         "zh_CN": "常见问题与疑难解答",
         "zh_TW": "常見問題與疑難排解"
@@ -794,7 +794,7 @@
         "ru_RU": "Разработана {0}",
         "sv_SE": "Utvecklat av {0}",
         "th_TH": "พัฒนาโดย {0}",
-        "tr_TR": "",
+        "tr_TR": "{0} tarafından geliştirilmiş",
         "uk_UA": "Розроблено: {0}",
         "zh_CN": "由 {0} 开发",
         "zh_TW": "由 {0} 開發"
@@ -1219,7 +1219,7 @@
         "ru_RU": "Совместимость:",
         "sv_SE": "Kompatibilitet:",
         "th_TH": "ความเข้ากันได้:",
-        "tr_TR": "",
+        "tr_TR": "Uyumluluk:",
         "uk_UA": "Сумісність:",
         "zh_CN": "兼容性:",
         "zh_TW": "相容性:"
@@ -1244,7 +1244,7 @@
         "ru_RU": "ID приложения:",
         "sv_SE": "Titel-id:",
         "th_TH": "รหัสเกม:",
-        "tr_TR": "",
+        "tr_TR": "Başlık ID:",
         "uk_UA": "ID гри:",
         "zh_CN": "标题 ID:",
         "zh_TW": "標題 ID:"
@@ -1269,7 +1269,7 @@
         "ru_RU": "Запущенно игр: {0}",
         "sv_SE": "Värdskap för spel: {0}",
         "th_TH": "เกมที่โฮสต์: {0}",
-        "tr_TR": "",
+        "tr_TR": "Kurulan Oyunlar: {0}",
         "uk_UA": "Розміщені ігри: {0}",
         "zh_CN": "服务的游戏: {0}",
         "zh_TW": "LDN 上主持的遊戲數量: {0}"
@@ -1294,7 +1294,7 @@
         "ru_RU": "Игроков онлайн: {0}",
         "sv_SE": "Online-spelare: {0}",
         "th_TH": "จำนวนผู้เล่นออนไลน์: {0}",
-        "tr_TR": "",
+        "tr_TR": "Çevrimiçi oyuncular: {0}",
         "uk_UA": "Гравців онлайн: {0}",
         "zh_CN": "在线玩家: {0}",
         "zh_TW": "LDN 上在線的玩家數量: {0}"
@@ -1544,7 +1544,7 @@
         "ru_RU": "Очистить кэш PPTC",
         "sv_SE": "Rensa PPTC-cache",
         "th_TH": "ล้างแคช PPTC",
-        "tr_TR": "",
+        "tr_TR": "PPTC önbelleğini boşalt",
         "uk_UA": "Очистити кеш PPTC",
         "zh_CN": "清理 PPTC 缓存",
         "zh_TW": "清除 PPTC"
@@ -1794,7 +1794,7 @@
         "ru_RU": "Извлекает файлы RomFS из выбранного файла DLC.",
         "sv_SE": "Extrahera RomFS från en vald DLC-fil.",
         "th_TH": "แยกข้อมูล RomFS จากไฟล์ DLC ที่เลือก",
-        "tr_TR": "",
+        "tr_TR": "RomFs",
         "uk_UA": "Витягти RomFS з обраного файлу DLC.",
         "zh_CN": "从选定的 DLC 文件中解压 RomFS。",
         "zh_TW": "從已選擇的 DLC 檔案中提取 RomFS。"
@@ -1919,7 +1919,7 @@
         "ru_RU": "Создать индивидуальную конфигурацию",
         "sv_SE": "Skapa anpassad konfiguration",
         "th_TH": "สร้างการตั้งค่าที่กำหนดเอง",
-        "tr_TR": "",
+        "tr_TR": "Özel yapılandırma oluştur",
         "uk_UA": "Створити користувацьку конфігурацію",
         "zh_CN": "创建自定义设置",
         "zh_TW": "建立遊戲獨立自訂 (per-game) 設定檔"
@@ -1944,7 +1944,7 @@
         "ru_RU": "Изменить индивидуальную конфигурацию",
         "sv_SE": "Redigera anpassad konfiguration",
         "th_TH": "แก้ไขการตั้งค่าที่กำหนดเอง",
-        "tr_TR": "",
+        "tr_TR": "Özel yapılandırmayı düzenle",
         "uk_UA": "Редагувати користувацьку конфігурацію",
         "zh_CN": "编辑自定义设置",
         "zh_TW": "編輯遊戲獨立自訂 (per-game) 設定檔"
@@ -1969,7 +1969,7 @@
         "ru_RU": "Создаёт ярлык в папке Программы macOS, который запускает выбранное приложение.",
         "sv_SE": "Skapa en genväg i macOS-programmapp som startar vald applikation.",
         "th_TH": "สร้างทางลัดในโฟลเดอร์ Applications ของ macOS เพื่อเปิดแอปพลิเคชันที่เลือก",
-        "tr_TR": "",
+        "tr_TR": "macOS'in Uygulamalar klasöründe, seçilen Uygulamayı başlatan bir kısayol oluşturur",
         "uk_UA": "Створити ярлик у каталозі програм macOS, що запускатиме обраний застосунок (гру).",
         "zh_CN": "在 macOS 的应用程序目录中创建一个直接启动此游戏的快捷方式。",
         "zh_TW": "在 macOS 的應用程式資料夾中建立捷徑，啟動選取的應用程式。"
@@ -1994,7 +1994,7 @@
         "ru_RU": "Запись о совместимости",
         "sv_SE": "Kompatibilitetspost",
         "th_TH": "รายการความเข้ากันได้",
-        "tr_TR": "",
+        "tr_TR": "Uyumluluk Kaydı",
         "uk_UA": "Iнформація про сумісність",
         "zh_CN": "兼容性项目",
         "zh_TW": "相容性資訊"
@@ -2019,7 +2019,7 @@
         "ru_RU": "Отобразить выбранную игру в списке совместимости, которой обычно доступен через меню Помощь.",
         "sv_SE": "Visa valt spel i kompatibilitetslistan som du normalt sett kan komma åt via hjälpmenyn.",
         "th_TH": "แสดงเกมที่เลือกในรายการความเข้ากันได้ ซึ่งปกติคุณสามารถเข้าถึงได้ผ่านเมนูช่วยเหลือ",
-        "tr_TR": "",
+        "tr_TR": "Seçilen oyunu, normalde Yardım menüsünden erişilebilen Uyumluluk Listesi'nde gösterir.",
         "uk_UA": "Показати цю гру в Списку Сумісності. Список сумісності також можна зайти в меню Довідки.",
         "zh_CN": "在兼容性列表中显示选定的游戏,您通常可以通过帮助菜单访问。",
         "zh_TW": "在相容性列表中顯示已選擇的遊戲。你也可以透過「說明」選單開啟。"
@@ -2069,7 +2069,7 @@
         "ru_RU": "Изменить существующую независимую конфигурацию выбранной игры",
         "sv_SE": "Redigera din befintliga oberoende konfiguration för det valda spelet",
         "th_TH": "แสดงรายละเอียดเกม",
-        "tr_TR": "",
+        "tr_TR": "Seçilen oyun için mevcut bağımsız yapılandırmanızı düzenleyin",
         "uk_UA": "Відредагувати наявну індивідуальну конфігурацію для цієї гри.",
         "zh_CN": "编辑选定游戏的现存独立配置",
         "zh_TW": "為已選擇的遊戲編輯遊戲獨立自訂 (game-specific) 的設定檔"
@@ -2094,7 +2094,7 @@
         "ru_RU": "Информацию об игре",
         "sv_SE": "Spelinformation",
         "th_TH": "ข้อมูลเกม",
-        "tr_TR": "",
+        "tr_TR": "Oyun Bilgisi",
         "uk_UA": "Інформація про гру",
         "zh_CN": "游戏信息",
         "zh_TW": "遊戲資訊"
@@ -2144,7 +2144,7 @@
         "ru_RU": "Открыть папку с модами Atmosphère",
         "sv_SE": "Öppna Atmosphère Mods-katalogen",
         "th_TH": "เปิดไดเร็กทอรี่ Mods Atmosphère",
-        "tr_TR": "",
+        "tr_TR": "Atmosphére Mod Dizinini Aç",
         "uk_UA": "Відкрити теку модифікацій Atmosphère",
         "zh_CN": "打开大气层系统 MOD 目录",
         "zh_TW": "開啟 Atmosphère 模組資料夾"
@@ -2169,7 +2169,7 @@
         "ru_RU": "Открывает альтернативную папку Atmosphère на SD-карте с модами приложения. Полезно для модов, предназначенных для реальной консоли.",
         "sv_SE": "Öppnar den alternativa Atmosphère-katalogen på SD-kort som innehåller applikationens Mods. Användbart för Mods som är paketerade för riktig hårdvara.",
         "th_TH": "เปิดโฟลเดอร์ Atmosphère บนการ์ด SD ทางเลือกที่เก็บม็อดของแอปพลิเคชัน ใช้สำหรับม็อดที่จัดเตรียมมาเพื่อฮาร์ดแวร์จริง",
-        "tr_TR": "",
+        "tr_TR": "Atmosphére dizininde alternatif SD kartını açar ve bu uygulamanın modlarını taşır. Gerçek donanım için yapılmış modlar için kullanışlı.",
         "uk_UA": "Відкриває альтернативну теку SD-карти Atmosphère, що містить модифікації до застосунків або ігор. Корисно для модифікацій, зроблених для реального обладнання.",
         "zh_CN": "打开存放适用于大气层系统的游戏 MOD 的目录，对于为真实硬件打包的 MOD 非常有用。",
         "zh_TW": "開啟此應用程式模組的另一個 SD 卡 Atmosphère 資料夾。適用於為真實硬體封裝的模組。"
@@ -2194,7 +2194,7 @@
         "ru_RU": "Проверить & обрезать XCI файл",
         "sv_SE": "Kontrollera & optimera XCI-fil",
         "th_TH": "ตรวจสอบ & ลดขนาดไฟล์ XCI",
-        "tr_TR": "",
+        "tr_TR": "XCI dosyasını kontrol et ve kırp",
         "uk_UA": "Перевірка & нарізка XCI Файлу",
         "zh_CN": "检查并精简 XCI 文件",
         "zh_TW": "檢查 & 修剪 XCI 檔案"
@@ -2219,7 +2219,7 @@
         "ru_RU": "Проверить и обрезать XCI файл для экономии места на диске",
         "sv_SE": "Kontrollera och optimera XCI-fil för att spara diskutrymme",
         "th_TH": "ตรวจสอบและลดขนาดไฟล์ XCI เพื่อประหยัดเนื้อที่เก็บข้อมูล",
-        "tr_TR": "",
+        "tr_TR": "Disk Alanından Tasarruf Etmek İçin XCI Dosyasını Kontrol Et ve Kırp",
         "uk_UA": "Перевірити та обрізати XCI Файл задля збереження місця на диску",
         "zh_CN": "检查并瘦身 XCI 文件以节约磁盘空间",
         "zh_TW": "檢查及修剪 XCI 檔案以節省儲存空間"
@@ -2269,7 +2269,7 @@
         "ru_RU": "Обрезается XCI файл '{0}'",
         "sv_SE": "Optimerar XCI-filen '{0}'",
         "th_TH": "กำลังลดขนาดไฟล์ XCI '{0}'",
-        "tr_TR": "",
+        "tr_TR": "XCI dosyası kırpılıyor",
         "uk_UA": "Обрізається XCI Файлів '{0}'",
         "zh_CN": "正在瘦身 XCI 文件 '{0}'",
         "zh_TW": "正在修剪 XCI 檔案 '{0}'"
@@ -2869,7 +2869,7 @@
         "ru_RU": "Отключить ввод при потере фокуса",
         "sv_SE": "Inaktivera inmatning när fokus tappas",
         "th_TH": "ปิดการพิมพ์เมื่อไม่ได้เลือกช่องอินพุต ไม่ให้กรอกข้อมูลเมื่อช่องอินพุตไม่อยู่ในโฟกัส",
-        "tr_TR": "",
+        "tr_TR": "Odağın dışındayken Input'u etkisizleştir",
         "uk_UA": "Вимкнути введення, якщо вікно неактивне",
         "zh_CN": "在后台时禁用输入",
         "zh_TW": "在「失去焦點」時停用輸入"
@@ -3893,7 +3893,7 @@
         "pt_BR": "Sincronizar com o Sistema PC",
         "ru_RU": "Соответствовать времени устройства",
         "sv_SE": "Matcha systemtid",
-        "th_TH": "",
+        "th_TH": "Sistem saatini eşzamanla",
         "tr_TR": "",
         "uk_UA": "Синхронізувати з системним годинником",
         "zh_CN": "与系统时间同步",
@@ -3944,7 +3944,7 @@
         "ru_RU": "Маломощный PPTC",
         "sv_SE": "PPTC med låg strömförbrukning",
         "th_TH": "PPTC แบบพลังงานตํ่า",
-        "tr_TR": "",
+        "tr_TR": "Düşük-güç PPTC",
         "uk_UA": "",
         "zh_CN": "低功耗 PPTC 加载",
         "zh_TW": "低功耗 PPTC"
@@ -3969,7 +3969,7 @@
         "ru_RU": "Множитель режима Турбо:",
         "sv_SE": "Multiplikator för turboläge:",
         "th_TH": "ระดับความแรงของโหมดเทอร์โบ:",
-        "tr_TR": "",
+        "tr_TR": "Turbo Modu çarpanı:",
         "uk_UA": "Множник Турборежиму:",
         "zh_CN": "涡轮模式倍数:",
         "zh_TW": "加速模式倍數："
@@ -3994,7 +3994,7 @@
         "ru_RU": "Целевое значение множителя режима Turbo.\n\nРекомендуется оставить 200.",
         "sv_SE": "Målvärdet för multiplikatorn i turboläget. \n\nLämna den på 200 om du är osäker.",
         "th_TH": "กำหนดค่าตัวคูณสำหรับโหมดเทอร์โบ\n\n(หากไม่แน่ใจ ให้ปล่อยไว้ที่ค่าเริ่มต้น 200)",
-        "tr_TR": "",
+        "tr_TR": "Turbo modu çarpan hedef değeri.\n\nEmin değilseniz 200'de bırakın.",
         "uk_UA": "Цільове значення коефіцієнта Турборежиму.\n\nЗалиште 200, якщо не впевнені.",
         "zh_CN": "涡轮模式倍数的目标值。\n\n如果不确定请保留为 200。",
         "zh_TW": "加速模式倍數的數值。\n\n如果不確定，請保持數值為 200。"
@@ -4019,7 +4019,7 @@
         "ru_RU": "Режим Турбо — это функция эмулятора, которая позволяет ускорять или замедлять игру, если она не чувствительна к частоте кадров.\nВы можете включать или отключать этот режим во время игры с помощью горячей клавиши, которую можно настроить в разделе «Горячие клавиши» Ryujinx.\n\nРекомендуется оставить 200.",
         "sv_SE": "Turboläget är en emulatorfunktion som effektivt ökar eller sänker hastigheten när ett spel inte är känsligt för bildfrekvens.\nDu kan växla denna funktion i spelet med en snabbtangent, konfigurerbar i Ryujinx inställningar för snabbtangenter.\n\nLämna den på 200 om du är osäker.",
         "th_TH": "โหมดเทอร์โบเป็นฟีเจอร์ของอีมูเลเตอร์ ที่ช่วยเร่งหรือชะลอความเร็วของเกม ในกรณีที่เกมไม่ไวต่ออัตราเฟรม\nคุณสามารถเปิดหรือปิดฟีเจอร์นี้ขณะเล่นเกมได้ด้วยปุ่มลัด ซึ่งสามารถตั้งค่าได้ในเมนู Ryujinx > การตั้งค่าปุ่มลัดบนคีย์บอร์ด\n\n(หากไม่แน่ใจ แนะนำให้ปล่อยค่าที่ 200)",
-        "tr_TR": "",
+        "tr_TR": "Turbo Mod bir emülatör özelliğidir. Bu özellik oyun kare-hızı duyarlı olmayan oyunlarda etkili bir şekilde hızlandırır ya da yavaşlatır.",
         "uk_UA": "Турборежим (Turbo mode) – функція емулятора, що ефективно прискорює або сповільнює гру, якщо та не чутлива до частоти кадрів. Цю функцію можна ввімкнути/вимкнути безпосередньо під час гри за допомогою гарячої клавіші, яку можна прив'язати в меню \"Гарячі клавіші\" в налаштуваннях.",
         "zh_CN": "涡轮模式是一种模拟器功能当游戏对帧率不敏感时它可以有效地导致加速或降速。\n您可以在游戏中使用热键切换此功能,它可以在 Ryujinx 的键盘热键设置进行设置。\n\n如果不确定则保留为 200。",
         "zh_TW": "加速模式是一種模擬器功能，其目的為加速或減速對不是以影格速率為速度 (frame-rate sensitive) 的遊戲。\n你可以在遊戲中以快捷鍵切換此功能，而快捷鍵可於 Ryujinx 鍵盤快捷鍵中設置。\n\n如果不確定，請保持數值為 200。"
@@ -4294,7 +4294,7 @@
         "ru_RU": "4ГиБ",
         "sv_SE": null,
         "th_TH": "4 กิบบิไบต์",
-        "tr_TR": "",
+        "tr_TR": "4GB",
         "uk_UA": "4Гб",
         "zh_CN": null,
         "zh_TW": null
@@ -4319,7 +4319,7 @@
         "ru_RU": "6ГиБ",
         "sv_SE": null,
         "th_TH": "6 กิบบิไบต์",
-        "tr_TR": "",
+        "tr_TR": "6GB",
         "uk_UA": "6Гб",
         "zh_CN": null,
         "zh_TW": null
@@ -4344,7 +4344,7 @@
         "ru_RU": "8ГиБ",
         "sv_SE": null,
         "th_TH": "8 กิบบิไบต์",
-        "tr_TR": "",
+        "tr_TR": "8GB",
         "uk_UA": "8Гб",
         "zh_CN": null,
         "zh_TW": null
@@ -4369,7 +4369,7 @@
         "ru_RU": "12ГиБ",
         "sv_SE": null,
         "th_TH": "12 กิบบิไบต์",
-        "tr_TR": "",
+        "tr_TR": "12GB",
         "uk_UA": "12Гб",
         "zh_CN": null,
         "zh_TW": null
@@ -4419,7 +4419,7 @@
         "ru_RU": "Игнорировать окно контроллера",
         "sv_SE": "Ignorera kontroller-applet",
         "th_TH": "",
-        "tr_TR": "",
+        "tr_TR": "Denetleyici Uygulamasını Yoksay",
         "uk_UA": "Ігнорувати Аплет Контролера",
         "zh_CN": "忽略控制器小程序",
         "zh_TW": "忽略控制器小程式"
@@ -4594,7 +4594,7 @@
         "ru_RU": null,
         "sv_SE": null,
         "th_TH": "คูณ 2",
-        "tr_TR": "",
+        "tr_TR": "2x",
         "uk_UA": "",
         "zh_CN": null,
         "zh_TW": "2 倍"
@@ -4619,7 +4619,7 @@
         "ru_RU": null,
         "sv_SE": null,
         "th_TH": "คูณ 4",
-        "tr_TR": "",
+        "tr_TR": "4x",
         "uk_UA": "",
         "zh_CN": null,
         "zh_TW": "4 倍"
@@ -4644,7 +4644,7 @@
         "ru_RU": null,
         "sv_SE": null,
         "th_TH": "คูณ 8",
-        "tr_TR": "",
+        "tr_TR": "8x",
         "uk_UA": "",
         "zh_CN": null,
         "zh_TW": "8 倍"
@@ -4669,7 +4669,7 @@
         "ru_RU": null,
         "sv_SE": null,
         "th_TH": "คูณ 16",
-        "tr_TR": "",
+        "tr_TR": "16x",
         "uk_UA": "",
         "zh_CN": null,
         "zh_TW": "16 倍"
@@ -4769,7 +4769,7 @@
         "ru_RU": null,
         "sv_SE": null,
         "th_TH": "คูณ 2 (1440p/2160p)",
-        "tr_TR": "",
+        "tr_TR": "2x (1440p/2160p)",
         "uk_UA": "",
         "zh_CN": "2 倍 (1440p/2160p)",
         "zh_TW": "2 倍 (1440p/2160p)"
@@ -4794,7 +4794,7 @@
         "ru_RU": null,
         "sv_SE": null,
         "th_TH": "คูณ 3 (2160p/3240p)",
-        "tr_TR": "",
+        "tr_TR": "3x (2160p/3240p)",
         "uk_UA": "",
         "zh_CN": "3 倍 (2160p/3240p)",
         "zh_TW": "3 倍 (2160p/3240p)"
@@ -8266,8 +8266,6 @@
         "no_NO": "Veiledning",
         "pl_PL": "",
         "pt_BR": "Guia",
-        "ru_RU": "Кнопка меню",
-        "sv_SE": null,
         "th_TH": "คู่มือ",
         "tr_TR": "Rehber",
         "uk_UA": "Меню",
@@ -21294,7 +21292,7 @@
         "ru_RU": "Любой может присоединиться к этой игре.",
         "sv_SE": "Vem som helst kan delta i detta spel.",
         "th_TH": "ใครก็สามารถเข้าร่วมเกมนี้ได้",
-        "tr_TR": "",
+        "tr_TR": "Herkes bu oyuna katılabilir.",
         "uk_UA": "",
         "zh_CN": "任何人都可以加入此游戏。",
         "zh_TW": "任何人都可加入此遊戲。"
@@ -21319,7 +21317,7 @@
         "ru_RU": "Частная",
         "sv_SE": "Privat",
         "th_TH": "ส่วนตัว",
-        "tr_TR": "",
+        "tr_TR": "Özel",
         "uk_UA": "",
         "zh_CN": "私密",
         "zh_TW": "私人"
@@ -21344,7 +21342,7 @@
         "ru_RU": "Вы можете присоединиться к этой игре только если в настройках у вас тот же LDN пароль.",
         "sv_SE": "Du kan endast delta i detta spel om du också har samma LDN-lösenord i dina inställningar.",
         "th_TH": "คุณสามารถเข้าร่วมเกมนี้ได้ก็ต่อเมื่อคุณมีรหัสผ่าน LDN เดียวกันในการตั้งค่าของคุณด้วย",
-        "tr_TR": "",
+        "tr_TR": "Bu oyuna sadece",
         "uk_UA": "",
         "zh_CN": "如果您在设置中有某些 LDN 口令则可加入此游戏。",
         "zh_TW": "你只能加入與 LDN 網路密碼片語 (passphrase) 設定相同的遊戲。"

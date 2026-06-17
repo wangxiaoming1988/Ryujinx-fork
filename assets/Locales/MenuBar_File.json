@@ -94,7 +94,7 @@
         "ru_RU": "Загрузить обновления/DLC...",
         "sv_SE": "Läs in uppdateringar/DLC...",
         "th_TH": "โหลดอัปเดต/DLC...",
-        "tr_TR": "",
+        "tr_TR": "Başlık Güncellemelerini Yükle/DLC yükle",
         "uk_UA": "Завантажити оновлення/DLC...",
         "zh_CN": "加载更新/DLC...",
         "zh_TW": "載入更新/DLC..."
@@ -169,7 +169,7 @@
         "ru_RU": "Открыть папку снимков экрана",
         "sv_SE": "Öppna skärmbildsmappen",
         "th_TH": "เปิดโฟลเดอร์ที่เก็บภาพหน้าจอ",
-        "tr_TR": "",
+        "tr_TR": "Ekran yakalamaları klasörünü aç",
         "uk_UA": "Відкрити теку скріншотів",
         "zh_CN": "打开截图文件夹",
         "zh_TW": "開啟螢幕擷取畫面資料夾"
@@ -194,7 +194,7 @@
         "ru_RU": "Связать файлы с приложением",
         "sv_SE": "",
         "th_TH": "",
-        "tr_TR": "",
+        "tr_TR": "Dosya Türlerini İlişkilendir",
         "uk_UA": "",
         "zh_CN": "",
         "zh_TW": ""
@@ -219,7 +219,7 @@
         "ru_RU": "Удалить ассоциации файлов",
         "sv_SE": "",
         "th_TH": "",
-        "tr_TR": "",
+        "tr_TR": "Dosya Türü İlişkilendirmelerini Kaldır",
         "uk_UA": "",
         "zh_CN": "",
         "zh_TW": ""
@@ -244,7 +244,7 @@
         "ru_RU": "Связывает поддерживаемые типы файлов (NSP, XCI, NCA, NRO, NSO) с Ryujinx, чтобы они автоматически открывались при двойном щелчке в файловом менеджере. Удаление ассоциаций файлов отключает это поведение.",
         "sv_SE": "",
         "th_TH": "",
-        "tr_TR": "",
+        "tr_TR": "Desteklenen dosya türlerini (NSP, XCI, NCA, NRO, NSO) Ryujinx ile ilişkilendirir; böylece dosya yöneticinizde çift tıklandıklarında otomatik olarak açılırlar.Dosya türü ilişkilendirmelerini kaldırmak bu davranışı durdurur.",
         "uk_UA": "",
         "zh_CN": "",
         "zh_TW": ""

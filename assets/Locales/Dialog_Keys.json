@@ -194,7 +194,7 @@
         "ru_RU": "В {0} найден некорректный файл ключей.",
         "sv_SE": "En ogiltig nyckelfil hittades i {0}.",
         "th_TH": "พบไฟล์ Keys ที่ไม่ถูกต้องใน {0}.",
-        "tr_TR": "",
+        "tr_TR": "Geçersiz bir KEYS dosyası {0} dosyası içinde bulundu.",
         "uk_UA": "Виявлено неправильний файл ключів у теці {0}.",
         "zh_CN": "在 {0} 发现了一个无效的密匙文件。",
         "zh_TW": "找到無效的金鑰檔案 {0}。"

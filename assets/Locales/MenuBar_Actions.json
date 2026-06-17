@@ -193,7 +193,7 @@
         "pt_BR": "Ferramentas",
         "ru_RU": "Инструменты",
         "sv_SE": "Verktyg",
-        "th_TH": "",
+        "th_TH": "Araçlar",
         "tr_TR": "",
         "uk_UA": "",
         "zh_CN": "工具",
@@ -219,7 +219,7 @@
         "ru_RU": "Редактор Mii",
         "sv_SE": "Mii-redigerare",
         "th_TH": "",
-        "tr_TR": "",
+        "tr_TR": "Mii editör",
         "uk_UA": "Редактор Mii",
         "zh_CN": "Mii 编辑器",
         "zh_TW": "Mii 編輯器"
@@ -244,7 +244,7 @@
         "ru_RU": "Обрезать XCI файлы",
         "sv_SE": "Optimera XCI-filer",
         "th_TH": "ตัดแต่งไฟล์ XCI",
-        "tr_TR": "",
+        "tr_TR": "XCI Dosyalarını Kırp",
         "uk_UA": "Обрізати XCI файли",
         "zh_CN": "瘦身 XCI 文件",
         "zh_TW": "修剪 XCI 檔案"
@@ -344,7 +344,7 @@
         "ru_RU": "Перезапустить эмуляцию",
         "sv_SE": "Starta om emulering",
         "th_TH": "",
-        "tr_TR": "",
+        "tr_TR": "Emülasyonu yeniden başlat",
         "uk_UA": "",
         "zh_CN": "重启模拟",
         "zh_TW": "重新啟動模擬"
@@ -519,7 +519,7 @@
         "ru_RU": "Запустить захват кадра RenderDoc",
         "sv_SE": "",
         "th_TH": "",
-        "tr_TR": "",
+        "tr_TR": "RenderDoc Kare Yakalamayı Başlat",
         "uk_UA": "",
         "zh_CN": "启动 RenderDoc 帧捕获",
         "zh_TW": ""
@@ -544,7 +544,7 @@
         "ru_RU": "Завершить захват кадра RenderDoc",
         "sv_SE": "",
         "th_TH": "",
-        "tr_TR": "",
+        "tr_TR": "RenderDoc Kare Yakalamayı Sonlandır",
         "uk_UA": "",
         "zh_CN": "结束 RenderDoc 帧捕获",
         "zh_TW": ""
@@ -569,7 +569,7 @@
         "ru_RU": "Отменить захват кадра RenderDoc",
         "sv_SE": "",
         "th_TH": "",
-        "tr_TR": "",
+        "tr_TR": "RenderDoc Kare Yakalamasını At",
         "uk_UA": "",
         "zh_CN": "丢弃 RenderDoc 帧捕获",
         "zh_TW": ""
@@ -594,7 +594,7 @@
         "ru_RU": "Завершает текущий активный захват кадра RenderDoc и немедленно удаляет его результат.",
         "sv_SE": "",
         "th_TH": "",
-        "tr_TR": "",
+        "tr_TR": "Mevcut aktif RenderDoc Kare Yakalamasını sonlandırır ve sonucunu derhal atar.",
         "uk_UA": "",
         "zh_CN": "结束当前正在进行的 RenderDoc 帧捕获，并立即丢弃其结果。",
         "zh_TW": ""
