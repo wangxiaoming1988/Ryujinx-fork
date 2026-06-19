@@ -19,7 +19,7 @@
         "ru_RU": "Выберите файл приложения Switch для загрузки",
         "sv_SE": "Välj en Switch-applikationsfil att läsa in",
         "th_TH": "",
-        "tr_TR": "Yüklenecek bir Switch oyun dosyası seçin",
+        "tr_TR": "",
         "uk_UA": "Виберіть файл застосунку Switch для завантаження",
         "zh_CN": "请选择要加载的 Switch 应用程序文件",
         "zh_TW": "請選擇要載入的 Switch 應用程式檔案"
@@ -44,7 +44,7 @@
         "ru_RU": "Выберите папку, содержащую распакованное приложение Switch, для загрузки",
         "sv_SE": "Välj en mapp som innehåller en uppackad Switch-applikation att läsa in",
         "th_TH": "",
-        "tr_TR": "Yüklenecek çıkarılmış Switch dosyalarını barındıran bir dosya seçiniz",
+        "tr_TR": "",
         "uk_UA": "Виберіть папку, що містить розпакований застосунок Switch, для завантаження",
         "zh_CN": "请选择包含未打包 Switch 应用程序的文件夹以加载",
         "zh_TW": "請選擇包含未解壓縮 Switch 應用程式的資料夾以載入"
@@ -69,7 +69,7 @@
         "ru_RU": "Выберите одну или несколько папок для массовой загрузки обновлений и DLC",
         "sv_SE": "Välj en eller flera mappar för att massinläsa uppdateringar och DLC",
         "th_TH": "",
-        "tr_TR": "Birden fazla güncelleştirme ve DLC yüklemek için bir ya da birden fazla dosya seçiniz",
+        "tr_TR": "",
         "uk_UA": "Виберіть одну або кілька папок для масового завантаження оновлень і DLC",
         "zh_CN": "请选择一个或多个文件夹以批量加载更新和 DLC",
         "zh_TW": "請選擇一個或多個資料夾以批次載入更新與 DLC"

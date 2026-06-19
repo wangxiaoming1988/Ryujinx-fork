@@ -19,7 +19,7 @@
         "ru_RU": "Приложений в выбранном файле не найдены",
         "sv_SE": "Inga applikationer hittades i vald fil.",
         "th_TH": "ไม่พบแอปพลิเคชั่นจากไฟล์ที่เลือก",
-        "tr_TR": "Seçilen dosyada uygulama bulunamadı",
+        "tr_TR": "",
         "uk_UA": "У вибраному файлі не знайдено жодних додатків.",
         "zh_CN": "未发现应用",
         "zh_TW": "未能從已選擇的檔案中找到應用程式。"
@@ -44,7 +44,7 @@
         "ru_RU": "Пожалуйста, выберите папку распакованного приложения с корректным ExeFS или NSO/NRO",
         "sv_SE": "",
         "th_TH": "",
-        "tr_TR": "Lütfen geçerli bir ayıklanmış uygulama dosyası seçiniz. ExeFS ve ya NSO/NRO içermelidir.",
+        "tr_TR": "",
         "uk_UA": "",
         "zh_CN": "",
         "zh_TW": ""

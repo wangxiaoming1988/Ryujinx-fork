@@ -44,7 +44,7 @@
         "ru_RU": "Скрывать интерфейс при запуске игры",
         "sv_SE": "Dölj användargränssnitt vid spelstart",
         "th_TH": "ซ่อน UI เมื่อเริ่มเกม",
-        "tr_TR": "Oyun başlayınca arayüzü sakla",
+        "tr_TR": "",
         "uk_UA": "Приховувати інтерфейс під час запуску гри",
         "zh_CN": "启动游戏时隐藏界面",
         "zh_TW": "啟動遊戲時隱藏介面"
@@ -69,7 +69,7 @@
         "ru_RU": "Автоматически скрывает интерфейс Ryujinx при запуске игры. Во время игры нажмите F4, чтобы показать интерфейс.",
         "sv_SE": "",
         "th_TH": "",
-        "tr_TR": "Bir oyun açılınca otomatik olarak Ryujinx'in arayüzünü saklar. Oyun içindeyken F4'e basarak arayüzü gösterebilirsin.",
+        "tr_TR": "",
         "uk_UA": "",
         "zh_CN": "",
         "zh_TW": ""
