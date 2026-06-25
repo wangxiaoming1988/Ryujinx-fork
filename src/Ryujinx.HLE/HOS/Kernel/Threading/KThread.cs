@@ -689,13 +689,26 @@ namespace Ryujinx.HLE.HOS.Kernel.Threading
             return context.Pstate & 0xFF0FFE20;
         }
 
+        private const long ContextCacheDurationTicks = 800_000; // ~0.8ms cache lifetime
+
+        private ThreadContext _cachedContext;
+        private long _contextCacheTimestamp;
+        private bool _hasValidContextCache;
+
         private ThreadContext GetCurrentContext()
         {
+            var now = DateTime.UtcNow.Ticks;
+
+            // Cache hit
+            if (_hasValidContextCache && (now - _contextCacheTimestamp) < ContextCacheDurationTicks)
+            {
+                return _cachedContext;
+            }
+
             const int MaxRegistersAArch32 = 15;
             const int MaxFpuRegistersAArch32 = 16;
 
             ThreadContext context = new();
-            
             Span<ulong> registersSpan = context.Registers.AsSpan();
             Span<V128> fpuRegistersSpan = context.FpuRegisters.AsSpan();
 
@@ -705,12 +718,10 @@ namespace Ryujinx.HLE.HOS.Kernel.Threading
                 {
                     registersSpan[i] = Context.GetX(i);
                 }
-
                 for (int i = 0; i < fpuRegistersSpan.Length; i++)
                 {
                     fpuRegistersSpan[i] = Context.GetV(i);
                 }
-
                 context.Fp = Context.GetX(29);
                 context.Lr = Context.GetX(30);
                 context.Sp = Context.GetX(31);
@@ -724,12 +735,10 @@ namespace Ryujinx.HLE.HOS.Kernel.Threading
                 {
                     registersSpan[i] = (uint)Context.GetX(i);
                 }
-
                 for (int i = 0; i < MaxFpuRegistersAArch32; i++)
                 {
                     fpuRegistersSpan[i] = Context.GetV(i);
                 }
-
                 context.Pc = (uint)Context.Pc;
                 context.Pstate = GetPsr(Context);
                 context.Tpidr = (uint)Context.TpidrroEl0;
@@ -737,6 +746,11 @@ namespace Ryujinx.HLE.HOS.Kernel.Threading
 
             context.Fpcr = (uint)Context.Fpcr;
             context.Fpsr = (uint)Context.Fpsr;
+
+            // Update cache
+            _cachedContext = context;
+            _contextCacheTimestamp = now;
+            _hasValidContextCache = true;
 
             return context;
         }
