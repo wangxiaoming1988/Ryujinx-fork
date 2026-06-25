@@ -1,10 +1,12 @@
 using Gommon;
 using Humanizer;
 using MsgPack;
+using Ryujinx.Common;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 
 namespace Ryujinx.Ava.Systems.PlayReport
 {
@@ -1115,6 +1117,88 @@ namespace Ryujinx.Ava.Systems.PlayReport
                 "7" => "Traveling Miitopia",
                 _ => "Wandering"
             };
+        }
+
+        private static FormattedValue NsmbudRpc(SparseMultiValue values)
+        {
+            if (values.Matched.TryGetValue("WorldNo", out Value world) && values.Matched.TryGetValue("CourseNo", out Value course) | values.Matched.TryGetValue("GameModeType", out Value gamemode))
+            {
+                string worldstr = world.ToString();
+                string coursestr = course.ToString();
+                int courseint = Int32.Parse(coursestr);
+                string gamemodestr = gamemode.ToString();
+                
+                try
+                {
+                    Dictionary<string, Dictionary<string, Dictionary<string, string>>> output;
+                    string data;
+                    data = EmbeddedResources.ReadAllText("Ryujinx/Assets/RPCData/nsmbud.json");
+                    output = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(data);
+                    if (SpecialMapNames(courseint) == "Hazard")
+                    {
+                        return $"Last Played: Course {worldstr}-Hazard";
+                    }
+                    string outputloc = output[MarioOrLuigiGamemode(gamemodestr)][worldstr][coursestr];
+                    return $"Last Played: Course {worldstr}-{SpecialMapNames(courseint)} | {outputloc}";
+                }
+                catch
+                {
+                    return FormattedValue.ForceReset;
+                }
+            }
+            
+            if (values.Matched.TryGetValue("RlId", out Value RlId) | values.Matched.TryGetValue("TotalPlayTime", out Value TotalPlayTime))
+            {
+                return "At the main menu";
+            }
+
+            static string MarioOrLuigiGamemode(string? gamemode) => gamemode switch
+            {
+                "0" => "mario",
+                "1" => "luigi",
+                "4" => "mario",
+                "5" => "mario",
+                _ => gamemode
+            };
+            
+            static string OtherGameMode(string? gamemode) => gamemode switch
+            {
+                "2" => "Boost Rush",
+                "3" => "Challenges",
+                "4" => "Coin Battle",
+                "5" => "Coin Battle Editor",
+                _ => ""
+            };
+
+            static string SpecialMapNames(int? course) => course switch
+            {
+                >= 1 and <= 9 => course.ToString(),
+                13 => "Shortcut",
+                14 => "Shortcut",
+                15 => "Shortcut",
+                16 => "Shortcut",
+                17 => "Shortcut",
+                20 => "Ghost",
+                21 => "Tower",
+                22 => "Tower",
+                23 => "Castle",
+                37 => "Airship",
+                42 => "Castle",
+                43 => "Castle",
+                _ => "Hazard"
+            };
+            
+            // For future reference
+            // Tower course = 21, Castle course = 23,Haunted Mansion/ship = 20
+            // Tower course 2 (rock candy) = 22
+            // Peach castle 1 = 42, Peach final battle = 43
+            // airship = 37, jungle beetles = 17
+            // Glacier seals = 16, water leaf = 15
+            // desert ice = 14, acorn squid = 13
+            // all other course numbers are to be considered a hazard
+            
+            return "";
+            
         }
     }
 }

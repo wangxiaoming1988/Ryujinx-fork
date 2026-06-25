@@ -138,6 +138,12 @@ namespace Ryujinx.Ava.Systems.PlayReport
                 .WithDescription("based on gold count, report info only in the mii selector, and gamestage (progression)")
                 .AddSparseMultiValueFormatter(["gold", "secret", "stage"], MiitopiaRPC)
             )
+            .AddSpec(
+                "0100ea80032ea000", // New Super Mario Bros U Deluxe
+                spec => spec
+                    .WithDescription("based on world map return info.")
+                    .AddSparseMultiValueFormatter(["WorldNo", "CourseNo", "RlId", "TotalPlayTime", "GameModeType"], NsmbudRpc)
+                )
         );
 
         private static string Playing(string game) => $"Playing {game}";
