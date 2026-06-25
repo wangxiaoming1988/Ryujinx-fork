@@ -39,7 +39,6 @@
     <!-- OpenTk.Audio.OpenAL has moved to OpenTk.Audio -->
     <!--<PackageVersion Include="OpenTK.Audio" Version="5.0.0-pre.15" />-->
     <PackageVersion Include="OpenTK.Audio.OpenAL" Version="4.9.4" />
-    <PackageVersion Include="OpenTK.Windowing.GraphicsLibraryFramework" Version="4.9.4" />
     <PackageVersion Include="Open.NAT.Core" Version="2.1.0.5" />
     <!-- Ryujinx.Audio.OpenAL.Dependencies is from the original project, last updated 12/30/20 -->
     <!--<PackageVersion Include="Ryujinx.Audio.OpenAL.Dependencies" Version="1.21.0.1" />-->

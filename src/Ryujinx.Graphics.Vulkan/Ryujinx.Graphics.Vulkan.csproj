@@ -51,7 +51,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenTK.Windowing.GraphicsLibraryFramework" />
     <PackageReference Include="Silk.NET.Shaderc" ExcludeAssets="native" />
     <PackageReference Include="Silk.NET.Vulkan" />
     <PackageReference Include="Silk.NET.Vulkan.Extensions.EXT" />
