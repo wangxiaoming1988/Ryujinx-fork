@@ -437,13 +437,9 @@ namespace Ryujinx.Ava
 
         internal static void PrintSystemInfo()
         {
-            Logger.Notice.Print(LogClass.Application,  "   ___                 __    _              ");
-            Logger.Notice.Print(LogClass.Application, @"  / _ \  __ __ __ __  / /   (_)  ___   ___ _");
-            Logger.Notice.Print(LogClass.Application, @" / , _/ / // // // / / _ \ / /  / _ \ / _ `/");
-            Logger.Notice.Print(LogClass.Application, @"/_/|_|  \_, / \_,_/ /_.__//_/  /_//_/ \_, / ");
-            Logger.Notice.Print(LogClass.Application,  "       /___/                         /___/  ");
-
-
+            // Print the ryubing logo + joke splash
+            SplashTextHelper.PrintSplash(); 
+            
             Logger.Notice.Print(LogClass.Application, $"{RyujinxApp.FullAppName} Version: {Version}");
             Logger.Notice.Print(LogClass.Application, $".NET Runtime: {RuntimeInformation.FrameworkDescription}");
             SystemInfo.Gather().Print();

@@ -76,6 +76,8 @@ namespace Ryujinx.Ava.UI.ViewModels
         [ObservableProperty] public partial string LoadHeading { get; set; }
 
         [ObservableProperty] public partial string CacheLoadStatus { get; set; }
+        
+        [ObservableProperty] public partial string Splash { get; set; }
 
         [ObservableProperty] public partial string DockedStatusText { get; set; }
 
@@ -1256,6 +1258,7 @@ namespace Ryujinx.Ava.UI.ViewModels
                         break;
                     case ShaderCacheLoadingState shaderCacheState:
                         CacheLoadStatus = $"{current} / {total}";
+                        Splash = $"\"{SplashTextHelper.GetSplash()}\"";
                         switch (shaderCacheState)
                         {
                             case ShaderCacheLoadingState.Start:

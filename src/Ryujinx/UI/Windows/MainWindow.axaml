@@ -135,7 +135,7 @@
                         Grid.Column="1"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Center"
-                        IsVisible="{Binding ShowLoadProgress}" RowDefinitions="Auto,Auto,Auto">
+                        IsVisible="{Binding ShowLoadProgress}" RowDefinitions="Auto,Auto,Auto,Auto">
                         <TextBlock
                             Grid.Row="0"
                             Margin="10"
@@ -177,6 +177,16 @@
                             FontSize="18"
                             IsVisible="{Binding ShowLoadProgress}"
                             Text="{Binding CacheLoadStatus}"
+                            TextAlignment="Start"
+                            MaxWidth="500" />
+                        <TextBlock
+                            Grid.Row="3"
+                            Margin="10"
+                            FontSize="14"
+                            FontStyle="Oblique"
+                            IsVisible="{Binding ShowLoadProgress}"
+                            Text="{Binding Splash}"
+                            Foreground="LightGray"
                             TextAlignment="Start"
                             MaxWidth="500" />
                     </Grid>
