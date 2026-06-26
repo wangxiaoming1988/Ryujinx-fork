@@ -3,11 +3,11 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Avalonia" Version="11.3.17" />
+    <PackageVersion Include="Avalonia" Version="11.3.18" />
     <PackageVersion Include="Avalonia.Controls.DataGrid" Version="11.3.13" />
-    <PackageVersion Include="Avalonia.Desktop" Version="11.3.17" />
-    <PackageVersion Include="Avalonia.Diagnostics" Version="11.3.17" />
-    <PackageVersion Include="Avalonia.Markup.Xaml.Loader" Version="11.3.17" />
+    <PackageVersion Include="Avalonia.Desktop" Version="11.3.18" />
+    <PackageVersion Include="Avalonia.Diagnostics" Version="11.3.18" />
+    <PackageVersion Include="Avalonia.Markup.Xaml.Loader" Version="11.3.18" />
     <PackageVersion Include="SharpCompress" Version="0.49.1" />
     <PackageVersion Include="Svg.Controls.Avalonia" Version="11.3.9.5" />
     <PackageVersion Include="Svg.Controls.Skia.Avalonia" Version="11.3.9.5" />
