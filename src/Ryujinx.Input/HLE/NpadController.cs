@@ -582,12 +582,12 @@ namespace Ryujinx.Input.HLE
                 Logger.Debug?.Print(LogClass.Hid, $"Effect for {controllerConfig.PlayerIndex} " +
                     // Value=value/multiplier * multiplier (result)
                     $"L.low.amp={leftVibrationValue.AmplitudeLow / controllerConfig.Rumble.WeakRumble} * {controllerConfig.Rumble.WeakRumble} ({leftVibrationValue.AmplitudeLow}), " +
-                    $"L.high.amp={leftVibrationValue.AmplitudeHigh / controllerConfig.Rumble.WeakRumble} * {controllerConfig.Rumble.WeakRumble} ({leftVibrationValue.AmplitudeHigh}), " +
+                    $"L.high.amp={leftVibrationValue.AmplitudeHigh / controllerConfig.Rumble.StrongRumble} * {controllerConfig.Rumble.StrongRumble} ({leftVibrationValue.AmplitudeHigh}), " +
                     $"L.low.freq={leftVibrationValue.FrequencyLow / controllerConfig.Rumble.WeakRumble} * {controllerConfig.Rumble.WeakRumble} ({leftVibrationValue.FrequencyLow}), " +
-                    $"L.high.freq={leftVibrationValue.FrequencyHigh / controllerConfig.Rumble.WeakRumble} * {controllerConfig.Rumble.WeakRumble} ({leftVibrationValue.FrequencyHigh}), " +
-                    $"R.low.amp={rightVibrationValue.AmplitudeLow / controllerConfig.Rumble.StrongRumble} * {controllerConfig.Rumble.StrongRumble} ({rightVibrationValue.AmplitudeLow}), " +
+                    $"L.high.freq={leftVibrationValue.FrequencyHigh / controllerConfig.Rumble.StrongRumble} * {controllerConfig.Rumble.StrongRumble} ({leftVibrationValue.FrequencyHigh}), " +
+                    $"R.low.amp={rightVibrationValue.AmplitudeLow / controllerConfig.Rumble.WeakRumble} * {controllerConfig.Rumble.WeakRumble} ({rightVibrationValue.AmplitudeLow}), " +
                     $"R.high.amp={rightVibrationValue.AmplitudeHigh / controllerConfig.Rumble.StrongRumble} * {controllerConfig.Rumble.StrongRumble} ({rightVibrationValue.AmplitudeHigh}), " +
-                    $"R.low.freq={rightVibrationValue.FrequencyLow / controllerConfig.Rumble.StrongRumble} * {controllerConfig.Rumble.StrongRumble} ({rightVibrationValue.FrequencyLow}), " +
+                    $"R.low.freq={rightVibrationValue.FrequencyLow / controllerConfig.Rumble.WeakRumble} * {controllerConfig.Rumble.WeakRumble} ({rightVibrationValue.FrequencyLow}), " +
                     $"R.high.freq={rightVibrationValue.FrequencyHigh / controllerConfig.Rumble.StrongRumble} * {controllerConfig.Rumble.StrongRumble} ({rightVibrationValue.FrequencyHigh})");
             }
         }

@@ -336,7 +336,7 @@ namespace Ryujinx.Ava.Systems.Configuration
                             EnableRumble = false,
                             StrongRumble = 1f,
                             WeakRumble = 1f,
-                            UseHDRumble = true
+                            UseHDRumble = false
                         };
                     }
                 }

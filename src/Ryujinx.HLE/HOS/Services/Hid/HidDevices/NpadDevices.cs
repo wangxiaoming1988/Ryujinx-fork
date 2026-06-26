@@ -23,7 +23,7 @@ namespace Ryujinx.HLE.HOS.Services.Hid
         private readonly bool[] _supportedPlayers;
         private VibrationValue _neutralVibrationValue = new()
         {
-            AmplitudeLow = 0f,
+            AmplitudeLow = 0.01f,
             FrequencyLow = 160f,
             AmplitudeHigh = 0f,
             FrequencyHigh = 320f,
