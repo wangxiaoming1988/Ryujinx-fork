@@ -1132,7 +1132,7 @@ namespace Ryujinx.Ava.Systems.PlayReport
                 {
                     Dictionary<string, Dictionary<string, Dictionary<string, string>>> output;
                     string data;
-                    data = EmbeddedResources.ReadAllText("Ryujinx/Assets/RPCData/nsmbud.json");
+                    data = EmbeddedResources.ReadAllText("Ryujinx/Assets/PlayReports/nsmbud.json");
                     output = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, Dictionary<string, string>>>>(data);
                     if (SpecialMapNames(courseint) == "Hazard")
                     {
