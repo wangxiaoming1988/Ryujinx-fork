@@ -95,7 +95,7 @@
                                 Tag="Favorite" />
                             <RadioButton
                                 Checked="Sort_Checked"
-                                Content="{ext:Locale GameListHeaderApplication}"
+                                Content="{ext:Locale Common_Sort_NameLabel}"
                                 GroupName="Sort"
                                 IsChecked="{Binding IsSortedByTitle, Mode=OneTime}"
                                 Tag="Title" />
@@ -153,13 +153,13 @@
                         </Border>
                         <RadioButton
                             Checked="Order_Checked"
-                            Content="{ext:Locale OrderAscending}"
+                            Content="{ext:Locale Common_Sort_OrderAscending}"
                             GroupName="Order"
                             IsChecked="{Binding IsAscending, Mode=OneTime}"
                             Tag="Ascending" />
                         <RadioButton
                             Checked="Order_Checked"
-                            Content="{ext:Locale OrderDescending}"
+                            Content="{ext:Locale Common_Sort_OrderDescending}"
                             GroupName="Order"
                             IsChecked="{Binding !IsAscending, Mode=OneTime}"
                             Tag="Descending" />

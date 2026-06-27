@@ -163,7 +163,7 @@
                     IsEnabled="{Binding HasSkylander}" />
                 <MenuItem 
                     Command="{Binding SimulateWakeUpMessage}" 
-                    Header="{ext:Locale MenuBarOptionsSimulateWakeUpMessage}" 
+                    Header="{ext:Locale MenuBar_Actions_SimulateWakeUpMessageButton}" 
                     Icon="{ext:Icon fa-solid fa-sun}" 
                     InputGesture="Ctrl + M" />
                 <Separator />
@@ -216,7 +216,7 @@
                 <MenuItem Header="{ext:Locale MenuBar_Actions_ToolsLabel}" Icon="{ext:Icon fa-solid fa-toolbox}">
                     <MenuItem
                         Name="MiiAppletMenuItem" Header="{ext:Locale MenuBar_Actions_MiiEditorButton}" Icon="{ext:Icon fa-solid fa-face-grin-wide}" />
-                    <MenuItem Name="XciTrimmerMenuItem" Header="{ext:Locale MenuBar_Actions_XCITrimmerButton}" Icon="{ext:Icon fa-solid fa-scissors}" />
+                    <MenuItem Name="XCITrimmerMenuItem" Header="{ext:Locale MenuBar_Actions_XCITrimmerButton}" Icon="{ext:Icon fa-solid fa-scissors}" />
                 </MenuItem>
             </MenuItem>
             <MenuItem VerticalAlignment="Center" Header="{ext:Locale MenuBarView}">

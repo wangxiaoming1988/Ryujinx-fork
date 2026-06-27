@@ -1,7 +1,7 @@
 using Avalonia;
 using Avalonia.Data;
 using Avalonia.Data.Converters;
-using Ryujinx.Ava.Common.Locale;
+using FluentAvalonia.UI.Controls;
 using Ryujinx.Ava.Common.Models;
 using System;
 using System.Globalization;
@@ -16,26 +16,30 @@ namespace Ryujinx.Ava.UI.Helpers
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is UnsetValueType)
-            {
                 return BindingOperations.DoNothing;
-            }
-
-            if (!targetType.IsAssignableFrom(typeof(string)))
-            {
-                return null;
-            }
 
             if (value is not XCITrimmerFileModel app)
-            {
-                return null;
-            }
+                return default(Symbol);
+            
+            bool isProcessing = app.PercentageProgress != null;
+            
+            if (isProcessing)
+                return Symbol.Sync;
 
-            return app.PercentageProgress != null ? String.Empty :
-                app.ProcessingOutcome is not OperationOutcome.Successful and not OperationOutcome.Undetermined ? LocaleManager.Instance[LocaleKeys.TitleXCIStatusFailedLabel] :
-                app.Trimmable & app.Untrimmable ? LocaleManager.Instance[LocaleKeys.TitleXCIStatusPartialLabel] :
-                app.Trimmable ? LocaleManager.Instance[LocaleKeys.TitleXCIStatusTrimmableLabel] :
-                app.Untrimmable ? LocaleManager.Instance[LocaleKeys.TitleXCIStatusUntrimmableLabel] :
-                String.Empty;
+            if (app.ProcessingOutcome is not OperationOutcome.Successful
+                and not OperationOutcome.Undetermined)
+                return Symbol.ImportantFilled;
+
+            if (app.Trimmable && app.Untrimmable)
+                return Symbol.Repair;
+
+            if (app.Trimmable)
+                return Symbol.Clear;
+
+            if (app.Untrimmable)
+                return Symbol.Checkmark;
+
+            return Symbol.Help;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

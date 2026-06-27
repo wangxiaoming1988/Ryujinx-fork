@@ -228,26 +228,26 @@
     {
       "ID": "XCITrimmerButton",
       "Translations": {
-        "ar_SA": "",
-        "de_DE": "XCI-Dateien trimmen",
+	      "ar_SA": "",
+        "de_DE": "XCI-Trimmer",
         "el_GR": "",
-        "en_US": "Trim XCI Files",
-        "es_ES": "Recortar Archivos XCI",
-        "fr_FR": "Réduire les Fichiers XCI",
+        "en_US": "XCI Trimmer",
+        "es_ES": "Recortador de XCI",
+        "fr_FR": "Réducteur de XCI",
         "he_IL": "",
-        "it_IT": "Riduci dimensioni dei file XCI",
+        "it_IT": "Trimmer XCI",
         "ja_JP": "",
         "ko_KR": "XCI 파일 트리머",
         "no_NO": "Trim XCI-filer",
-        "pl_PL": "",
-        "pt_BR": "Reduzir Arquivos XCI",
-        "ru_RU": "Обрезать XCI файлы",
-        "sv_SE": "Optimera XCI-filer",
-        "th_TH": "ตัดแต่งไฟล์ XCI",
-        "tr_TR": "",
-        "uk_UA": "Обрізати XCI файли",
-        "zh_CN": "瘦身 XCI 文件",
-        "zh_TW": "修剪 XCI 檔案"
+        "pl_PL": "Przycinacz XCI",
+        "pt_BR": "Cortador de XCI",
+        "ru_RU": "Триммер XCI",
+        "sv_SE": "XCI-trimmer",
+        "th_TH": "",
+        "tr_TR": "XCI Kesici",
+        "uk_UA": "Тример XCI",
+        "zh_CN": "",
+        "zh_TW": ""
       }
     },
     {
@@ -448,6 +448,31 @@
         "uk_UA": "Видалити Skylander",
         "zh_CN": "移除 Skylander",
         "zh_TW": "移除 Skylander"
+      }
+    },
+    {
+      "ID": "SimulateWakeUpMessageButton",
+      "Translations": {
+        "ar_SA": "محاكاة رسالة الاستيقاظ",
+        "de_DE": "Aufwachnachricht simulieren",
+        "el_GR": "Προσομοίωση Μηνύματος Αφύπνισης",
+        "en_US": "Simulate Wake-Up Message",
+        "es_ES": "Simular Mensaje de Reactivación",
+        "fr_FR": "Simuler un Message de Réveil",
+        "he_IL": "דמה הודעת השכמה",
+        "it_IT": "Simula messaggio di risveglio",
+        "ja_JP": "スリープ復帰メッセージをシミュレート",
+        "ko_KR": "절전 모드 해제 메시지 시뮬레이션",
+        "no_NO": "Simuler oppvåknings-melding",
+        "pl_PL": "Symuluj wiadomość wybudzania",
+        "pt_BR": "Simular Mensagem de Acordar o Console",
+        "ru_RU": "Имитировать сообщение пробуждения",
+        "sv_SE": "Simulera uppvakningsmeddelande",
+        "th_TH": "จำลองการปลุกอุปกรณ์ให้ทำงาน",
+        "tr_TR": "Uyandırma Mesajı Simüle Et",
+        "uk_UA": "Симулювати повідомлення про пробудження",
+        "zh_CN": "模拟唤醒消息",
+        "zh_TW": "模擬喚醒訊息"
       }
     },
     {

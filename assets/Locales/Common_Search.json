@@ -1,0 +1,29 @@
+{
+  "Locales": [
+    {
+      "ID": "SearchWatermark",
+      "Translations": {
+        "ar_SA": "بحث",
+        "de_DE": "Suche",
+        "el_GR": "Αναζήτηση",
+        "en_US": "Search",
+        "es_ES": "Buscar",
+        "fr_FR": "Rechercher",
+        "he_IL": "חפש",
+        "it_IT": "Cerca",
+        "ja_JP": "検索",
+        "ko_KR": "찾기",
+        "no_NO": "Søk",
+        "pl_PL": "Wyszukaj",
+        "pt_BR": "Buscar",
+        "ru_RU": "Поиск",
+        "sv_SE": "Sök",
+        "th_TH": "ค้นหา",
+        "tr_TR": "Ara",
+        "uk_UA": "Пошук",
+        "zh_CN": "搜索",
+        "zh_TW": "搜尋"
+      }
+    }
+  ]
+}

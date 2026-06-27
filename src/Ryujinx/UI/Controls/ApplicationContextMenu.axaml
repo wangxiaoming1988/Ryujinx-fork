@@ -103,10 +103,10 @@
 	<MenuItem
         Command="{Binding TrimXci}"
         CommandParameter="{Binding}"
-		Header="{ext:Locale GameListContextMenuTrimXCI}"
+		Header="{ext:Locale GameListContextMenu_TrimXCIButton}"
         IsEnabled="{Binding TrimXCIEnabled}"
-        Icon="{ext:Icon fa-solid fa-scissors}"
-		ToolTip.Tip="{ext:Locale GameListContextMenuTrimXCIToolTip}" />
+        IsVisible="{Binding IsXCIFile}"
+        Icon="{ext:Icon fa-solid fa-scissors}" />
     <MenuItem Header="{ext:Locale GameListContextMenuCacheManagement}" Icon="{ext:Icon fa-solid fa-memory}">
         <MenuItem
             Command="{Binding PurgePtcCache}"

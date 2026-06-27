@@ -496,6 +496,8 @@ namespace Ryujinx.Ava.UI.ViewModels
 
         public bool HasCompatibilityEntry => SelectedApplication.HasPlayabilityInfo;
 
+        public bool IsXCIFile => Path.GetExtension(SelectedApplication.Path)?.ToLower() == ".xci";
+
         public bool HasDlc => ApplicationLibrary.HasDlcs(SelectedApplication.Id);
 
         public bool OpenUserSaveDirectoryEnabled => SelectedApplication.HasControlHolder &&
@@ -790,7 +792,7 @@ namespace Ryujinx.Ava.UI.ViewModels
                 {
                     ApplicationSort.Favorite => LocaleManager.Instance[LocaleKeys.CommonFavorite],
                     ApplicationSort.TitleId => LocaleManager.Instance[LocaleKeys.DlcManagerTableHeadingTitleIdLabel],
-                    ApplicationSort.Title => LocaleManager.Instance[LocaleKeys.GameListHeaderApplication],
+                    ApplicationSort.Title => LocaleManager.Instance[LocaleKeys.Common_Sort_NameLabel],
                     ApplicationSort.Developer => LocaleManager.Instance[LocaleKeys.GameListSortDeveloper],
                     ApplicationSort.LastPlayed => LocaleManager.Instance[LocaleKeys.GameListSortLastPlayed],
                     ApplicationSort.TotalTimePlayed => LocaleManager.Instance[LocaleKeys.GameListSortTimePlayed],
@@ -1935,13 +1937,13 @@ namespace Ryujinx.Ava.UI.ViewModels
 
             if (version != null)
             {
-                LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.StatusBar_FirmwareVersion, version.VersionString);
+                LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.StatusBar_FirmwareVersionLabel, version.VersionString);
 
                 hasApplet = version.Major > 3;
             }
             else
             {
-                LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.StatusBar_FirmwareVersion, "NaN");
+                LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.StatusBar_FirmwareVersionLabel, "NaN");
             }
 
             IsAppletMenuActive = hasApplet;
@@ -2317,7 +2319,7 @@ namespace Ryujinx.Ava.UI.ViewModels
             if (notifyUser != null)
             {
                 await ContentDialogHelper.CreateWarningDialog(
-                    LocaleManager.Instance[LocaleKeys.TrimXCIFileFailedPrimaryText],
+                    LocaleManager.Instance[LocaleKeys.Dialog_XCITrimmer_TrimFailedMessage],
                     notifyUser
                 );
             }
@@ -2343,18 +2345,18 @@ namespace Ryujinx.Ava.UI.ViewModels
 
             if (trimmer.CanBeTrimmed)
             {
-                double savings = (double)trimmer.DiskSpaceSavingsB / 1024.0 / 1024.0;
-                double currentFileSize = (double)trimmer.FileSizeB / 1024.0 / 1024.0;
-                double cartDataSize = (double)trimmer.DataSizeB / 1024.0 / 1024.0;
+                int savings = (int)Math.Round((double)trimmer.DiskSpaceSavingsB / 1024.0 / 1024.0);
+                int currentFileSize = (int)Math.Round((double)trimmer.FileSizeB / 1024.0 / 1024.0);
+                int cartDataSize = (int)Math.Round((double)trimmer.DataSizeB / 1024.0 / 1024.0);
                 string secondaryText = LocaleManager.Instance.UpdateAndGetDynamicValue(
-                    LocaleKeys.TrimXCIFileDialogSecondaryText, currentFileSize, cartDataSize, savings);
+                    LocaleKeys.Dialog_XCITrimmer_SecondaryMessage, currentFileSize.ToString("0"), cartDataSize.ToString("0"), savings.ToString("0"));
 
                 UserResult result = await ContentDialogHelper.CreateConfirmationDialog(
-                    LocaleManager.Instance[LocaleKeys.TrimXCIFileDialogPrimaryText],
+                    LocaleManager.Instance[LocaleKeys.Dialog_XCITrimmer_PrimaryMessage],
                     secondaryText,
                     LocaleManager.Instance[LocaleKeys.Continue],
                     LocaleManager.Instance[LocaleKeys.Cancel],
-                    LocaleManager.Instance[LocaleKeys.GameListContextMenuTrimXCI]
+                    LocaleManager.Instance[LocaleKeys.GameListContextMenu_TrimXCIButton]
                 );
 
                 if (result == UserResult.Yes)
@@ -2364,8 +2366,8 @@ namespace Ryujinx.Ava.UI.ViewModels
                         Dispatcher.UIThread.Post(() =>
                         {
                             StatusBarProgressStatusText =
-                                LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.StatusBarXCIFileTrimming,
-                                    Path.GetFileName(filename));
+                                LocaleManager.Instance.UpdateAndGetDynamicValue(LocaleKeys.StatusBar_TrimmingXCILabel,
+                                    Path.GetFileNameWithoutExtension(filename));
                             StatusBarProgressStatusVisible = true;
                             StatusBarProgressMaximum = 1;
                             StatusBarProgressValue = 0;

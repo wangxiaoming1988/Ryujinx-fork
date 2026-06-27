@@ -46,7 +46,7 @@
                     MinHeight="27"
                     MaxHeight="27"
                     HorizontalAlignment="Stretch"
-                    Watermark="{ext:Locale Search}"
+                    Watermark="{ext:Locale Common_Search_SearchWatermark}"
                     Text="{Binding Search}" />
             </Grid>
         </Panel>

@@ -43,7 +43,7 @@ namespace Ryujinx.Ava.UI.Views.Main
             ResumeEmulationMenuItem.Command = Commands.Create(() => ViewModel.AppHost?.Resume());
             StopEmulationMenuItem.Command = Commands.Create(() => ViewModel.AppHost?.ShowExitPrompt().OrCompleted());
             RestartEmulationMenuItem.Command = Commands.Create(() => ViewModel.RestartEmulation());
-            XciTrimmerMenuItem.Command = Commands.Create(XciTrimmerView.Show);
+            XCITrimmerMenuItem.Command = Commands.Create(XCITrimmerView.Show);
             AboutWindowMenuItem.Command = Commands.Create(AboutView.Show);
             CompatibilityListMenuItem.Command = Commands.Create(() => CompatibilityListWindow.Show());
             LdnGameListMenuItem.Command = Commands.Create(() => LdnGamesListWindow.Show());

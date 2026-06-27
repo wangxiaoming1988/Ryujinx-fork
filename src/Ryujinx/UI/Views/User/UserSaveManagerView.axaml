@@ -33,7 +33,7 @@
                           HorizontalContentAlignment="Left"
                           MinWidth="100">
                     <ComboBoxItem
-                        Content="{ext:Locale Name}" />
+                        Content="{ext:Locale Common_Sort_NameLabel}" />
                     <ComboBoxItem
                         Content="{ext:Locale Size}" />
                     <ComboBox.Styles>
@@ -46,9 +46,9 @@
                           HorizontalContentAlignment="Left"
                           MinWidth="150">
                     <ComboBoxItem
-                        Content="{ext:Locale OrderAscending}" />
+                        Content="{ext:Locale Common_Sort_OrderAscending}" />
                     <ComboBoxItem
-                        Content="{ext:Locale OrderDescending}" />
+                        Content="{ext:Locale Common_Sort_OrderDescending}" />
                     <ComboBox.Styles>
                         <Style Selector="ContentControl#ContentPresenter">
                             <Setter Property="HorizontalAlignment" Value="Left" />
@@ -60,7 +60,7 @@
                 Grid.Column="1"
                 HorizontalAlignment="Stretch"
                 Margin="10,0, 0, 0" ColumnDefinitions="Auto,*">
-                <TextBlock Text="{ext:Locale Search}" VerticalAlignment="Center" />
+                <TextBlock Text="{ext:Locale Common_Search_SearchWatermark}" VerticalAlignment="Center" />
                 <TextBox
                     Margin="10,0,0,0"
                     Grid.Column="1"

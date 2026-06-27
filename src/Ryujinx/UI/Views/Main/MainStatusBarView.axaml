@@ -50,33 +50,37 @@
                     VerticalAlignment="Center"
                     IsVisible="{Binding EnableNonGameRunningControls}"
                     Text="{ext:Locale StatusBarGamesLoaded}" />
-                <TextBlock
-                    Name="StatusBarProgressStatus"
-                    Grid.Column="2"
-                    MinWidth="200"
-                    Margin="10,0,5,0"
-                    VerticalAlignment="Center"
-                    IsVisible="{Binding StatusBarProgressStatusVisible}"
-                    Text="{Binding StatusBarProgressStatusText}" />
-                <ProgressBar
-                    Name="LoadProgressBar"
-                    Grid.Column="3"
-                    MinWidth="200"
-                    Height="6"
-                    VerticalAlignment="Center"
-                    Margin="0, 0, 5, 0"
-                    Foreground="{DynamicResource SystemAccentColorLight2}"
-                    IsVisible="{Binding StatusBarVisible}"
-                    Maximum="{Binding StatusBarProgressMaximum}"
-                    Value="{Binding StatusBarProgressValue}" />
-                <controls:MiniVerticalSeparator Grid.Column="4" IsVisible="{Binding ShowTotalTimePlayed}" />
+                <controls:MiniVerticalSeparator Grid.Column="2" IsVisible="{Binding ShowTotalTimePlayed}" />
                 <TextBlock 
-                    Grid.Column="5"
+                    Grid.Column="3"
                     Margin="5,0,5,0"
                     VerticalAlignment="Center"
                     IsVisible="{Binding ShowTotalTimePlayed}"
                     Text="{ext:Locale GameListLabelTotalTimePlayed}">
                 </TextBlock>
+                <controls:MiniVerticalSeparator Grid.Column="4" IsVisible="{Binding StatusBarVisible}" />
+                <controls:MiniVerticalSeparator Grid.Column="4" IsVisible="{Binding StatusBarProgressStatusVisible}" />
+                <TextBlock
+                    Name="StatusBarProgressStatus"
+                    Grid.Column="5"
+                    Margin="5,0,0,0"
+                    VerticalAlignment="Center"
+                    IsVisible="{Binding StatusBarProgressStatusVisible}"
+                    Text="{Binding StatusBarProgressStatusText}"
+                    TextTrimming="CharacterEllipsis"
+                    TextWrapping="NoWrap"
+                    MaxWidth="1000" />
+                <ProgressBar
+                    Name="LoadProgressBar"
+                    Grid.Column="6"
+                    MinWidth="100"
+                    Height="6"
+                    VerticalAlignment="Center"
+                    Margin="5,0,5,0"
+                    Foreground="{DynamicResource SystemAccentColorLight2}"
+                    IsVisible="{Binding StatusBarVisible}"
+                    Maximum="{Binding StatusBarProgressMaximum}"
+                    Value="{Binding StatusBarProgressValue}" />
             </Grid>
         </StackPanel>
         <StackPanel
@@ -329,7 +333,7 @@
                 Margin="5, 0, 0, 0"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Center"
-                Text="{ext:Locale StatusBar_FirmwareVersion}" />
+                Text="{ext:Locale StatusBar_FirmwareVersionLabel}" />
         </StackPanel>
     </Grid>
 </UserControl>
