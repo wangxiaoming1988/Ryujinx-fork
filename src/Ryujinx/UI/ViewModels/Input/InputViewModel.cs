@@ -54,6 +54,12 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
         [ObservableProperty]
         public partial string ProfileName { get; set; }
 
+        partial void OnProfileNameChanged(string value)
+        {
+            OnPropertyChanged(nameof(IsProfileLinked));
+            OnPropertyChanged(nameof(CanDeleteOrSaveProfile));
+        }
+
         [ObservableProperty]
         public partial bool NotificationIsVisible { get; set; } // Automatically call the NotificationView property with OnPropertyChanged()
 
@@ -61,6 +67,11 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
         public partial string NotificationText { get; set; } // Automatically call the NotificationText property with OnPropertyChanged()
 
         private bool _isLoaded;
+        private bool _enableDynamicGamepadSwap;
+        private bool _suppressProfileLoad;
+        private bool _dynamicInputSwapFirstUseWarningShown;
+        private bool? _allowDuplicateDeviceAssignment;
+        private List<PlayerInputAssignment> _workingPlayerInputAssignments;
 
         private static readonly InputConfigJsonSerializerContext _serializerContext = new(JsonHelper.GetDefaultSerializerOptions());
 
@@ -88,6 +99,7 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 
         public ObservableCollection<PlayerModel> PlayerIndexes { get; set; }
         public ObservableCollection<(DeviceType Type, string Id, string Name)> Devices { get; set; }
+        public ObservableCollection<PlayerInputDeviceAssignmentItem> PlayerInputDevices { get; set; }
         internal ObservableCollection<ControllerModel> Controllers { get; set; }
         public AvaloniaList<string> ProfilesList { get; set; }
 
@@ -95,12 +107,14 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 
         // XAML Flags
         public bool ShowSettings => _device > 0;
-        public bool IsController => _device > 1;
-        public bool IsKeyboard => !IsController;
+        public bool IsController => CurrentDeviceType == DeviceType.Controller;
+        public bool IsKeyboard => CurrentDeviceType == DeviceType.Keyboard;
+        public bool CanOpenAssignedDevices => ShowSettings && EnableDynamicGamepadSwap;
+        public bool CanDeleteOrSaveProfile => ShowSettings && !IsDefaultProfileName(ProfileName);
         public bool IsRight { get; set; }
         public bool IsLeft { get; set; }
-        public bool HasLed => (SelectedGamepad.Features & GamepadFeaturesFlag.Led) != 0;
-        public bool CanClearLed => SelectedGamepad.Name.ContainsIgnoreCase("DualSense");
+        public bool HasLed => (SelectedGamepad?.Features & GamepadFeaturesFlag.Led) != 0;
+        public bool CanClearLed => SelectedGamepad?.Name?.ContainsIgnoreCase("DualSense") == true;
 
         public event Action NotifyChangesEvent;
 
@@ -112,7 +126,10 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 // When you select a profile, the settings from the profile will be applied.
                 // To save the settings, you still need to click the apply button
                 field = value;
-                LoadProfile();
+                if (!_suppressProfileLoad)
+                {
+                    LoadProfile();
+                }
                 OnPropertyChanged();
             }
         }
@@ -128,6 +145,111 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 
                 OnPropertyChanged();
             }
+        }
+
+        public bool EnableDynamicGamepadSwap
+        {
+            get => _enableDynamicGamepadSwap;
+            set
+            {
+                if (_enableDynamicGamepadSwap == value)
+                {
+                    return;
+                }
+
+                bool isFirstDynamicInputSwapEnable = value && ShouldInitializePlayerOneDynamicInputSwap();
+                bool shouldShowFirstUseWarning =
+                    isFirstDynamicInputSwapEnable &&
+                    !_dynamicInputSwapFirstUseWarningShown &&
+                    _isChangeTrackingActive &&
+                    _isLoaded &&
+                    ConfigurationState.Instance.UI.ShowDynamicInputSwapWarning.Value;
+
+                _enableDynamicGamepadSwap = value;
+
+                if (_enableDynamicGamepadSwap)
+                {
+                    if (isFirstDynamicInputSwapEnable)
+                    {
+                        AssignAllConnectedInputDevices();
+                    }
+                    else
+                    {
+                        AssignCurrentDeviceIfNoInputDeviceIsAssigned();
+                    }
+                }
+
+                RefreshProfileBindingState();
+                RefreshModifiedState();
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(CanOpenAssignedDevices));
+
+                if (shouldShowFirstUseWarning)
+                {
+                    _dynamicInputSwapFirstUseWarningShown = true;
+                    ShowDynamicInputSwapFirstUseWarning();
+                }
+            }
+        }
+
+        private bool ShouldInitializePlayerOneDynamicInputSwap()
+        {
+            if (_playerId != PlayerIndex.Player1)
+            {
+                return false;
+            }
+
+            PlayerInputAssignment persistedAssignment = GetPersistedPlayerInputAssignments()
+                .FirstOrDefault(assignment => assignment.PlayerIndex == _playerId);
+
+            return persistedAssignment == null || !persistedAssignment.EnableDynamicInputSwap;
+        }
+
+        private async void ShowDynamicInputSwapFirstUseWarning()
+        {
+            string message = LocaleManager.Instance[LocaleKeys.DialogDynamicInputSwapDeviceAssignmentsHint];
+
+            CheckBoxDialogResult result = await ContentDialogHelper.CreateCheckBoxDialog(
+                LocaleManager.Instance[LocaleKeys.ControllerSettingsAssignedInputDevices],
+                message,
+                LocaleManager.Instance[LocaleKeys.DialogDontShowAgain],
+                false);
+
+            if (result.IsChecked)
+            {
+                ConfigurationState.Instance.UI.ShowDynamicInputSwapWarning.Value = false;
+            }
+        }
+
+        public bool AllowDuplicateDeviceAssignment
+        {
+            get => _allowDuplicateDeviceAssignment ?? GetSavedAllowDuplicateDeviceAssignment();
+            set
+            {
+                if (AllowDuplicateDeviceAssignment == value)
+                {
+                    return;
+                }
+
+                _allowDuplicateDeviceAssignment = value;
+
+                if (!value)
+                {
+                    KeepCurrentPlayerAssignedDevicesExclusive();
+                }
+
+                RefreshPlayerInputDeviceAssignmentState();
+
+                IsModified = true;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool GetSavedAllowDuplicateDeviceAssignment()
+        {
+            return UseGlobalConfig && Program.UseExtraConfig
+                ? ConfigurationState.InstanceExtra.Hid.AllowDuplicateDeviceAssignment.Value
+                : ConfigurationState.Instance.Hid.AllowDuplicateDeviceAssignment.Value;
         }
 
         public PlayerIndex PlayerIdChoose
@@ -310,7 +432,7 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 return;
             }
 
-            LoadSelectedDeviceDefaults();
+            LoadCurrentDeviceDefaultProfile();
             RefreshModifiedState();
             FindPairedDeviceInConfigFile();
             NotifyChanges();
@@ -397,6 +519,7 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
             PlayerIndexes = [];
             Controllers = [];
             Devices = [];
+            PlayerInputDevices = [];
             ProfilesList = [];
             VisualStick = new StickVisualizer(this);
 
@@ -417,17 +540,119 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 
         private InputConfig GetPersistedInputConfig()
         {
-            if (UseGlobalConfig && Program.UseExtraConfig)
-            {
-                return ConfigurationState.InstanceExtra.Hid.InputConfig.Value.FirstOrDefault(inputConfig => inputConfig.PlayerIndex == _playerId);
-            }
-
-            return ConfigurationState.Instance.Hid.InputConfig.Value.FirstOrDefault(inputConfig => inputConfig.PlayerIndex == _playerId);
+            return GetPersistedInputConfig(_playerId);
         }
 
-        private void LoadConfiguration(InputConfig inputConfig = null)
+        private InputConfig GetPersistedInputConfig(PlayerIndex playerIndex)
+        {
+            if (UseGlobalConfig && Program.UseExtraConfig)
+            {
+                return ConfigurationState.InstanceExtra.Hid.InputConfig.Value.FirstOrDefault(inputConfig => inputConfig.PlayerIndex == playerIndex);
+            }
+
+            return ConfigurationState.Instance.Hid.InputConfig.Value.FirstOrDefault(inputConfig => inputConfig.PlayerIndex == playerIndex);
+        }
+
+        private List<InputConfig> GetPersistedInputConfigs()
+        {
+            if (UseGlobalConfig && Program.UseExtraConfig)
+            {
+                return ConfigurationState.InstanceExtra.Hid.InputConfig.Value ?? [];
+            }
+
+            return ConfigurationState.Instance.Hid.InputConfig.Value ?? [];
+        }
+
+        private List<PlayerInputAssignment> GetPersistedPlayerInputAssignments()
+        {
+            if (UseGlobalConfig && Program.UseExtraConfig)
+            {
+                return ConfigurationState.InstanceExtra.Hid.PlayerInputAssignments.Value ?? [];
+            }
+
+            return ConfigurationState.Instance.Hid.PlayerInputAssignments.Value ?? [];
+        }
+
+        private List<PlayerInputAssignment> GetWorkingPlayerInputAssignments()
+        {
+            if (_workingPlayerInputAssignments != null)
+            {
+                return _workingPlayerInputAssignments;
+            }
+
+            _workingPlayerInputAssignments = GetPersistedPlayerInputAssignments()
+                .Where(assignment => assignment != null)
+                .Select(ClonePlayerInputAssignment)
+                .ToList();
+
+            return _workingPlayerInputAssignments;
+        }
+
+        private static PlayerInputAssignment ClonePlayerInputAssignment(PlayerInputAssignment assignment)
+        {
+            if (assignment == null)
+            {
+                return null;
+            }
+
+            return new PlayerInputAssignment
+            {
+                PlayerIndex = assignment.PlayerIndex,
+                EnableDynamicInputSwap = assignment.EnableDynamicInputSwap,
+                Devices = assignment.Devices?
+                    .Where(device => device != null)
+                    .Select(device => new AssignedInputDevice
+                    {
+                        Type = device.Type,
+                        Id = device.Id,
+                        ProfileName = device.ProfileName,
+                    })
+                    .ToList() ?? [],
+            };
+        }
+
+        private PlayerInputAssignment GetPersistedPlayerInputAssignment()
+        {
+            return GetPersistedPlayerInputAssignment(_playerId);
+        }
+
+        private PlayerInputAssignment GetPersistedPlayerInputAssignment(PlayerIndex playerIndex)
+        {
+            return GetPlayerInputAssignment(playerIndex, GetPersistedPlayerInputAssignments());
+        }
+
+        private PlayerInputAssignment GetWorkingPlayerInputAssignment(PlayerIndex playerIndex)
+        {
+            return GetPlayerInputAssignment(playerIndex, _workingPlayerInputAssignments ?? GetPersistedPlayerInputAssignments());
+        }
+
+        private PlayerInputAssignment GetPlayerInputAssignment(PlayerIndex playerIndex, List<PlayerInputAssignment> assignments)
+        {
+            InputConfig persistedConfig = GetPersistedInputConfig(playerIndex);
+            PlayerInputAssignment persistedAssignment = assignments?.FirstOrDefault(assignment => assignment.PlayerIndex == playerIndex);
+
+            if (persistedAssignment == null)
+            {
+                return BuildDefaultPlayerInputAssignment(playerIndex, persistedConfig);
+            }
+
+            PlayerInputAssignment normalizedAssignment = PlayerInputAssignmentHelper.Normalize(
+                persistedAssignment,
+                PlayerInputAssignmentHelper.CreatePrimaryDevice(persistedConfig));
+
+            return normalizedAssignment;
+        }
+
+        private void LoadConfiguration(InputConfig inputConfig = null, bool reloadPlayerInputDevices = true)
         {
             Config = inputConfig ?? GetDisplayedInputConfig(GetPersistedInputConfig());
+
+            if (reloadPlayerInputDevices)
+            {
+                PlayerInputAssignment persistedAssignment = GetPersistedPlayerInputAssignment();
+                EnableDynamicGamepadSwap = persistedAssignment.EnableDynamicInputSwap;
+            }
+
             ConfigViewModel = null;
 
             if (Config is StandardKeyboardInputConfig keyboardInputConfig)
@@ -438,6 +663,15 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
             if (Config is StandardControllerInputConfig controllerInputConfig)
             {
                 ConfigViewModel = new ControllerInputViewModel(this, new GamepadInputConfig(controllerInputConfig), VisualStick);
+            }
+
+            if (reloadPlayerInputDevices)
+            {
+                LoadPlayerInputDevices();
+            }
+            else
+            {
+                RefreshProfileBindingState();
             }
         }
 
@@ -451,7 +685,6 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
             // If runtime has already fallen back to keyboard, reflect that active config in settings
             // instead of showing the stale persisted controller config.
             InputConfig activeConfig = _mainWindow?.ViewModel.AppHost?.NpadManager?.GetPlayerInputConfigByIndex((int)_playerId);
-
             if (activeConfig is StandardKeyboardInputConfig)
             {
                 return activeConfig;
@@ -468,6 +701,531 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
             }
 
             return persistedConfig;
+        }
+
+        // Note: player-level routing is stored separately from the selected keyboard/controller profile,
+        // so changing the edited device does not silently clear dynamic input swap or assigned devices.
+        private PlayerInputAssignment BuildDefaultPlayerInputAssignment(PlayerIndex playerIndex, InputConfig persistedConfig)
+        {
+            PlayerInputAssignment assignment = new()
+            {
+                PlayerIndex = playerIndex,
+                EnableDynamicInputSwap = persistedConfig?.EnableDynamicGamepadSwap ?? false,
+            };
+
+            if (persistedConfig is StandardKeyboardInputConfig)
+            {
+                assignment.Devices.Add(new AssignedInputDevice
+                {
+                    Type = AssignedInputDeviceType.Keyboard,
+                    Id = persistedConfig.Id,
+                });
+
+                if (assignment.EnableDynamicInputSwap)
+                {
+                    foreach ((DeviceType Type, string Id, string _) in Devices.Where(device => device.Type == DeviceType.Controller))
+                    {
+                        assignment.Devices.Add(new AssignedInputDevice
+                        {
+                            Type = AssignedInputDeviceType.Controller,
+                            Id = Id,
+                        });
+                    }
+                }
+            }
+            else if (persistedConfig is StandardControllerInputConfig)
+            {
+                assignment.Devices.Add(new AssignedInputDevice
+                {
+                    Type = AssignedInputDeviceType.Controller,
+                    Id = persistedConfig.Id,
+                });
+
+                if (assignment.EnableDynamicInputSwap)
+                {
+                    (DeviceType Type, string Id, string Name) keyboardDevice = Devices.FirstOrDefault(device => device.Type == DeviceType.Keyboard);
+
+                    if (keyboardDevice != default)
+                    {
+                        assignment.Devices.Add(new AssignedInputDevice
+                        {
+                            Type = AssignedInputDeviceType.Keyboard,
+                            Id = keyboardDevice.Id,
+                        });
+                    }
+                }
+            }
+
+            return assignment;
+        }
+
+        private string GetPlayerDisplayName(PlayerIndex playerIndex)
+        {
+            return PlayerIndexes.FirstOrDefault(player => player.Id == playerIndex)?.Name ?? playerIndex.ToString();
+        }
+
+        private void LoadPlayerInputDevices(bool preserveEdits = false)
+        {
+            PlayerInputAssignment assignment = GetPersistedPlayerInputAssignment();
+            Dictionary<(DeviceType Type, string Id), PlayerInputDeviceAssignmentItem> editedItems = preserveEdits
+                ? PlayerInputDevices.ToDictionary(item => (item.DeviceType, item.Id))
+                : null;
+
+            Dictionary<(AssignedInputDeviceType Type, string Id), List<string>> deviceToOtherAssignedPlayers = GetOtherPlayerDeviceAssignments();
+
+            PlayerInputDevices.Clear();
+
+            foreach ((DeviceType Type, string Id, string Name) device in Devices.Where(device => device.Type is DeviceType.Keyboard or DeviceType.Controller))
+            {
+                string deviceId = GetConfigDeviceId(device);
+                AssignedInputDeviceType assignedType = device.Type == DeviceType.Keyboard
+                    ? AssignedInputDeviceType.Keyboard
+                    : AssignedInputDeviceType.Controller;
+                PlayerInputDeviceAssignmentItem editedItem = null;
+                editedItems?.TryGetValue((device.Type, deviceId), out editedItem);
+
+                bool isAssigned = editedItem?.IsAssigned ?? assignment.Devices.Any(assignedDevice =>
+                    assignedDevice.Type == assignedType &&
+                    assignedDevice.Id == deviceId);
+
+                string boundProfile = GetProfileNameOrDefault(editedItem?.BoundProfileName ?? assignment.Devices
+                    .FirstOrDefault(assignedDevice =>
+                        assignedDevice.Type == assignedType &&
+                        assignedDevice.Id == deviceId)?.ProfileName);
+
+                // Find other players using this device
+                deviceToOtherAssignedPlayers.TryGetValue((assignedType, deviceId), out List<string> assignedOtherPlayers);
+
+                PlayerInputDevices.Add(new PlayerInputDeviceAssignmentItem
+                {
+                    DeviceType = device.Type,
+                    Id = deviceId,
+                    Name = device.Name,
+                    BoundProfileName = boundProfile,
+                    IsAssigned = isAssigned,
+                    AssignedToPlayers = FormatAssignedPlayerNames(isAssigned, assignedOtherPlayers),
+                    IsDisabledByOtherPlayer = IsDisabledByOtherPlayer(isAssigned, assignedOtherPlayers),
+                });
+            }
+
+            RefreshPlayerInputDeviceAssignmentState();
+            RefreshProfileBindingState();
+            OnPropertyChanged(nameof(PlayerInputDevices));
+        }
+
+        public void ToggleAssignedPlayerInputDevice(PlayerInputDeviceAssignmentItem item, bool isAssigned)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            if (item.IsDisabledByOtherPlayer && isAssigned)
+            {
+                return;
+            }
+
+            if (item.IsDisabledByOtherPlayer && !isAssigned)
+            {
+                item.IsAssigned = false;
+                RefreshPlayerInputDeviceAssignmentState();
+                return;
+            }
+
+            item.IsAssigned = isAssigned;
+            RefreshPlayerInputDeviceAssignmentState();
+            RefreshProfileBindingState();
+            RefreshModifiedState();
+        }
+
+        private Dictionary<(AssignedInputDeviceType Type, string Id), List<string>> GetOtherPlayerDeviceAssignments()
+        {
+            IEnumerable<PlayerIndex> otherPlayers = GetPersistedInputConfigs()
+                .Where(config => config != null && config.PlayerIndex != _playerId)
+                .Select(config => config.PlayerIndex)
+                .Concat(((_workingPlayerInputAssignments ?? GetPersistedPlayerInputAssignments()) ?? [])
+                    .Where(assignment => assignment != null && assignment.PlayerIndex != _playerId)
+                    .Select(assignment => assignment.PlayerIndex))
+                .Distinct();
+            Dictionary<(AssignedInputDeviceType Type, string Id), List<string>> deviceToOtherAssignedPlayers = [];
+
+            foreach (PlayerIndex otherPlayer in otherPlayers)
+            {
+                PlayerInputAssignment normalizedOtherAssignment = GetWorkingPlayerInputAssignment(otherPlayer);
+
+                // Only include players who participate in dynamic input swap.
+                // Players with dynamic swap disabled manage their device through
+                // the traditional InputConfig and should not appear in the
+                // Assigned Devices menu for other players.
+                if (!normalizedOtherAssignment.EnableDynamicInputSwap)
+                {
+                    continue;
+                }
+
+                string playerName = GetPlayerDisplayName(otherPlayer);
+
+                foreach (AssignedInputDevice device in normalizedOtherAssignment.Devices)
+                {
+                    (AssignedInputDeviceType Type, string Id) key = (device.Type, device.Id);
+                    if (!deviceToOtherAssignedPlayers.TryGetValue(key, out List<string> players))
+                    {
+                        players = [];
+                        deviceToOtherAssignedPlayers[key] = players;
+                    }
+
+                    if (!players.Contains(playerName))
+                    {
+                        players.Add(playerName);
+                    }
+                }
+            }
+
+            return deviceToOtherAssignedPlayers;
+        }
+
+        private void RefreshPlayerInputDeviceAssignmentState()
+        {
+            Dictionary<(AssignedInputDeviceType Type, string Id), List<string>> deviceToOtherAssignedPlayers = GetOtherPlayerDeviceAssignments();
+
+            foreach (PlayerInputDeviceAssignmentItem item in PlayerInputDevices)
+            {
+                deviceToOtherAssignedPlayers.TryGetValue((item.AssignedType, item.Id), out List<string> assignedOtherPlayers);
+
+                item.IsDisabledByOtherPlayer = IsDisabledByOtherPlayer(item.IsAssigned, assignedOtherPlayers);
+
+                if (item.IsDisabledByOtherPlayer)
+                {
+                    item.IsAssigned = false;
+                }
+
+                item.AssignedToPlayers = FormatAssignedPlayerNames(item.IsAssigned, assignedOtherPlayers);
+            }
+        }
+
+        private void KeepCurrentPlayerAssignedDevicesExclusive()
+        {
+            List<PlayerInputAssignment> assignments = GetWorkingPlayerInputAssignments();
+
+            PlayerInputAssignment currentAssignment = GetEditedPlayerInputAssignment();
+            int assignmentIndex = assignments.FindIndex(assignment => assignment.PlayerIndex == PlayerId);
+
+            if (assignmentIndex == -1)
+            {
+                assignments.Add(currentAssignment);
+            }
+            else
+            {
+                assignments[assignmentIndex] = currentAssignment;
+            }
+
+            RemoveDuplicateDeviceAssignmentsForCurrentPlayer(assignments, currentAssignment);
+        }
+
+        private bool IsDisabledByOtherPlayer(bool isAssigned, List<string> assignedOtherPlayers)
+        {
+            return !AllowDuplicateDeviceAssignment &&
+                !isAssigned &&
+                assignedOtherPlayers != null &&
+                assignedOtherPlayers.Count > 0;
+        }
+
+        private string FormatAssignedPlayerNames(bool isAssigned, List<string> assignedOtherPlayers)
+        {
+            if (!isAssigned)
+            {
+                return assignedOtherPlayers != null && assignedOtherPlayers.Count > 0
+                    ? string.Join(", ", assignedOtherPlayers.OrderBy(name => ExtractPlayerNumber(name)))
+                    : null;
+            }
+
+            string currentPlayerName = GetPlayerDisplayName(_playerId);
+
+            if (!AllowDuplicateDeviceAssignment)
+            {
+                return currentPlayerName;
+            }
+
+            return assignedOtherPlayers != null && assignedOtherPlayers.Count > 0
+                ? $"{currentPlayerName}, {string.Join(", ", assignedOtherPlayers.OrderBy(name => ExtractPlayerNumber(name)))}"
+                : currentPlayerName;
+        }
+
+        private int ExtractPlayerNumber(string playerName)
+        {
+            // Extract the numeric suffix from player names like "Player 1", "Player 2", etc.
+            // If no number is found, return 0 to sort such names first.
+            if (string.IsNullOrWhiteSpace(playerName))
+            {
+                return 0;
+            }
+
+            // Find the last space and try to parse the number after it
+            int lastSpace = playerName.LastIndexOf(' ');
+            if (lastSpace >= 0 && lastSpace < playerName.Length - 1)
+            {
+                string numberPart = playerName[(lastSpace + 1)..];
+                if (int.TryParse(numberPart, out int number))
+                {
+                    return number;
+                }
+            }
+
+            return 0;
+        }
+
+        private PlayerInputAssignment GetEditedPlayerInputAssignment()
+        {
+            PlayerInputAssignment assignment = new()
+            {
+                PlayerIndex = _playerId,
+                EnableDynamicInputSwap = EnableDynamicGamepadSwap,
+            };
+
+            if (EnableDynamicGamepadSwap)
+            {
+                foreach (PlayerInputDeviceAssignmentItem item in PlayerInputDevices.Where(item => item.IsAssigned))
+                {
+                    assignment.Devices.Add(new AssignedInputDevice
+                    {
+                        Type = item.AssignedType,
+                        Id = item.Id,
+                        ProfileName = GetPersistedProfileName(item.BoundProfileName),
+                    });
+                }
+            }
+
+            // When dynamic swap is off, keep the legacy single selected-device route.
+            if (!EnableDynamicGamepadSwap &&
+                assignment.Devices.Count == 0 &&
+                TryGetCurrentDevice(out (DeviceType Type, string Id, string Name) currentDevice) &&
+                currentDevice.Type != DeviceType.None)
+            {
+                assignment.Devices.Add(new AssignedInputDevice
+                {
+                    Type = currentDevice.Type == DeviceType.Keyboard ? AssignedInputDeviceType.Keyboard : AssignedInputDeviceType.Controller,
+                    Id = GetConfigDeviceId(currentDevice),
+                    ProfileName = GetPersistedProfileName(FindInputDeviceAssignmentItem(currentDevice)?.BoundProfileName),
+                });
+            }
+
+            return PlayerInputAssignmentHelper.Normalize(assignment, GetCurrentPrimaryAssignedInputDevice());
+        }
+
+        private bool PlayerAssignmentsMatch(PlayerInputAssignment currentAssignment, PlayerInputAssignment persistedAssignment)
+        {
+            return PlayerInputAssignmentHelper.AreEquivalent(
+                currentAssignment,
+                persistedAssignment,
+                GetCurrentPrimaryAssignedInputDevice(),
+                GetPersistedPrimaryAssignedInputDevice());
+        }
+
+        private void AssignCurrentDeviceIfNoInputDeviceIsAssigned()
+        {
+            if (PlayerInputDevices.Any(device => device.IsAssigned))
+            {
+                return;
+            }
+
+            if (TryGetCurrentDevice(out (DeviceType Type, string Id, string Name) currentDevice) && currentDevice.Type != DeviceType.None)
+            {
+                PlayerInputDeviceAssignmentItem currentItem = FindInputDeviceAssignmentItem(currentDevice);
+
+                if (currentItem is { IsDisabledByOtherPlayer: false })
+                {
+                    currentItem.IsAssigned = true;
+                    return;
+                }
+            }
+
+            PlayerInputDeviceAssignmentItem firstAvailableItem = PlayerInputDevices.FirstOrDefault(device => !device.IsDisabledByOtherPlayer);
+
+            if (firstAvailableItem != null)
+            {
+                firstAvailableItem.IsAssigned = true;
+            }
+        }
+
+        private void AssignAllConnectedInputDevices()
+        {
+            foreach (PlayerInputDeviceAssignmentItem item in PlayerInputDevices.Where(device => !device.IsDisabledByOtherPlayer))
+            {
+                item.IsAssigned = true;
+            }
+
+            RefreshPlayerInputDeviceAssignmentState();
+        }
+
+        private AssignedInputDevice GetCurrentPrimaryAssignedInputDevice()
+        {
+            if (TryGetCurrentDevice(out (DeviceType Type, string Id, string Name) currentDevice) && currentDevice.Type != DeviceType.None)
+            {
+                return new AssignedInputDevice
+                {
+                    Type = currentDevice.Type == DeviceType.Keyboard ? AssignedInputDeviceType.Keyboard : AssignedInputDeviceType.Controller,
+                    Id = GetConfigDeviceId(currentDevice),
+                };
+            }
+
+            return PlayerInputAssignmentHelper.CreatePrimaryDevice(GetDisplayedInputConfig(GetPersistedInputConfig()));
+        }
+
+        private AssignedInputDevice GetPersistedPrimaryAssignedInputDevice()
+        {
+            return PlayerInputAssignmentHelper.CreatePrimaryDevice(GetPersistedInputConfig());
+        }
+
+        private PlayerInputDeviceAssignmentItem FindInputDeviceAssignmentItem((DeviceType Type, string Id, string Name) device)
+        {
+            string deviceId = GetConfigDeviceId(device);
+
+            return PlayerInputDevices.FirstOrDefault(item =>
+                item.DeviceType == device.Type &&
+                item.Id == deviceId);
+        }
+
+        internal string GetCurrentProfileDefaultName()
+        {
+            return LocaleManager.Instance[LocaleKeys.ControllerSettingsProfileDefault];
+        }
+
+        private string GetProfileNameOrDefault(string profileName)
+        {
+            return string.IsNullOrWhiteSpace(profileName)
+                ? GetCurrentProfileDefaultName()
+                : profileName;
+        }
+
+        private bool IsDefaultProfileName(string profileName)
+        {
+            return string.Equals(profileName, GetCurrentProfileDefaultName(), StringComparison.Ordinal);
+        }
+
+        private string GetPersistedProfileName(string profileName)
+        {
+            return string.IsNullOrWhiteSpace(profileName) || IsDefaultProfileName(profileName)
+                ? null
+                : profileName;
+        }
+
+        private string GetBoundProfileNameForCurrentDevice()
+        {
+            if (!TryGetCurrentDevice(out (DeviceType Type, string Id, string Name) currentDevice))
+            {
+                return GetCurrentProfileDefaultName();
+            }
+
+            return GetProfileNameOrDefault(FindInputDeviceAssignmentItem(currentDevice)?.BoundProfileName);
+        }
+
+        private void ClearInvalidBindingForCurrentDevice()
+        {
+            if (!TryGetCurrentDevice(out (DeviceType Type, string Id, string Name) currentDevice))
+            {
+                return;
+            }
+
+            PlayerInputDeviceAssignmentItem item = FindInputDeviceAssignmentItem(currentDevice);
+            if (item != null)
+            {
+                item.BoundProfileName = GetCurrentProfileDefaultName();
+            }
+        }
+
+        public bool IsProfileLinked =>
+            !string.IsNullOrWhiteSpace(ProfileName) &&
+            string.Equals(ProfileName, GetBoundProfileNameForCurrentDevice(), StringComparison.Ordinal);
+
+        public bool IsProfileNameLinked(string profileName)
+        {
+            return !string.IsNullOrWhiteSpace(profileName) &&
+                   string.Equals(profileName, GetBoundProfileNameForCurrentDevice(), StringComparison.Ordinal);
+        }
+
+        private void ReplaceBoundProfileName(string previousProfileName, string nextProfileName)
+        {
+            if (string.IsNullOrWhiteSpace(previousProfileName) ||
+                string.Equals(previousProfileName, nextProfileName, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            string replacementProfileName = GetProfileNameOrDefault(nextProfileName);
+
+            foreach (PlayerInputDeviceAssignmentItem item in PlayerInputDevices)
+            {
+                if (string.Equals(item.BoundProfileName, previousProfileName, StringComparison.Ordinal))
+                {
+                    item.BoundProfileName = replacementProfileName;
+                }
+            }
+        }
+
+        private void SetSelectedProfileSilently(string profileName)
+        {
+            bool wasSuppressingProfileLoad = _suppressProfileLoad;
+            _suppressProfileLoad = true;
+
+            try
+            {
+                ProfileName = profileName;
+                ChosenProfile = profileName;
+            }
+            finally
+            {
+                _suppressProfileLoad = wasSuppressingProfileLoad;
+            }
+        }
+
+        private void RefreshProfileBindingState()
+        {
+            OnPropertyChanged(nameof(CanBindSelectedProfile));
+            OnPropertyChanged(nameof(IsProfileLinked));
+            OnPropertyChanged(nameof(BoundProfileNameForCurrentDevice));
+        }
+
+        public string BoundProfileNameForCurrentDevice => GetBoundProfileNameForCurrentDevice();
+
+        public bool CanBindSelectedProfile =>
+            ShowSettings &&
+            !string.IsNullOrWhiteSpace(ProfileName) &&
+            ProfilesList.Contains(ProfileName);
+
+        public void LinkCurrentProfileToCurrentDevice()
+        {
+            if (!CanBindSelectedProfile)
+            {
+                return;
+            }
+
+            if (!TryGetCurrentDevice(out (DeviceType Type, string Id, string Name) currentDevice) || currentDevice.Type == DeviceType.None)
+            {
+                return;
+            }
+
+            PlayerInputDeviceAssignmentItem target = FindInputDeviceAssignmentItem(currentDevice);
+
+            if (target == null)
+            {
+                return;
+            }
+
+            DeviceType selectedType = target.DeviceType;
+            bool selectedDefaultProfile = IsDefaultProfileName(ProfileName);
+
+            foreach (PlayerInputDeviceAssignmentItem item in PlayerInputDevices.Where(item => item.DeviceType == selectedType))
+            {
+                if ((!selectedDefaultProfile && string.Equals(item.BoundProfileName, ProfileName, StringComparison.Ordinal)) ||
+                    item.Id == target.Id)
+                {
+                    item.BoundProfileName = GetCurrentProfileDefaultName();
+                }
+            }
+
+            target.BoundProfileName = GetProfileNameOrDefault(ProfileName);
+
+            RefreshProfileBindingState();
+            RefreshModifiedState();
         }
 
         private void FindPairedDeviceInConfigFile()
@@ -549,6 +1307,7 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 LoadControllers();
             }
 
+            LoadPlayerInputDevices(_isChangeTrackingActive);
             FindPairedDeviceInConfigFile();
             OnPropertyChanged(nameof(Device));
             OnPropertyChanged(nameof(SelectedDeviceItem));
@@ -562,7 +1321,85 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 LoadControllers();
             }
 
-            LoadConfiguration(LoadDefaultConfiguration());
+            LoadConfiguration(LoadPreferredConfigurationForCurrentDevice(), false);
+            SetSelectedProfileSilently(GetBoundProfileNameForCurrentDevice());
+            RefreshProfileBindingState();
+        }
+
+        private void LoadCurrentDeviceDefaultProfile()
+        {
+            if (_device > 0 && _device < Devices.Count && Devices[_device].Type != DeviceType.None)
+            {
+                LoadControllers();
+            }
+
+            LoadConfiguration(LoadDefaultConfiguration(), false);
+            SetSelectedProfileSilently(GetCurrentProfileDefaultName());
+            RefreshProfileBindingState();
+        }
+
+        private string GetProfilePath(string profileName)
+        {
+            return Path.Combine(GetProfileBasePath(), profileName + ".json");
+        }
+
+        private InputConfig LoadPreferredConfigurationForCurrentDevice()
+        {
+            string boundProfileName = GetBoundProfileNameForCurrentDevice();
+
+            if (!string.IsNullOrWhiteSpace(boundProfileName) &&
+                TryLoadProfileConfiguration(boundProfileName, out InputConfig boundConfig))
+            {
+                return boundConfig;
+            }
+
+            return LoadDefaultConfiguration();
+        }
+
+        private bool TryLoadProfileConfiguration(string profileName, out InputConfig config)
+        {
+            config = null;
+
+            if (string.IsNullOrWhiteSpace(profileName) ||
+                string.Equals(profileName, GetCurrentProfileDefaultName(), StringComparison.Ordinal))
+            {
+                config = LoadDefaultConfiguration();
+                return true;
+            }
+
+            string path = GetProfilePath(profileName);
+
+            if (!File.Exists(path))
+            {
+                return false;
+            }
+
+            try
+            {
+                config = JsonHelper.DeserializeFromFile(path, _serializerContext.InputConfig);
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+
+            if (config == null)
+            {
+                return false;
+            }
+
+            if (TryGetCurrentDevice(out (DeviceType Type, string Id, string Name) currentDevice))
+            {
+                config.Id = GetConfigDeviceId(currentDevice);
+                config.Name = currentDevice.Name;
+                config.PlayerIndex = _playerId;
+            }
+
+            return true;
         }
 
         public void RefreshModifiedState()
@@ -572,7 +1409,17 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 return;
             }
 
-            IsModified = !ConfigsMatch(GetSelectedDeviceConfig(), GetDisplayedInputConfig(GetPersistedInputConfig()));
+            IsModified = HasUnsavedChanges();
+        }
+
+        private bool HasUnsavedChanges()
+        {
+            bool duplicateDeviceAssignmentChanged = _allowDuplicateDeviceAssignment.HasValue &&
+                _allowDuplicateDeviceAssignment.Value != GetSavedAllowDuplicateDeviceAssignment();
+            bool configChanged = !ConfigsMatch(GetSelectedDeviceConfig(), GetDisplayedInputConfig(GetPersistedInputConfig()));
+            bool playerAssignmentsChanged = !PlayerAssignmentsMatch(GetEditedPlayerInputAssignment(), GetPersistedPlayerInputAssignment());
+
+            return duplicateDeviceAssignmentChanged || configChanged || playerAssignmentsChanged;
         }
 
         private static bool ConfigsMatch(InputConfig currentConfig, InputConfig otherConfig)
@@ -626,7 +1473,8 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
             config.Id = GetConfigDeviceId(device);
             config.Name = device.Name;
             config.PlayerIndex = _playerId;
-            config.ControllerType = Controllers[_controller].Type;
+            config.ControllerType = GetSelectedControllerType();
+            config.EnableDynamicGamepadSwap = EnableDynamicGamepadSwap;
 
             return config;
         }
@@ -668,60 +1516,69 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 
         private void HandleOnGamepadDisconnected(string id)
         {
-            _isChangeTrackingActive = false; // Disable configuration change tracking
-
             bool selectedControllerDisconnected =
                 TryGetCurrentDevice(out (DeviceType Type, string Id, string Name) currentDevice) &&
                 currentDevice.Type == DeviceType.Controller &&
                 string.Equals(GetGamepadId(currentDevice), id, StringComparison.Ordinal);
 
-            RefreshAvailableDevices();
-
-            InputConfig persistedConfig = GetPersistedInputConfig();
-            InputConfig displayedConfig = GetDisplayedInputConfig(persistedConfig);
-            bool shouldApplyKeyboardFallback =
-                selectedControllerDisconnected ||
-                displayedConfig is StandardKeyboardInputConfig;
-
-            if (shouldApplyKeyboardFallback)
+            if (!selectedControllerDisconnected)
             {
-                if (selectedControllerDisconnected &&
-                    displayedConfig is not StandardKeyboardInputConfig &&
-                    TryCreateKeyboardFallbackConfig(persistedConfig, out StandardKeyboardInputConfig fallbackConfig))
-                {
-                    displayedConfig = fallbackConfig;
-                }
-
-                LoadConfiguration(displayedConfig);
-                LoadDevice();
-                LoadProfiles();
+                RefreshAvailableDevices();
+                RefreshModifiedState();
                 FindPairedDeviceInConfigFile();
-                IsModified = false;
                 NotifyChanges();
+                return;
             }
-            else
-            {
-                IsModified = true;
-                RevertChanges();
-                FindPairedDeviceInConfigFile();
-            }
-            
-            _isChangeTrackingActive = true; // Enable configuration change tracking
 
-        }
-
-        private async void HandleOnGamepadConnected(string id)
-        {
             _isChangeTrackingActive = false; // Disable configuration change tracking
 
             try
             {
-                InputConfig persistedConfig = GetPersistedInputConfig();
-                bool shouldRestoreControllerAfterFallback =
-                    Config is StandardKeyboardInputConfig &&
-                    persistedConfig is StandardControllerInputConfig;
+                RefreshAvailableDevices();
 
-                if (shouldRestoreControllerAfterFallback)
+                InputConfig persistedConfig = GetPersistedInputConfig();
+                InputConfig displayedConfig = GetDisplayedInputConfig(persistedConfig);
+                bool shouldApplyKeyboardFallback =
+                    selectedControllerDisconnected ||
+                    displayedConfig is StandardKeyboardInputConfig;
+
+                if (shouldApplyKeyboardFallback)
+                {
+                    if (selectedControllerDisconnected &&
+                        displayedConfig is not StandardKeyboardInputConfig &&
+                        TryCreateKeyboardFallbackConfig(persistedConfig, out StandardKeyboardInputConfig fallbackConfig))
+                    {
+                        displayedConfig = fallbackConfig;
+                    }
+
+                    LoadConfiguration(displayedConfig);
+                    LoadDevice();
+                    LoadProfiles();
+                    FindPairedDeviceInConfigFile();
+                    IsModified = false;
+                    NotifyChanges();
+                }
+            }
+            finally
+            {
+                _isChangeTrackingActive = true; // Enable configuration change tracking
+            }
+        }
+
+        private async void HandleOnGamepadConnected(string id)
+        {
+            bool hasUnsavedChanges = HasUnsavedChanges();
+            InputConfig persistedConfig = GetPersistedInputConfig();
+            bool shouldRestoreControllerAfterFallback =
+                !hasUnsavedChanges &&
+                Config is StandardKeyboardInputConfig &&
+                persistedConfig is StandardControllerInputConfig;
+
+            if (shouldRestoreControllerAfterFallback)
+            {
+                _isChangeTrackingActive = false; // Disable configuration change tracking
+
+                try
                 {
                     const int reconnectRestoreAttempts = 20;
                     const int reconnectRestoreDelayMs = 250;
@@ -742,16 +1599,16 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                         await Task.Delay(reconnectRestoreDelayMs);
                     }
                 }
-
-                RefreshAvailableDevices();
-
-                IsModified = true;
-                RevertChanges();
+                finally
+                {
+                    _isChangeTrackingActive = true; // Enable configuration change tracking
+                }
             }
-            finally
-            {
-                _isChangeTrackingActive = true;// Enable configuration change tracking
-            }
+
+            RefreshAvailableDevices();
+            RefreshModifiedState();
+            FindPairedDeviceInConfigFile();
+            NotifyChanges();
         }
 
         private bool TryGetCurrentDevice(out (DeviceType Type, string Id, string Name) device)
@@ -764,6 +1621,16 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 
             device = Devices[_device];
             return true;
+        }
+
+        private DeviceType CurrentDeviceType =>
+            _device >= 0 && _device < Devices.Count ? Devices[_device].Type : DeviceType.None;
+
+        private ControllerType GetSelectedControllerType()
+        {
+            return _controller >= 0 && _controller < Controllers.Count
+                ? Controllers[_controller].Type
+                : ControllerType.ProController;
         }
 
         private static string GetGamepadId((DeviceType Type, string Id, string Name) device)
@@ -812,23 +1679,27 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                         }
                     }
 
-                    if (controllerIndex != -1)
+                    if (controllerIndex == -1)
                     {
-                        // Avalonia bug: setting a newly instanced ComboBox to 0
-                        // causes the selected item to show up blank.
-                        // Workaround: set the box to 1 and then 0.
-                        // See: https://github.com/AvaloniaUI/Avalonia/issues/4610
-                        //      https://github.com/AvaloniaUI/Avalonia/discussions/18834
-                        if (controllerIndex == 0)
-                        {
-                            ApplyControllerSelection(1);
-                        }
-
-                        ApplyControllerSelection(controllerIndex);
+                        controllerIndex = 0;
                     }
+
+                    // Avalonia bug: setting a newly instanced ComboBox to 0
+                    // causes the selected item to show up blank
+                    // Workaround: set the box to 1 and then 0
+                    // See: https://github.com/AvaloniaUI/Avalonia/issues/4610
+                    //      https://github.com/AvaloniaUI/Avalonia/discussions/18834
+                    if (controllerIndex == 0)
+                    {
+                        ApplyControllerSelection(1);
+                    }
+
+                    ApplyControllerSelection(controllerIndex);
                 }
                 else
                 {
+                    // Avalonia bug workaround: set to 1 then 0
+                    ApplyControllerSelection(1);
                     ApplyControllerSelection(0);
                 }
             }
@@ -928,7 +1799,7 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
         private string GetProfileBasePath()
         {
             string path = AppDataManager.ProfilesDirPath;
-            DeviceType type = Devices[Device == -1 ? 0 : Device].Type;
+            DeviceType type = CurrentDeviceType;
 
             if (type == DeviceType.Keyboard)
             {
@@ -944,26 +1815,43 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 
         private void LoadProfiles()
         {
-            ProfilesList.Clear();
+            bool wasSuppressingProfileLoad = _suppressProfileLoad;
+            _suppressProfileLoad = true;
 
-            string basePath = GetProfileBasePath();
-
-            if (!Directory.Exists(basePath))
+            try
             {
-                Directory.CreateDirectory(basePath);
+                ProfilesList.Clear();
+
+                string basePath = GetProfileBasePath();
+
+                if (!Directory.Exists(basePath))
+                {
+                    Directory.CreateDirectory(basePath);
+                }
+
+                ProfilesList.Add(GetCurrentProfileDefaultName());
+
+                foreach (string profile in Directory.GetFiles(basePath, "*.json", SearchOption.AllDirectories))
+                {
+                    ProfilesList.Add(Path.GetFileNameWithoutExtension(profile));
+                }
+
+                string selectedProfile = GetBoundProfileNameForCurrentDevice();
+
+                if (!ProfilesList.Contains(selectedProfile))
+                {
+                    ClearInvalidBindingForCurrentDevice();
+                    selectedProfile = GetCurrentProfileDefaultName();
+                }
+
+                SetSelectedProfileSilently(selectedProfile);
+            }
+            finally
+            {
+                _suppressProfileLoad = wasSuppressingProfileLoad;
             }
 
-            ProfilesList.Add((LocaleManager.Instance[LocaleKeys.ControllerSettingsProfileDefault]));
-
-            foreach (string profile in Directory.GetFiles(basePath, "*.json", SearchOption.AllDirectories))
-            {
-                ProfilesList.Add(Path.GetFileNameWithoutExtension(profile));
-            }
-
-            if (string.IsNullOrWhiteSpace(ProfileName))
-            {
-                ProfileName = LocaleManager.Instance[LocaleKeys.ControllerSettingsProfileDefault];
-            }
+            RefreshProfileBindingState();
         }
 
         public InputConfig LoadDefaultConfiguration()
@@ -981,7 +1869,7 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 config = InputConfigDefaults.CreateDefaultKeyboardConfiguration(
                     activeDevice.Id,
                     activeDevice.Name,
-                    ControllerType.ProController,
+                    GetSelectedControllerType(),
                     _playerId);
             }
             else if (activeDevice.Type == DeviceType.Controller)
@@ -1015,7 +1903,7 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 config = InputConfigDefaults.CreateDefaultControllerConfiguration(
                     id,
                     name,
-                    ControllerType.ProController,
+                    GetSelectedControllerType(),
                     _playerId,
                     isNintendoStyle);
             }
@@ -1041,7 +1929,7 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 return false;
             }
 
-            ControllerType controllerType = sourceConfig?.ControllerType ?? ControllerType.ProController;
+            ControllerType controllerType = sourceConfig?.ControllerType ?? GetSelectedControllerType();
             PlayerIndex playerIndex = sourceConfig?.PlayerIndex ?? _playerId;
 
             fallbackConfig = InputConfigDefaults.CreateDefaultKeyboardConfiguration(
@@ -1049,12 +1937,8 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 keyboardDevice.Name,
                 controllerType,
                 playerIndex);
+            fallbackConfig.EnableDynamicGamepadSwap = sourceConfig?.EnableDynamicGamepadSwap ?? false;
             return true;
-        }
-
-        public void LoadProfileButton()
-        {
-            LoadProfile();
         }
 
         public async void LoadProfile()
@@ -1071,13 +1955,13 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 return;
             }
 
-            if (ProfileName == LocaleManager.Instance[LocaleKeys.ControllerSettingsProfileDefault])
+            if (ProfileName == GetCurrentProfileDefaultName())
             {
                 config = LoadDefaultConfiguration();
             }
             else
             {
-                string path = Path.Combine(GetProfileBasePath(), ProfileName + ".json");
+                string path = GetProfilePath(ProfileName);
 
                 if (!File.Exists(path))
                 {
@@ -1121,12 +2005,13 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 
                 config.Id = currentDeviceId; // Set current device id instead of changing device(independent profiles)
 
-                LoadConfiguration(config);
+                LoadConfiguration(config, false);
 
                 //LoadDevice();  This line of code hard-links profiles to controllers, the commented line allows profiles to be applied to all controllers 
 
                 _isLoaded = true;
 
+                RefreshProfileBindingState();
                 RefreshModifiedState();
                 NotifyChanges();
             }
@@ -1145,7 +2030,7 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 return;
             }
 
-            if (ProfileName == LocaleManager.Instance[LocaleKeys.ControllerSettingsProfileDefault])
+            if (ProfileName == GetCurrentProfileDefaultName())
             {
                 await ContentDialogHelper.CreateErrorDialog(LocaleManager.Instance[LocaleKeys.DialogProfileDefaultProfileOverwriteErrorMessage]);
 
@@ -1157,7 +2042,7 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 
                 if (validFileName)
                 {
-                    string path = Path.Combine(GetProfileBasePath(), ProfileName + ".json");
+                    string path = GetProfilePath(ProfileName);
 
                     InputConfig config = null;
 
@@ -1170,15 +2055,17 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                         config = (ConfigViewModel as ControllerInputViewModel).Config.GetConfig();
                     }
 
-                    config.ControllerType = Controllers[_controller].Type;
+                    if (config != null && _controller >= 0 && _controller < Controllers.Count)
+                    {
+                        config.ControllerType = Controllers[_controller].Type;
+                    }
 
                     string jsonString = JsonHelper.Serialize(config, _serializerContext.InputConfig);
 
                     await File.WriteAllTextAsync(path, jsonString);
 
                     LoadProfiles();
-
-                    ChosenProfile = ProfileName; // Show new profile
+                    SetSelectedProfileSilently(ProfileName);
                 }
                 else
                 {
@@ -1189,7 +2076,7 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 
         public async void RemoveProfile()
         {
-            if (Device == 0 || ProfileName == LocaleManager.Instance[LocaleKeys.ControllerSettingsProfileDefault] || ProfilesList.IndexOf(ProfileName) == -1)
+            if (Device == 0 || ProfileName == GetCurrentProfileDefaultName() || ProfilesList.IndexOf(ProfileName) == -1)
             {
                 return;
             }
@@ -1203,21 +2090,25 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 
             if (result == UserResult.Yes)
             {
-                string path = Path.Combine(GetProfileBasePath(), ProfileName + ".json");
+                string path = GetProfilePath(ProfileName);
 
                 if (File.Exists(path))
                 {
                     File.Delete(path);
                 }
 
+                ReplaceBoundProfileName(ProfileName, null);
                 LoadProfiles();
 
-                ChosenProfile = ProfilesList[0].ToString(); // Show default profile
+                SetSelectedProfileSilently(ProfilesList[0].ToString());
+                RefreshModifiedState();
             }
         }
 
         public void RevertChanges()
         {
+            _allowDuplicateDeviceAssignment = null;
+            _workingPlayerInputAssignments = null;
             _isLoaded = false;
             LoadConfiguration();
             LoadDevice();
@@ -1238,25 +2129,37 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
             IsModified = false;
 
             List<InputConfig> newConfig = [];
+            List<PlayerInputAssignment> newAssignments = [];
 
             if (UseGlobalConfig && Program.UseExtraConfig)
             {
-                newConfig.AddRange(ConfigurationState.InstanceExtra.Hid.InputConfig.Value);
+                newConfig.AddRange(ConfigurationState.InstanceExtra.Hid.InputConfig.Value ?? []);
+                newAssignments.AddRange((_workingPlayerInputAssignments ?? ConfigurationState.InstanceExtra.Hid.PlayerInputAssignments.Value) ?? []);
             }
             else
             {
-                newConfig.AddRange(ConfigurationState.Instance.Hid.InputConfig.Value);
+                newConfig.AddRange(ConfigurationState.Instance.Hid.InputConfig.Value ?? []);
+                newAssignments.AddRange((_workingPlayerInputAssignments ?? ConfigurationState.Instance.Hid.PlayerInputAssignments.Value) ?? []);
             }
 
             newConfig.RemoveAll(static inputConfig => inputConfig == null);
+            newAssignments.RemoveAll(static assignment => assignment == null);
 
             if (Device == 0)
             {
                 newConfig.RemoveAll(inputConfig => inputConfig.PlayerIndex == PlayerId);
+                newAssignments.RemoveAll(assignment => assignment.PlayerIndex == PlayerId);
             }
             else
             {
                 InputConfig config = GetSelectedDeviceConfig();
+                PlayerInputAssignment assignment = GetEditedPlayerInputAssignment();
+
+                if (config == null)
+                {
+                    IsModified = true;
+                    return;
+                }
 
                 int i = newConfig.FindIndex(x => x.PlayerIndex == PlayerId);
                 if (i == -1)
@@ -1267,23 +2170,82 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
                 {
                     newConfig[i] = config;
                 }
+
+                int assignmentIndex = newAssignments.FindIndex(x => x.PlayerIndex == PlayerId);
+                if (assignmentIndex == -1)
+                {
+                    newAssignments.Add(assignment);
+                }
+                else
+                {
+                    newAssignments[assignmentIndex] = assignment;
+                }
+
+                if (!AllowDuplicateDeviceAssignment)
+                {
+                    RemoveDuplicateDeviceAssignmentsForCurrentPlayer(newAssignments, assignment);
+                }
             }
 
             // Atomically replace and signal input change.
             // NOTE: Do not modify InputConfig.Value directly as other code depends on the on-change event.
-            _mainWindow.ViewModel.AppHost?.NpadManager.ReloadConfiguration(newConfig, ConfigurationState.Instance.Hid.EnableKeyboard, ConfigurationState.Instance.Hid.EnableMouse);
+            _mainWindow.ViewModel.AppHost?.NpadManager.ReloadConfiguration(newConfig, newAssignments, ConfigurationState.Instance.Hid.EnableKeyboard, ConfigurationState.Instance.Hid.EnableMouse);
 
             if (UseGlobalConfig && Program.UseExtraConfig)
             {
                 // In User Settings when "Use Global Input" is enabled, it saves global input to global setting
                 ConfigurationState.InstanceExtra.Hid.InputConfig.Value = newConfig;
+                ConfigurationState.InstanceExtra.Hid.PlayerInputAssignments.Value = newAssignments;
+                ConfigurationState.InstanceExtra.Hid.AllowDuplicateDeviceAssignment.Value = AllowDuplicateDeviceAssignment;
                 ConfigurationState.InstanceExtra.ToFileFormat().SaveConfig(Program.GlobalConfigurationPath);
             }
             else
             {
                 ConfigurationState.Instance.Hid.InputConfig.Value = newConfig;
+                ConfigurationState.Instance.Hid.PlayerInputAssignments.Value = newAssignments;
+                ConfigurationState.Instance.Hid.AllowDuplicateDeviceAssignment.Value = AllowDuplicateDeviceAssignment;
                 ConfigurationState.Instance.ToFileFormat().SaveConfig(Program.ConfigurationPath);
             }
+
+            _allowDuplicateDeviceAssignment = null;
+            _workingPlayerInputAssignments = null;
+        }
+
+        private void RemoveDuplicateDeviceAssignmentsForCurrentPlayer(List<PlayerInputAssignment> assignments, PlayerInputAssignment currentAssignment)
+        {
+            if (currentAssignment?.Devices == null || currentAssignment.Devices.Count == 0)
+            {
+                return;
+            }
+
+            foreach (InputConfig inputConfig in GetPersistedInputConfigs().Where(inputConfig =>
+                inputConfig != null &&
+                inputConfig.PlayerIndex != PlayerId &&
+                inputConfig.EnableDynamicGamepadSwap &&
+                CurrentAssignmentContainsDevice(currentAssignment, PlayerInputAssignmentHelper.CreatePrimaryDevice(inputConfig))))
+            {
+                if (assignments.All(assignment => assignment.PlayerIndex != inputConfig.PlayerIndex))
+                {
+                    assignments.Add(new PlayerInputAssignment
+                    {
+                        PlayerIndex = inputConfig.PlayerIndex,
+                        EnableDynamicInputSwap = true,
+                    });
+                }
+            }
+
+            foreach (PlayerInputAssignment assignment in assignments.Where(assignment => assignment.PlayerIndex != PlayerId))
+            {
+                assignment.Devices.RemoveAll(device => CurrentAssignmentContainsDevice(currentAssignment, device));
+            }
+        }
+
+        private static bool CurrentAssignmentContainsDevice(PlayerInputAssignment currentAssignment, AssignedInputDevice device)
+        {
+            return device != null &&
+                currentAssignment.Devices.Any(currentDevice =>
+                    currentDevice.Type == device.Type &&
+                    string.Equals(currentDevice.Id, device.Id, StringComparison.Ordinal));
         }
 
         public void NotifyChanges()
@@ -1291,9 +2253,12 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
             OnPropertyChanged(nameof(ConfigViewModel));
             OnPropertyChanged(nameof(IsController));
             OnPropertyChanged(nameof(ShowSettings));
+            OnPropertyChanged(nameof(CanOpenAssignedDevices));
             OnPropertyChanged(nameof(IsKeyboard));
             OnPropertyChanged(nameof(IsRight));
             OnPropertyChanged(nameof(IsLeft));
+            OnPropertyChanged(nameof(CanBindSelectedProfile));
+            OnPropertyChanged(nameof(IsProfileLinked));
             NotifyChangesEvent?.Invoke();
         }
 

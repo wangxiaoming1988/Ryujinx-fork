@@ -37,6 +37,7 @@ namespace Ryujinx.Input.HLE
 
         private List<InputConfig> _inputConfig;
         private List<InputConfig> _requestedInputConfig;
+        private List<PlayerInputAssignment> _playerInputAssignments;
         private bool _enableKeyboard;
         private bool _enableMouse;
         private Switch _device;
@@ -54,6 +55,7 @@ namespace Ryujinx.Input.HLE
             _mouseDriver = mouseDriver;
             _inputConfig = [];
             _requestedInputConfig = [];
+            _playerInputAssignments = [];
 
             _gamepadDriver.OnGamepadConnected += HandleOnGamepadConnected;
             _gamepadDriver.OnGamepadDisconnected += HandleOnGamepadDisconnected;
@@ -78,52 +80,98 @@ namespace Ryujinx.Input.HLE
 
         private void HandleOnGamepadDisconnected(string obj)
         {
-            // Force input reload
+            List<InputConfig> requestedInputConfig;
+            List<PlayerInputAssignment> playerInputAssignments;
+            bool enableKeyboard;
+            bool enableMouse;
+
             lock (_lock)
             {
                 // Forcibly disconnect any controllers with this ID.
                 for (int i = 0; i < _controllers.Length; i++)
                 {
-                    if (_controllers[i]?.Id == obj)
+                    if (_controllers[i]?.HasAssignedControllerId(obj) == true)
                     {
                         _controllers[i]?.Dispose();
                         _controllers[i] = null;
                     }
                 }
 
-                ReloadConfiguration(_requestedInputConfig, _enableKeyboard, _enableMouse);
+                requestedInputConfig = _requestedInputConfig;
+                playerInputAssignments = _playerInputAssignments;
+                enableKeyboard = _enableKeyboard;
+                enableMouse = _enableMouse;
             }
+
+            // Force input reload.
+            ReloadConfiguration(requestedInputConfig, playerInputAssignments, enableKeyboard, enableMouse);
         }
 
-        private void HandleOnGamepadConnected(string _)
+        private void HandleOnGamepadConnected(string id)
         {
+            lock (_lock)
+            {
+                for (int i = 0; i < _controllers.Length; i++)
+                {
+                    if (_controllers[i] != null && PlayerHasAssignedControllerId((PlayerIndex)i, id))
+                    {
+                        _controllers[i]?.Dispose();
+                        _controllers[i] = null;
+                    }
+                }
+            }
+
             // Force input reload
-            ReloadConfiguration(_requestedInputConfig, _enableKeyboard, _enableMouse);
+            ReloadConfiguration(_requestedInputConfig, _playerInputAssignments, _enableKeyboard, _enableMouse);
+        }
+
+        private bool PlayerHasAssignedControllerId(PlayerIndex playerIndex, string id)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                return false;
+            }
+
+            InputConfig inputConfig = _requestedInputConfig.FirstOrDefault(config => (int)config.PlayerIndex == (int)playerIndex);
+
+            if (inputConfig == null)
+            {
+                return false;
+            }
+
+            PlayerInputAssignment playerInputAssignment = GetPlayerInputAssignment(inputConfig);
+
+            return playerInputAssignment.EnableDynamicInputSwap &&
+                playerInputAssignment.Devices.Any(device =>
+                    device.Type == AssignedInputDeviceType.Controller &&
+                    string.Equals(device.Id, id, StringComparison.Ordinal));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool DriverConfigurationUpdate(ref NpadController controller, InputConfig config)
+        private bool DriverConfigurationUpdate(ref NpadController controller, InputConfig config, PlayerInputAssignment playerInputAssignment)
         {
-            IGamepadDriver targetDriver =
-                config is StandardKeyboardInputConfig
-                    ? _keyboardDriver
-                    : _gamepadDriver;
+            Debug.Assert(_keyboardDriver != null, "Keyboard driver is not initialized!");
+            Debug.Assert(_gamepadDriver != null, "Gamepad driver is not initialized!");
 
-            Debug.Assert(targetDriver != null, "Unknown input configuration!");
-
-            if (controller.GamepadDriver != targetDriver || controller.Id != config.Id)
+            if (!controller.MatchesDriverConfiguration(config, playerInputAssignment))
             {
-                return controller.UpdateDriverConfiguration(targetDriver, config);
+                return controller.UpdateDriverConfiguration(_keyboardDriver, _gamepadDriver, config, playerInputAssignment);
             }
 
-            return controller.GamepadDriver != null;
+            return controller.IsAvailable;
         }
 
         public void ReloadConfiguration(List<InputConfig> inputConfig, bool enableKeyboard, bool enableMouse)
         {
+            ReloadConfiguration(inputConfig, [], enableKeyboard, enableMouse);
+        }
+
+        public void ReloadConfiguration(List<InputConfig> inputConfig, List<PlayerInputAssignment> playerInputAssignments, bool enableKeyboard, bool enableMouse)
+        {
             lock (_lock)
             {
                 _requestedInputConfig = inputConfig?.ToList() ?? [];
+                _playerInputAssignments = playerInputAssignments?.ToList() ?? [];
 
                 NpadController[] oldControllers = _controllers.ToArray();
 
@@ -146,14 +194,17 @@ namespace Ryujinx.Input.HLE
                     }
 
                     InputConfig activeConfig = inputConfigEntry;
-                    bool isValid = DriverConfigurationUpdate(ref controller, activeConfig);
+                    PlayerInputAssignment playerInputAssignment = GetPlayerInputAssignment(inputConfigEntry);
+
+                    bool isValid = DriverConfigurationUpdate(ref controller, activeConfig, playerInputAssignment);
 
                     if (!isValid &&
+                        !playerInputAssignment.EnableDynamicInputSwap &&
                         inputConfigEntry is StandardControllerInputConfig &&
                         TryGetKeyboardFallback(inputConfigEntry, out StandardKeyboardInputConfig fallbackConfig))
                     {
                         activeConfig = fallbackConfig;
-                        isValid = DriverConfigurationUpdate(ref controller, activeConfig);
+                        isValid = DriverConfigurationUpdate(ref controller, activeConfig, playerInputAssignment);
                     }
 
                     if (!isValid)
@@ -184,6 +235,54 @@ namespace Ryujinx.Input.HLE
             }
         }
 
+        private PlayerInputAssignment GetPlayerInputAssignment(InputConfig inputConfig)
+        {
+            PlayerInputAssignment playerInputAssignment = _playerInputAssignments.FirstOrDefault(assignment => assignment.PlayerIndex == inputConfig.PlayerIndex);
+
+            if (playerInputAssignment != null)
+            {
+                PlayerInputAssignment normalizedAssignment = PlayerInputAssignmentHelper.Normalize(
+                    playerInputAssignment,
+                    PlayerInputAssignmentHelper.CreatePrimaryDevice(inputConfig));
+
+                if (normalizedAssignment.EnableDynamicInputSwap || normalizedAssignment.Devices.Count > 0)
+                {
+                    return normalizedAssignment;
+                }
+            }
+
+            // Note: older configs only know about a single saved device per player,
+            // so we synthesize a routing entry here until the user saves explicit assignments.
+            playerInputAssignment = new PlayerInputAssignment
+            {
+                PlayerIndex = inputConfig.PlayerIndex,
+                EnableDynamicInputSwap = inputConfig.EnableDynamicGamepadSwap,
+            };
+
+            AssignedInputDevice primaryDevice = PlayerInputAssignmentHelper.CreatePrimaryDevice(inputConfig);
+
+            if (primaryDevice != null)
+            {
+                playerInputAssignment.Devices.Add(primaryDevice);
+            }
+
+            if (playerInputAssignment.EnableDynamicInputSwap && inputConfig is StandardControllerInputConfig)
+            {
+                string keyboardId = _keyboardDriver.GamepadsIds.IsEmpty ? null : _keyboardDriver.GamepadsIds[0];
+
+                if (!string.IsNullOrWhiteSpace(keyboardId))
+                {
+                    playerInputAssignment.Devices.Add(new AssignedInputDevice
+                    {
+                        Type = AssignedInputDeviceType.Keyboard,
+                        Id = keyboardId,
+                    });
+                }
+            }
+
+            return playerInputAssignment;
+        }
+
         private bool TryGetKeyboardFallback(InputConfig inputConfig, out StandardKeyboardInputConfig fallbackConfig)
         {
             fallbackConfig = null;
@@ -209,6 +308,8 @@ namespace Ryujinx.Input.HLE
                 keyboard.Name,
                 inputConfig.ControllerType,
                 inputConfig.PlayerIndex);
+
+            fallbackConfig.EnableDynamicGamepadSwap = inputConfig.EnableDynamicGamepadSwap;
 
             return true;
         }
@@ -258,10 +359,15 @@ namespace Ryujinx.Input.HLE
 
         public void Initialize(Switch device, List<InputConfig> inputConfig, bool enableKeyboard, bool enableMouse)
         {
+            Initialize(device, inputConfig, [], enableKeyboard, enableMouse);
+        }
+
+        public void Initialize(Switch device, List<InputConfig> inputConfig, List<PlayerInputAssignment> playerInputAssignments, bool enableKeyboard, bool enableMouse)
+        {
             _device = device;
             _device.Configuration.RefreshInputConfig = RefreshInputConfigForHLE;
 
-            ReloadConfiguration(inputConfig, enableKeyboard, enableMouse);
+            ReloadConfiguration(inputConfig, playerInputAssignments, enableKeyboard, enableMouse);
         }
 
         public void Update(float aspectRatio = 1)
@@ -286,7 +392,7 @@ namespace Ryujinx.Input.HLE
                     // Do we allow input updates and is a controller connected?
                     if (_inputUpdateBlockCount == 0 && controller != null)
                     {
-                        DriverConfigurationUpdate(ref controller, inputConfig);
+                        DriverConfigurationUpdate(ref controller, inputConfig, GetPlayerInputAssignment(inputConfig));
 
                         controller.UpdateUserConfiguration(inputConfig);
                         controller.Update();
@@ -387,7 +493,9 @@ namespace Ryujinx.Input.HLE
         {
             lock (_lock)
             {
-                return _inputConfig.FirstOrDefault(x => x.PlayerIndex == (Common.Configuration.Hid.PlayerIndex)index);
+                NpadController controller = _controllers[index];
+
+                return controller?.ActiveConfig ?? _inputConfig.FirstOrDefault(x => x.PlayerIndex == (Common.Configuration.Hid.PlayerIndex)index);
             }
         }
 

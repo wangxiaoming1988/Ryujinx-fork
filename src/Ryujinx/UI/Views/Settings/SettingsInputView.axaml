@@ -41,6 +41,13 @@
                         <StackPanel
                             Orientation="Horizontal"
                             Spacing="10">
+                            <CheckBox
+                                ToolTip.Tip="{ext:Locale DockModeToggleTooltip}"
+                                MinWidth="0"
+                                IsChecked="{Binding EnableDockedMode}">
+                                <TextBlock
+                                    Text="{ext:Locale SettingsTabInputEnableDockedMode}" />
+                            </CheckBox>
                             <CheckBox                          
                                 ToolTip.Tip="{ext:Locale UseGlobalInputTooltip}"
                                 MinWidth="0"
@@ -49,11 +56,11 @@
                                     Text="{ext:Locale SettingsTabInputUseGlobalInput}" />
                             </CheckBox>
                             <CheckBox
-                                ToolTip.Tip="{ext:Locale DockModeToggleTooltip}"
-                                MinWidth="0"
-                                IsChecked="{Binding EnableDockedMode}">
+                                ToolTip.Tip="{ext:Locale ControllerSettingsDynamicInputSwapTooltip}"
+                                IsChecked="{Binding ElementName=InputView, Path=ViewModel.EnableDynamicGamepadSwap, Mode=TwoWay}"
+                                IsEnabled="{Binding ElementName=InputView, Path=ViewModel.ShowSettings}">
                                 <TextBlock
-                                    Text="{ext:Locale SettingsTabInputEnableDockedMode}" />
+                                    Text="{ext:Locale ControllerSettingsDynamicInputSwap}" />
                             </CheckBox>
                             <CheckBox
                                 ToolTip.Tip="{ext:Locale DirectKeyboardTooltip}"

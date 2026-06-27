@@ -275,7 +275,7 @@ namespace Ryujinx.Input.SDL3
             {
                 _configuration = (StandardControllerInputConfig)configuration;
 
-                if ((Features & GamepadFeaturesFlag.Led) != 0 && _configuration.Led.EnableLed)
+                if ((Features & GamepadFeaturesFlag.Led) != 0 && _configuration.Led?.EnableLed == true)
                 {
                     if (_configuration.Led.TurnOffLed)
                         (this as IGamepad).ClearLed();

@@ -157,6 +157,8 @@ namespace Ryujinx.Ava.Systems.Configuration
             Hid.DisableInputWhenOutOfFocus.Value = shouldLoadFromFile ? cff.DisableInputWhenOutOfFocus : Hid.DisableInputWhenOutOfFocus.Value; // Get from global config only
             Hid.Hotkeys.Value = shouldLoadFromFile ? cff.Hotkeys : Hid.Hotkeys.Value; // Get from global config only
             Hid.InputConfig.Value = cff.InputConfig ?? [] ;
+            Hid.PlayerInputAssignments.Value = cff.PlayerInputAssignments ?? [];
+            Hid.AllowDuplicateDeviceAssignment.Value = cff.AllowDuplicateDeviceAssignment;
             Hid.RainbowSpeed.Value = cff.RainbowSpeed;
 
             Multiplayer.LanInterfaceId.Value = cff.MultiplayerLanInterfaceId;

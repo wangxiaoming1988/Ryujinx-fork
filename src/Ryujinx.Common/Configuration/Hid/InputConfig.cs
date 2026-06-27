@@ -36,6 +36,12 @@ namespace Ryujinx.Common.Configuration.Hid
         /// </summary>
         public PlayerIndex PlayerIndex { get; set; }
 
+        /// <summary>
+        /// Allow a keyboard configuration to temporarily promote to a connected gamepad,
+        /// while preserving the existing keyboard fallback path when that gamepad disappears.
+        /// </summary>
+        public bool EnableDynamicGamepadSwap { get; set; }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)

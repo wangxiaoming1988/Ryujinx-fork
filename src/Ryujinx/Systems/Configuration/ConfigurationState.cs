@@ -143,6 +143,8 @@ namespace Ryujinx.Ava.Systems.Configuration
                 DisableInputWhenOutOfFocus = Hid.DisableInputWhenOutOfFocus,
                 Hotkeys = Hid.Hotkeys,
                 InputConfig = Hid.InputConfig,
+                PlayerInputAssignments = Hid.PlayerInputAssignments,
+                AllowDuplicateDeviceAssignment = Hid.AllowDuplicateDeviceAssignment,
                 RainbowSpeed = Hid.RainbowSpeed,
                 GraphicsBackend = Graphics.GraphicsBackend,
                 PreferredGpu = Graphics.PreferredGpu,
@@ -331,6 +333,22 @@ namespace Ryujinx.Ava.Systems.Configuration
                         StickButton = PhysicalKey.H,
                     },
                 }
+            ];
+            Hid.PlayerInputAssignments.Value =
+            [
+                new PlayerInputAssignment
+                {
+                    PlayerIndex = PlayerIndex.Player1,
+                    EnableDynamicInputSwap = false,
+                    Devices =
+                    [
+                        new AssignedInputDevice
+                        {
+                            Type = AssignedInputDeviceType.Keyboard,
+                            Id = "0",
+                        },
+                    ],
+                },
             ];
             Debug.EnableGdbStub.Value = false;
             Debug.GdbStubPort.Value = 55555;

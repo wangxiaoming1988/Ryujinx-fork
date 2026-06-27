@@ -88,7 +88,7 @@
                     Grid.Column="2"
                     Margin="2"
                     HorizontalAlignment="Stretch"
-                    VerticalAlignment="Center" ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+                    VerticalAlignment="Center" ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto">
                     <TextBlock
                         Margin="5,0,10,0"
                         Width="90"
@@ -101,19 +101,46 @@
                         Name="ProfileBox"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Center"
+                        MaxHeight="32"
+                        Padding="8,0,44,0"
+                        IsEnabled="{Binding ShowSettings}"
                         SelectedItem="{Binding ChosenProfile, Mode=TwoWay}"
                         SelectionChanged="ComboBox_SelectionChanged"
                         ItemsSource="{Binding ProfilesList}"
-                        Text="{Binding ProfileName, Mode=TwoWay}" />
+                        Text="{Binding ProfileName, Mode=TwoWay}">
+                        <ui:FAComboBox.Styles>
+                            <Style Selector="TextBlock">
+                                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                                <Setter Property="TextWrapping" Value="NoWrap" />
+                                <Setter Property="MaxLines" Value="1" />
+                                <Setter Property="MaxWidth" Value="170" />
+                            </Style>
+                            <Style Selector="TextBox">
+                                <Setter Property="TextWrapping" Value="NoWrap" />
+                                <Setter Property="MaxLines" Value="1" />
+                                <Setter Property="Padding" Value="0,0,36,0" />
+                            </Style>
+                        </ui:FAComboBox.Styles>
+                    </ui:FAComboBox>
+                    <ui:SymbolIcon
+                        Grid.Column="1"
+                        Symbol="Link"
+                        FontSize="12"
+                        Opacity="0.6"
+                        IsVisible="{Binding IsProfileLinked}"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Margin="0,0,37,0" />
                     <Button
                         Grid.Column="2"
                         MinWidth="0"
                         Margin="5,0,0,0"
                         VerticalAlignment="Center"
-                        ToolTip.Tip="{ext:Locale ControllerSettingsLoadProfileToolTip}"
-                        Command="{Binding LoadProfileButton}">
+                        ToolTip.Tip="{ext:Locale ControllerSettingsBindProfileToolTip}"
+                        IsEnabled="{Binding CanBindSelectedProfile}"
+                        Click="LinkProfileButton_OnClick">
                         <ui:SymbolIcon
-                            Symbol="View"
+                            Symbol="Link"
                             FontSize="15"
                             Height="20" />
                     </Button>
@@ -122,10 +149,11 @@
                             MinWidth="0"
                             Margin="5,0,0,0"
                             VerticalAlignment="Center"
-                            ToolTip.Tip="{ext:Locale ControllerSettingsSaveProfileToolTip}"
-                            Command="{Binding SaveProfile}">
+                            ToolTip.Tip="{ext:Locale ControllerSettingsLoadProfileToolTip}"
+                            IsEnabled="{Binding ShowSettings}"
+                            Click="LoadProfileButton_OnClick">
                         <ui:SymbolIcon
-                            Symbol="Save"
+                            Symbol="OpenFolder"
                             FontSize="15"
                             Height="20" />
                     </Button>
@@ -134,7 +162,21 @@
                             MinWidth="0"
                             Margin="5,0,0,0"
                             VerticalAlignment="Center"
+                            ToolTip.Tip="{ext:Locale ControllerSettingsSaveProfileToolTip}"
+                            IsEnabled="{Binding CanDeleteOrSaveProfile}"
+                            Command="{Binding SaveProfile}">
+                        <ui:SymbolIcon
+                            Symbol="Save"
+                            FontSize="15"
+                            Height="20" />
+                    </Button>
+                    <Button
+                        Grid.Column="5"
+                            MinWidth="0"
+                            Margin="5,0,0,0"
+                            VerticalAlignment="Center"
                             ToolTip.Tip="{ext:Locale ControllerSettingsRemoveProfileToolTip}"
+                            IsEnabled="{Binding CanDeleteOrSaveProfile}"
                             Command="{Binding RemoveProfile}">
                         <ui:SymbolIcon
                             Symbol="Delete"
@@ -149,7 +191,7 @@
                 <Grid
                     Grid.Column="0"
                     Margin="2"
-                    HorizontalAlignment="Stretch" ColumnDefinitions="Auto,*,Auto,Auto">
+                    HorizontalAlignment="Stretch" ColumnDefinitions="Auto,*,Auto,Auto,Auto">
                     <TextBlock
                         Grid.Column="0"
                         Margin="5,0,10,0"
@@ -187,7 +229,21 @@
                         MinWidth="0"
                         Margin="5,0,0,0"
                         VerticalAlignment="Center"
+                        ToolTip.Tip="{ext:Locale ControllerSettingsAssignedInputDevicesTooltip}"
+                        IsEnabled="{Binding CanOpenAssignedDevices}"
+                        Click="AssignedDevicesButton_OnClick">
+                        <ui:SymbolIcon
+                            Symbol="Settings"
+                            FontSize="15"
+                            Height="20"/>
+                    </Button>
+                    <Button
+                        Grid.Column="4"
+                        MinWidth="0"
+                        Margin="5,0,0,0"
+                        VerticalAlignment="Center"
                         ToolTip.Tip="{ext:Locale ControllerSettingsResetKeybindsToDefault}"
+                        IsEnabled="{Binding ShowSettings}"
                         Click="ResetCurrentDeviceToDefaultsButton_OnClick">
                         <ui:SymbolIcon
                             Symbol="Undo"
@@ -210,6 +266,7 @@
                     <ComboBox
                         Grid.Column="1"
                         HorizontalAlignment="Stretch"
+                        IsEnabled="{Binding ShowSettings}"
                         ItemsSource="{Binding Controllers}"
                         SelectedIndex="{Binding Controller}">
                         <ComboBox.ItemTemplate>

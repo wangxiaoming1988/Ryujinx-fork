@@ -427,6 +427,16 @@ namespace Ryujinx.Ava.Systems.Configuration
         public List<InputConfig> InputConfig { get; set; }
 
         /// <summary>
+        /// Player-level input routing assignments
+        /// </summary>
+        public List<PlayerInputAssignment> PlayerInputAssignments { get; set; }
+
+        /// <summary>
+        /// Whether to allow mapping the same input device to multiple players.
+        /// </summary>
+        public bool AllowDuplicateDeviceAssignment { get; set; }
+
+        /// <summary>
         /// The speed of spectrum cycling for the Rainbow LED feature.
         /// </summary>
         public float RainbowSpeed { get; set; }

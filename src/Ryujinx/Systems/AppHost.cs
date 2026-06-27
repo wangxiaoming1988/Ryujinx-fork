@@ -468,11 +468,11 @@ namespace Ryujinx.Ava.Systems
 
             if (ConfigurationState.Instance.System.UseInputGlobalConfig.Value && Program.UseExtraConfig)
             {
-                NpadManager.Initialize(Device, ConfigurationState.InstanceExtra.Hid.InputConfig, ConfigurationState.Instance.Hid.EnableKeyboard, ConfigurationState.Instance.Hid.EnableMouse);
+                NpadManager.Initialize(Device, ConfigurationState.InstanceExtra.Hid.InputConfig, ConfigurationState.InstanceExtra.Hid.PlayerInputAssignments, ConfigurationState.Instance.Hid.EnableKeyboard, ConfigurationState.Instance.Hid.EnableMouse);
             }
             else
             {
-                NpadManager.Initialize(Device, ConfigurationState.Instance.Hid.InputConfig, ConfigurationState.Instance.Hid.EnableKeyboard, ConfigurationState.Instance.Hid.EnableMouse);
+                NpadManager.Initialize(Device, ConfigurationState.Instance.Hid.InputConfig, ConfigurationState.Instance.Hid.PlayerInputAssignments, ConfigurationState.Instance.Hid.EnableKeyboard, ConfigurationState.Instance.Hid.EnableMouse);
             }
 
             TouchScreenManager.Initialize(Device);

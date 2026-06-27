@@ -18,6 +18,11 @@ using System.Threading.Tasks;
 
 namespace Ryujinx.Ava.UI.Helpers
 {
+    public class CheckBoxDialogResult
+    {
+        public bool IsChecked { get; set; }
+    }
+
     public static class ContentDialogHelper
     {
         private static bool _isChoiceDialogOpen;
@@ -429,6 +434,67 @@ namespace Ryujinx.Ava.UI.Helpers
             _isChoiceDialogOpen = false;
 
             return response == UserResult.Yes;
+        }
+
+        internal static async Task<CheckBoxDialogResult> CreateCheckBoxDialog(string title, string primaryText, string checkBoxText, bool isCheckedDefault)
+        {
+            CheckBoxDialogResult result = new CheckBoxDialogResult { IsChecked = isCheckedDefault };
+
+            Grid content = new()
+            {
+                RowDefinitions = [new(), new(), new()],
+                ColumnDefinitions = [new(GridLength.Auto), new()],
+                MinHeight = 80,
+            };
+
+            content.Children.Add(new SymbolIcon
+            {
+                Symbol = (Symbol)Symbol.Important,
+                Margin = new Thickness(10),
+                FontSize = 40,
+                FlowDirection = FlowDirection.LeftToRight,
+                VerticalAlignment = VerticalAlignment.Center,
+                GridColumn = 0,
+                GridRow = 0,
+                GridRowSpan = 2
+            });
+
+            content.Children.Add(new TextBlock
+            {
+                Text = primaryText,
+                Margin = new Thickness(5),
+                TextWrapping = TextWrapping.Wrap,
+                MaxWidth = 450,
+                GridColumn = 1,
+                GridRow = 0
+            });
+
+            CheckBox checkBox = new()
+            {
+                Content = checkBoxText,
+                IsChecked = isCheckedDefault,
+                Margin = new Thickness(5),
+                GridColumn = 1,
+                GridRow = 1
+            };
+
+            checkBox.IsCheckedChanged += (s, e) =>
+            {
+                result.IsChecked = checkBox.IsChecked == true;
+            };
+
+            content.Children.Add(checkBox);
+
+            ContentDialog contentDialog = new()
+            {
+                Title = title,
+                PrimaryButtonText = LocaleManager.Instance[LocaleKeys.InputDialogOk],
+                Content = content,
+            };
+
+            await ShowAsync(contentDialog);
+
+            return result;
         }
 
         internal static async Task<UserResult> CreateUpdaterChoiceDialog(string title, string primary, string secondaryText, string changelogUrl)
