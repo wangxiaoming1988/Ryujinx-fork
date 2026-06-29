@@ -109,6 +109,11 @@ namespace Ryujinx.Input.HLE
 
         private void HandleOnGamepadConnected(string id)
         {
+            List<InputConfig> requestedInputConfig;
+            List<PlayerInputAssignment> playerInputAssignments;
+            bool enableKeyboard;
+            bool enableMouse;
+
             lock (_lock)
             {
                 for (int i = 0; i < _controllers.Length; i++)
@@ -119,10 +124,15 @@ namespace Ryujinx.Input.HLE
                         _controllers[i] = null;
                     }
                 }
+
+                requestedInputConfig = _requestedInputConfig;
+                playerInputAssignments = _playerInputAssignments;
+                enableKeyboard = _enableKeyboard;
+                enableMouse = _enableMouse;
             }
 
             // Force input reload
-            ReloadConfiguration(_requestedInputConfig, _playerInputAssignments, _enableKeyboard, _enableMouse);
+            ReloadConfiguration(requestedInputConfig, playerInputAssignments, enableKeyboard, enableMouse);
         }
 
         private bool PlayerHasAssignedControllerId(PlayerIndex playerIndex, string id)

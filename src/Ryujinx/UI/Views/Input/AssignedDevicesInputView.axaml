@@ -19,59 +19,74 @@
             BorderThickness="1"
             CornerRadius="5"
             HorizontalAlignment="Stretch">
-            <ItemsControl
-                ItemsSource="{Binding PlayerInputDevices}">
+            <ItemsControl ItemsSource="{Binding PlayerInputDevices}">
+                <ItemsControl.Styles>
+                    <Style Selector="ContentPresenter">
+                        <Setter Property="HorizontalAlignment" Value="Stretch" />
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    </Style>
+                </ItemsControl.Styles>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel HorizontalAlignment="Stretch" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="models:PlayerInputDeviceAssignmentItem">
                         <Border
                             Margin="0,3"
                             Padding="10,8"
                             CornerRadius="4"
+                            HorizontalAlignment="Stretch"
                             Background="{DynamicResource ControlFillColorTertiary}"
                             BorderBrush="{DynamicResource ThemeControlBorderColor}"
                             BorderThickness="1"
                             PointerPressed="DeviceRow_OnPointerPressed"
                             Cursor="Hand"
                             IsEnabled="{Binding !IsDisabledByOtherPlayer}">
-                            <Grid ColumnDefinitions="Auto,*,200">
+                            <DockPanel
+                                HorizontalAlignment="Stretch"
+                                LastChildFill="True">
                                 <CheckBox
-                                    Grid.Column="0"
+                                    DockPanel.Dock="Left"
+                                    Margin="0,0,8,0"
+                                    Padding="0"
+                                    VerticalAlignment="Center"
+                                    ClipToBounds="False"
                                     IsChecked="{Binding IsAssigned}"
                                     Checked="AssignedDeviceCheckBox_OnCheckedChanged"
-                                    Unchecked="AssignedDeviceCheckBox_OnCheckedChanged"
+                                    Unchecked="AssignedDeviceCheckBox_OnCheckedChanged" />
+                                <TextBlock
+                                    DockPanel.Dock="Right"
+                                    Margin="10,0,0,0"
+                                    Opacity="0.6"
+                                    FontSize="12"
+                                    MaxWidth="200"
                                     VerticalAlignment="Center"
-                                    Margin="0"
-                                    Padding="0" />
+                                    HorizontalAlignment="Right"
+                                    TextWrapping="Wrap"
+                                    Text="{Binding AssignedToPlayers}"
+                                    IsVisible="{Binding HasAssignedToPlayers}" />
                                 <StackPanel
-                                    Grid.Column="1"
-                                    Margin="8,0,0,0"
+                                    HorizontalAlignment="Left"
                                     VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Name}" />
                                     <TextBlock
+                                        HorizontalAlignment="Left"
+                                        Text="{Binding Name}" />
+                                    <TextBlock
+                                        HorizontalAlignment="Left"
                                         Opacity="0.6"
                                         FontSize="12"
-                                        MaxWidth="160"
                                         TextTrimming="CharacterEllipsis"
                                         TextWrapping="NoWrap"
                                         MaxLines="1"
                                         IsVisible="{Binding HasBoundProfileName}">
                                         <Run Text="{ext:Locale ControllerSettingsProfile}" />
-                                        <Run Text=":" />
+                                        <Run Text=": " />
                                         <Run Text="{Binding BoundProfileName}" />
                                     </TextBlock>
                                 </StackPanel>
-                                <TextBlock
-                                    Grid.Column="2"
-                                    VerticalAlignment="Center"
-                                    HorizontalAlignment="Center"
-                                    Margin="10,0,0,0"
-                                    Opacity="0.6"
-                                    FontSize="12"
-                                    Text="{Binding AssignedToPlayers}"
-                                    TextWrapping="Wrap"
-                                    MaxWidth="200"
-                                    IsVisible="{Binding HasAssignedToPlayers}" />
-                            </Grid>
+                            </DockPanel>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

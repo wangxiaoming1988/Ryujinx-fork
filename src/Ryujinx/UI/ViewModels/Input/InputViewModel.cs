@@ -207,7 +207,9 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
 
         private async void ShowDynamicInputSwapFirstUseWarning()
         {
-            string message = LocaleManager.Instance[LocaleKeys.DialogDynamicInputSwapDeviceAssignmentsHint];
+            string message = LocaleManager.Instance.UpdateAndGetDynamicValue(
+                LocaleKeys.DialogDynamicInputSwapDeviceAssignmentsHint,
+                BuildDynamicInputSwapFirstUseAssignmentSummary());
 
             CheckBoxDialogResult result = await ContentDialogHelper.CreateCheckBoxDialog(
                 LocaleManager.Instance[LocaleKeys.ControllerSettingsAssignedInputDevices],
@@ -219,6 +221,15 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
             {
                 ConfigurationState.Instance.UI.ShowDynamicInputSwapWarning.Value = false;
             }
+        }
+
+        private string BuildDynamicInputSwapFirstUseAssignmentSummary()
+        {
+            return string.Join(
+                Environment.NewLine,
+                PlayerInputDevices
+                    .Where(device => device.HasAssignedToPlayers)
+                    .Select(device => $"{device.Name} - {device.AssignedToPlayers}"));
         }
 
         public bool AllowDuplicateDeviceAssignment
@@ -853,15 +864,6 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
             {
                 PlayerInputAssignment normalizedOtherAssignment = GetWorkingPlayerInputAssignment(otherPlayer);
 
-                // Only include players who participate in dynamic input swap.
-                // Players with dynamic swap disabled manage their device through
-                // the traditional InputConfig and should not appear in the
-                // Assigned Devices menu for other players.
-                if (!normalizedOtherAssignment.EnableDynamicInputSwap)
-                {
-                    continue;
-                }
-
                 string playerName = GetPlayerDisplayName(otherPlayer);
 
                 foreach (AssignedInputDevice device in normalizedOtherAssignment.Devices)
@@ -939,11 +941,6 @@ namespace Ryujinx.Ava.UI.ViewModels.Input
             }
 
             string currentPlayerName = GetPlayerDisplayName(_playerId);
-
-            if (!AllowDuplicateDeviceAssignment)
-            {
-                return currentPlayerName;
-            }
 
             return assignedOtherPlayers != null && assignedOtherPlayers.Count > 0
                 ? $"{currentPlayerName}, {string.Join(", ", assignedOtherPlayers.OrderBy(name => ExtractPlayerNumber(name)))}"

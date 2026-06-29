@@ -417,8 +417,8 @@ namespace Ryujinx.Input.HLE
             bool motionWasDisabled = oldConfig?.Motion == null;
             bool leftMotionMissing = _leftMotionInput == null;
             bool isJoyconPairNeedingRightMotion = newConfig.ControllerType == ConfigControllerType.JoyconPair && _rightMotionInput == null;
-            bool motionEnabledChanged = oldConfig.Motion.EnableMotion != newConfig.Motion.EnableMotion;
-            bool motionBackendChanged = oldConfig.Motion.MotionBackend != newConfig.Motion.MotionBackend;
+            bool motionEnabledChanged = !motionWasDisabled && oldConfig?.Motion?.EnableMotion != newConfig.Motion.EnableMotion;
+            bool motionBackendChanged = !motionWasDisabled && oldConfig?.Motion?.MotionBackend != newConfig.Motion.MotionBackend;
 
             return motionWasDisabled ||
                    leftMotionMissing ||
@@ -769,7 +769,7 @@ namespace Ryujinx.Input.HLE
                 {
                     foreach (string gamepadId in gamepadDriver.GamepadsIds)
                     {
-                        if (gamepadId == assignedController.Id)
+                        if (string.Equals(gamepadId, assignedController.Id, StringComparison.Ordinal))
                         {
                             yield return assignedController;
                             break;
@@ -784,7 +784,7 @@ namespace Ryujinx.Input.HLE
             {
                 foreach (string gamepadId in gamepadDriver.GamepadsIds)
                 {
-                    if (gamepadId == config.Id)
+                    if (string.Equals(gamepadId, config.Id, StringComparison.Ordinal))
                     {
                         yield return new AssignedInputDevice
                         {
