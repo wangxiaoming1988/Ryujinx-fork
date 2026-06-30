@@ -5,7 +5,7 @@ namespace ARMeilleure.CodeGen.Linking
     /// <summary>
     /// Represents a symbol.
     /// </summary>
-    readonly struct Symbol
+    public readonly struct Symbol
     {
         private readonly ulong _value;
 

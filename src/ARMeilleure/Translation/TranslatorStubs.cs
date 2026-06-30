@@ -14,6 +14,8 @@ namespace ARMeilleure.Translation
     /// </summary>
     class TranslatorStubs : IDisposable
     {
+        private readonly JitCache _jitCache;
+        
         private readonly Lazy<nint> _slowDispatchStub;
 
         private bool _disposed;
@@ -83,11 +85,14 @@ namespace ARMeilleure.Translation
         /// Initializes a new instance of the <see cref="TranslatorStubs"/> class with the specified
         /// <see cref="Translator"/> instance.
         /// </summary>
+        /// <param name="jitCache">Jit cache to map functions in</param>
         /// <param name="functionTable">Function table used to store pointers to the functions that the guest code will call</param>
         /// <exception cref="ArgumentNullException"><paramref name="translator"/> is null</exception>
-        public TranslatorStubs(IAddressTable<ulong> functionTable)
+        public TranslatorStubs(JitCache jitCache, IAddressTable<ulong> functionTable)
         {
             ArgumentNullException.ThrowIfNull(functionTable);
+            
+            _jitCache = jitCache;
 
             _functionTable = functionTable;
             _slowDispatchStub = new(GenerateSlowDispatchStub, isThreadSafe: true);
@@ -115,12 +120,12 @@ namespace ARMeilleure.Translation
             {
                 if (_dispatchStub.IsValueCreated)
                 {
-                    JitCache.Unmap(_dispatchStub.Value);
+                    _jitCache.Unmap(_dispatchStub.Value);
                 }
 
                 if (_dispatchLoop.IsValueCreated)
                 {
-                    JitCache.Unmap(Marshal.GetFunctionPointerForDelegate(_dispatchLoop.Value));
+                    _jitCache.Unmap(Marshal.GetFunctionPointerForDelegate(_dispatchLoop.Value));
                 }
 
                 _disposed = true;
@@ -188,7 +193,7 @@ namespace ARMeilleure.Translation
             OperandType retType = OperandType.I64;
             OperandType[] argTypes = [OperandType.I64];
 
-            GuestFunction func = Compiler.Compile(cfg, argTypes, retType, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<GuestFunction>();
+            GuestFunction func = Compiler.Compile(cfg, argTypes, retType, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<GuestFunction>(_jitCache);
 
             return Marshal.GetFunctionPointerForDelegate(func);
         }
@@ -213,7 +218,7 @@ namespace ARMeilleure.Translation
             OperandType retType = OperandType.I64;
             OperandType[] argTypes = [OperandType.I64];
 
-            GuestFunction func = Compiler.Compile(cfg, argTypes, retType, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<GuestFunction>();
+            GuestFunction func = Compiler.Compile(cfg, argTypes, retType, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<GuestFunction>(_jitCache);
 
             return Marshal.GetFunctionPointerForDelegate(func);
         }
@@ -290,7 +295,7 @@ namespace ARMeilleure.Translation
             OperandType retType = OperandType.None;
             OperandType[] argTypes = [OperandType.I64, OperandType.I64];
 
-            return Compiler.Compile(cfg, argTypes, retType, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<DispatcherFunction>();
+            return Compiler.Compile(cfg, argTypes, retType, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<DispatcherFunction>(_jitCache);
         }
 
         /// <summary>
@@ -314,7 +319,7 @@ namespace ARMeilleure.Translation
             OperandType retType = OperandType.I64;
             OperandType[] argTypes = [OperandType.I64, OperandType.I64];
 
-            return Compiler.Compile(cfg, argTypes, retType, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<WrapperFunction>();
+            return Compiler.Compile(cfg, argTypes, retType, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<WrapperFunction>(_jitCache);
         }
     }
 }

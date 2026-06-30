@@ -1,5 +1,6 @@
 using ARMeilleure.IntermediateRepresentation;
 using ARMeilleure.Translation;
+using ARMeilleure.Translation.Cache;
 using System.Runtime.InteropServices;
 using static ARMeilleure.IntermediateRepresentation.Operand.Factory;
 
@@ -17,7 +18,7 @@ namespace ARMeilleure.Signal
         public delegate int DebugThreadLocalMapGetOrReserve(int threadId, int initialState);
         public delegate void DebugNativeWriteLoop(nint nativeWriteLoopPtr, nint writePtr);
 
-        public static DebugPartialUnmap GenerateDebugPartialUnmap()
+        public static DebugPartialUnmap GenerateDebugPartialUnmap(JitCache jitCache)
         {
             EmitterContext context = new();
 
@@ -31,10 +32,10 @@ namespace ARMeilleure.Signal
 
             OperandType[] argTypes = [OperandType.I64];
 
-            return Compiler.Compile(cfg, argTypes, OperandType.I32, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<DebugPartialUnmap>();
+            return Compiler.Compile(cfg, argTypes, OperandType.I32, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<DebugPartialUnmap>(jitCache);
         }
 
-        public static DebugThreadLocalMapGetOrReserve GenerateDebugThreadLocalMapGetOrReserve(nint structPtr)
+        public static DebugThreadLocalMapGetOrReserve GenerateDebugThreadLocalMapGetOrReserve(JitCache jitCache, nint structPtr)
         {
             EmitterContext context = new();
 
@@ -48,10 +49,10 @@ namespace ARMeilleure.Signal
 
             OperandType[] argTypes = [OperandType.I64];
 
-            return Compiler.Compile(cfg, argTypes, OperandType.I32, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<DebugThreadLocalMapGetOrReserve>();
+            return Compiler.Compile(cfg, argTypes, OperandType.I32, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<DebugThreadLocalMapGetOrReserve>(jitCache);
         }
 
-        public static DebugNativeWriteLoop GenerateDebugNativeWriteLoop()
+        public static DebugNativeWriteLoop GenerateDebugNativeWriteLoop(JitCache jitCache)
         {
             EmitterContext context = new();
 
@@ -77,7 +78,7 @@ namespace ARMeilleure.Signal
 
             OperandType[] argTypes = [OperandType.I64];
 
-            return Compiler.Compile(cfg, argTypes, OperandType.None, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<DebugNativeWriteLoop>();
+            return Compiler.Compile(cfg, argTypes, OperandType.None, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<DebugNativeWriteLoop>(jitCache);
         }
     }
 }

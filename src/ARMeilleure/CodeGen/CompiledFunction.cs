@@ -8,7 +8,7 @@ namespace ARMeilleure.CodeGen
     /// <summary>
     /// Represents a compiled function.
     /// </summary>
-    readonly struct CompiledFunction
+    public readonly struct CompiledFunction
     {
         /// <summary>
         /// Gets the machine code of the <see cref="CompiledFunction"/>.
@@ -44,10 +44,11 @@ namespace ARMeilleure.CodeGen
         /// <typeparamref name="T"/> pointing to the mapped function.
         /// </summary>
         /// <typeparam name="T">Type of delegate</typeparam>
+        /// <param name="jitCache">The jit cache to map the function into</param>
         /// <returns>A delegate of type <typeparamref name="T"/> pointing to the mapped function</returns>
-        public T Map<T>()
+        public T Map<T>(JitCache jitCache)
         {
-            return MapWithPointer<T>(out _);
+            return MapWithPointer<T>(jitCache, out _);
         }
 
         /// <summary>
@@ -55,11 +56,12 @@ namespace ARMeilleure.CodeGen
         /// <typeparamref name="T"/> pointing to the mapped function.
         /// </summary>
         /// <typeparam name="T">Type of delegate</typeparam>
+        /// <param name="jitCache">The jit cache to map the function into</param>
         /// <param name="codePointer">Pointer to the function code in memory</param>
         /// <returns>A delegate of type <typeparamref name="T"/> pointing to the mapped function</returns>
-        public T MapWithPointer<T>(out nint codePointer)
+        public T MapWithPointer<T>(JitCache jitCache, out nint codePointer)
         {
-            codePointer = JitCache.Map(this);
+            codePointer = jitCache.Map(this);
 
             return Marshal.GetDelegateForFunctionPointer<T>(codePointer);
         }

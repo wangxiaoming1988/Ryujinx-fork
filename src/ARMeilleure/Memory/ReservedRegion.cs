@@ -2,7 +2,7 @@ using System;
 
 namespace ARMeilleure.Memory
 {
-    public class ReservedRegion
+    public class ReservedRegion : IDisposable
     {
         public const int DefaultGranularity = 65536; // Mapping granularity in Windows.
 

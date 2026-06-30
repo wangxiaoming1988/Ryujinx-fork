@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ARMeilleure.Translation.Cache
 {
-    readonly struct CacheEntry : IComparable<CacheEntry>
+    public readonly struct CacheEntry : IComparable<CacheEntry>
     {
         public int Offset { get; }
         public int Size { get; }

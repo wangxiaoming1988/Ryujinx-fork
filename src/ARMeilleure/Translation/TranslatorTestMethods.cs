@@ -1,6 +1,7 @@
 using ARMeilleure.CodeGen.X86;
 using ARMeilleure.IntermediateRepresentation;
 using ARMeilleure.State;
+using ARMeilleure.Translation.Cache;
 using System;
 using System.Runtime.InteropServices;
 using static ARMeilleure.IntermediateRepresentation.Operand.Factory;
@@ -59,7 +60,7 @@ namespace ARMeilleure.Translation
             return context.VectorExtract(OperandType.I32, vec, 0);
         }
 
-        public static FpFlagsPInvokeTest GenerateFpFlagsPInvokeTest()
+        public static FpFlagsPInvokeTest GenerateFpFlagsPInvokeTest(JitCache jitCache)
         {
             EmitterContext context = new();
 
@@ -141,7 +142,7 @@ namespace ARMeilleure.Translation
 
             OperandType[] argTypes = [OperandType.I64];
 
-            return Compiler.Compile(cfg, argTypes, OperandType.I32, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<FpFlagsPInvokeTest>();
+            return Compiler.Compile(cfg, argTypes, OperandType.I32, CompilerOptions.HighCq, RuntimeInformation.ProcessArchitecture).Map<FpFlagsPInvokeTest>(jitCache);
         }
     }
 }

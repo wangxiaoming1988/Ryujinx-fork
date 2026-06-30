@@ -3,7 +3,7 @@ namespace ARMeilleure.CodeGen.Linking
     /// <summary>
     /// Represents a relocation.
     /// </summary>
-    readonly struct RelocEntry
+    public readonly struct RelocEntry
     {
         public const int Stride = 13; // Bytes.
 

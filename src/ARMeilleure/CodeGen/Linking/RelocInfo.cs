@@ -5,7 +5,7 @@ namespace ARMeilleure.CodeGen.Linking
     /// <summary>
     /// Represents relocation information about a <see cref="CompiledFunction"/>.
     /// </summary>
-    readonly struct RelocInfo
+    public readonly struct RelocInfo
     {
         /// <summary>
         /// Gets an empty <see cref="RelocInfo"/>.

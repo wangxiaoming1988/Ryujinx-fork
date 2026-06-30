@@ -24,6 +24,7 @@ namespace ARMeilleure.Translation
         private readonly IJitMemoryAllocator _allocator;
         private readonly ConcurrentQueue<KeyValuePair<ulong, TranslatedFunction>> _oldFuncs;
 
+        public readonly JitCache JitCache;
         private readonly Ptc _ptc;
 
         internal TranslatorCache<TranslatedFunction> Functions { get; }
@@ -43,16 +44,17 @@ namespace ARMeilleure.Translation
 
             _oldFuncs = new ConcurrentQueue<KeyValuePair<ulong, TranslatedFunction>>();
 
-            _ptc = new Ptc();
+            JitCache = new JitCache(allocator);
+            
+            _ptc = new Ptc(JitCache);
 
             Queue = new TranslatorQueue();
 
-            JitCache.Initialize(allocator);
 
             CountTable = new EntryTable<uint>();
             Functions = new TranslatorCache<TranslatedFunction>();
             FunctionTable = functionTable;
-            Stubs = new TranslatorStubs(FunctionTable);
+            Stubs = new TranslatorStubs(JitCache, FunctionTable);
 
             FunctionTable.Fill = (ulong)Stubs.SlowDispatchStub;
         }
@@ -167,6 +169,7 @@ namespace ARMeilleure.Translation
                 }
 
                 ClearJitCache();
+                JitCache.Dispose();
 
                 Stubs.Dispose();
                 FunctionTable.Dispose();
@@ -305,7 +308,7 @@ namespace ARMeilleure.Translation
                 _ptc.WriteCompiledFunction(address, funcSize, hash, highCq, compiledFunc);
             }
 
-            GuestFunction func = compiledFunc.MapWithPointer<GuestFunction>(out nint funcPointer);
+            GuestFunction func = compiledFunc.MapWithPointer<GuestFunction>(JitCache, out nint funcPointer);
 
             Allocators.ResetAll();
 

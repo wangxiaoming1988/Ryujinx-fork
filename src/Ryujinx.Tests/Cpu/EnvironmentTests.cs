@@ -51,7 +51,7 @@ namespace Ryujinx.Tests.Cpu
             bool methodCalled = false;
             bool isFz = false;
 
-            TranslatorTestMethods.FpFlagsPInvokeTest method = TranslatorTestMethods.GenerateFpFlagsPInvokeTest();
+            TranslatorTestMethods.FpFlagsPInvokeTest method = TranslatorTestMethods.GenerateFpFlagsPInvokeTest(_translator.JitCache);
 
             // This method sets flush-to-zero and then calls the managed method.
             // Before and after setting the flags, it ensures subnormal addition works as expected.

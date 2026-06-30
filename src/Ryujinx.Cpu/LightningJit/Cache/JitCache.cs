@@ -11,76 +11,45 @@ using System.Threading;
 
 namespace Ryujinx.Cpu.LightningJit.Cache
 {
-    static partial class JitCache
+    partial class JitCache : IDisposable
     {
         private static readonly int _pageSize = (int)MemoryBlock.GetPageSize();
         private static readonly int _pageMask = _pageSize - 1;
 
         private const int CodeAlignment = 4; // Bytes.
-        // TODO: JIT Cache size should be application dependent, not global.
-        private const int CacheSize = 1024 * (1024 * 1024); // Megabytes * Size of Megabytes (since its in bytes).
+        private const uint CacheSize = 256 * 1024 * 1024; // Megabytes * Size of Megabytes (since its in bytes).
 
-        private static JitCacheInvalidation _jitCacheInvalidator;
+        private readonly JitCacheInvalidation _jitCacheInvalidator;
 
-        private static CacheMemoryAllocator _cacheAllocator;
+        private readonly  CacheMemoryAllocator _cacheAllocator;
 
-        private static readonly List<CacheEntry> _cacheEntries = [];
+        private readonly List<CacheEntry> _cacheEntries = [];
 
-        private static readonly Lock _lock = new();
-        private static bool _initialized;
-        private static readonly List<ReservedRegion> _jitRegions = [];
-        private static int _activeRegionIndex = 0;
-
-        [SupportedOSPlatform("windows")]
-        [LibraryImport("kernel32.dll", SetLastError = true)]
-        public static partial nint FlushInstructionCache(nint hProcess, nint lpAddress, nuint dwSize);
+        private readonly Lock _lock = new();
         
-        [SupportedOSPlatform("macos")]
-        [LibraryImport("libSystem.dylib", EntryPoint = "sys_icache_invalidate")]
-        internal static partial void SysICacheInvalidate(nint start, nuint len);
+        private readonly List<ReservedRegion> _jitRegions = [];
 
-        [SupportedOSPlatform("linux")]
-        [LibraryImport("libgcc_s.so.1", EntryPoint = "__clear_cache")]
-        internal static partial void ClearCache(nint begin, nint end);
-
-        public static void Initialize(IJitMemoryAllocator allocator)
+        public JitCache(IJitMemoryAllocator allocator)
         {
-            if (_initialized)
-            {
-                return;
-            }
-
             lock (_lock)
             {
-                if (_initialized)
-                {
-                    return;
-                }
-
-                ReservedRegion firstRegion = new(allocator, CacheSize);
-                _jitRegions.Add(firstRegion);
-                _activeRegionIndex = 0;
-
+                _jitRegions.Add(new(allocator, CacheSize));
+                
+                _cacheAllocator = new CacheMemoryAllocator((int)CacheSize);
+                
                 if (!OperatingSystem.IsWindows() && !OperatingSystem.IsMacOS())
                 {
                     _jitCacheInvalidator = new JitCacheInvalidation(allocator);
                 }
-
-                _cacheAllocator = new CacheMemoryAllocator(CacheSize);
-
-                _initialized = true;
             }
         }
 
-        public unsafe static nint Map(ReadOnlySpan<byte> code)
+        public nint Map(ReadOnlySpan<byte> code)
         {
             lock (_lock)
             {
-                Debug.Assert(_initialized);
-
                 int funcOffset = Allocate(code.Length);
-                ReservedRegion targetRegion = _jitRegions[_activeRegionIndex];
-                nint funcPtr = targetRegion.Pointer + funcOffset;
+                nint funcPtr = GetFunctionPtr(funcOffset);
 
                 if (OperatingSystem.IsMacOS() && RuntimeInformation.ProcessArchitecture == Architecture.Arm64)
                 {
@@ -94,9 +63,9 @@ namespace Ryujinx.Cpu.LightningJit.Cache
                 }
                 else
                 {
-                    ReprotectAsWritable(targetRegion, funcOffset, code.Length);
+                    ReprotectAsWritable(funcOffset, code.Length);
                     Marshal.Copy(code.ToArray(), 0, funcPtr, code.Length);
-                    ReprotectAsExecutable(targetRegion, funcOffset, code.Length);
+                    ReprotectAsExecutable(funcOffset, code.Length);
 
                     _jitCacheInvalidator?.Invalidate(funcPtr, (ulong)code.Length);
                 }
@@ -107,21 +76,20 @@ namespace Ryujinx.Cpu.LightningJit.Cache
             }
         }
 
-        public static void Unmap(nint pointer)
+        public void Unmap(nint pointer)
         {
             lock (_lock)
             {
-                Debug.Assert(_initialized);
-
-                foreach (ReservedRegion region in _jitRegions)
+                for (int i = 0; i < _jitRegions.Count; i++)
                 {
+                    ReservedRegion region = _jitRegions[i];
                     if (pointer.ToInt64() < region.Pointer.ToInt64() ||
-                        pointer.ToInt64() >= (region.Pointer + CacheSize).ToInt64())
+                        pointer.ToInt64() >= (region.Pointer + (nint)CacheSize).ToInt64())
                     {
                         continue;
                     }
 
-                    int funcOffset = (int)(pointer.ToInt64() - region.Pointer.ToInt64());
+                    int funcOffset = (int)(pointer.ToInt64() - region.Pointer.ToInt64() + i * CacheSize);
 
                     if (TryFind(funcOffset, out CacheEntry entry, out int entryIndex) && entry.Offset == funcOffset)
                     {
@@ -134,59 +102,63 @@ namespace Ryujinx.Cpu.LightningJit.Cache
             }
         }
 
-        private static void ReprotectAsWritable(ReservedRegion region, int offset, int size)
+        private void ReprotectAsWritable(int offset, int size)
         {
             int endOffs = offset + size;
-            int regionStart = offset & ~_pageMask;
-            int regionEnd = (endOffs + _pageMask) & ~_pageMask;
+            int regionStart = (offset % (int)CacheSize) & ~_pageMask;
+            int regionEnd = ((endOffs % (int)CacheSize) + _pageMask) & ~_pageMask;
 
-            region.Block.MapAsRwx((ulong)regionStart, (ulong)(regionEnd - regionStart));
+            GetRegion(offset).Block.MapAsRwx((ulong)regionStart, (ulong)(regionEnd - regionStart));
         }
 
-        private static void ReprotectAsExecutable(ReservedRegion region, int offset, int size)
+        private void ReprotectAsExecutable(int offset, int size)
         {
             int endOffs = offset + size;
-            int regionStart = offset & ~_pageMask;
-            int regionEnd = (endOffs + _pageMask) & ~_pageMask;
+            int regionStart = (offset % (int)CacheSize) & ~_pageMask;
+            int regionEnd = ((endOffs % (int)CacheSize) + _pageMask) & ~_pageMask;
 
-            region.Block.MapAsRx((ulong)regionStart, (ulong)(regionEnd - regionStart));
+            GetRegion(offset).Block.MapAsRx((ulong)regionStart, (ulong)(regionEnd - regionStart));
         }
 
-        private static int Allocate(int codeSize)
+        private int Allocate(int codeSize)
         {
             codeSize = AlignCodeSize(codeSize);
+            
+            int allocOffset = _cacheAllocator.Allocate(codeSize); 
 
-            for (int i = _activeRegionIndex; i < _jitRegions.Count; i++)
+            if (allocOffset >= 0)
             {
-                int allocOffset = _cacheAllocator.Allocate(codeSize);
-
-                if (allocOffset >= 0)
-                {
-                    _jitRegions[i].ExpandIfNeeded((ulong)allocOffset + (ulong)codeSize);
-                    _activeRegionIndex = i;
-                    return allocOffset;
-                }
+                GetRegion(allocOffset).ExpandIfNeeded((ulong)(allocOffset % (int)CacheSize) + (ulong)codeSize);
+                return allocOffset;
             }
-
-            int exhaustedRegion = _activeRegionIndex;
+            
+            _cacheAllocator.AddNewBlocks(1);
             ReservedRegion newRegion = new(_jitRegions[0].Allocator, CacheSize);
+            
+            Logger.Warning?.Print(LogClass.Cpu, $"JIT Cache of size {(_jitRegions.Count * CacheSize).Bytes()} exhausted, creating new Cache Region ({((_jitRegions.Count + 1) * CacheSize).Bytes()} Total Allocation).");
+
             _jitRegions.Add(newRegion);
-            _activeRegionIndex = _jitRegions.Count - 1;
 
-            int newRegionNumber = _activeRegionIndex;
-
-            Logger.Warning?.Print(LogClass.Cpu, $"JIT Cache Region {exhaustedRegion} exhausted, creating new Cache Region {newRegionNumber} ({((long)(newRegionNumber + 1) * CacheSize).Bytes()} Total Allocation).");
-
-            _cacheAllocator = new CacheMemoryAllocator(CacheSize);
-
-            int allocOffsetNew = _cacheAllocator.Allocate(codeSize);
-            if (allocOffsetNew < 0)
+            allocOffset = _cacheAllocator.Allocate(codeSize);
+            if (allocOffset < 0)
             {
                 throw new OutOfMemoryException("Failed to allocate in new Cache Region!");
             }
 
-            newRegion.ExpandIfNeeded((ulong)allocOffsetNew + (ulong)codeSize);
-            return allocOffsetNew;
+            GetRegion(allocOffset).ExpandIfNeeded((ulong)(allocOffset % (int)CacheSize) + (ulong)codeSize);
+            return allocOffset;
+        }
+        
+        private nint GetFunctionPtr(int offset)
+        {
+            return GetRegion(offset).Pointer + (offset % (int)CacheSize);
+        }
+
+        private ReservedRegion GetRegion(int offset)
+        {
+            int index = offset / (int)CacheSize;
+
+            return _jitRegions[index];
         }
 
         private static int AlignCodeSize(int codeSize)
@@ -194,7 +166,7 @@ namespace Ryujinx.Cpu.LightningJit.Cache
             return checked(codeSize + (CodeAlignment - 1)) & ~(CodeAlignment - 1);
         }
 
-        private static void Add(int offset, int size)
+        private void Add(int offset, int size)
         {
             CacheEntry entry = new(offset, size);
 
@@ -208,7 +180,7 @@ namespace Ryujinx.Cpu.LightningJit.Cache
             _cacheEntries.Insert(index, entry);
         }
 
-        public static bool TryFind(int offset, out CacheEntry entry, out int entryIndex)
+        public bool TryFind(int offset, out CacheEntry entry, out int entryIndex)
         {
             lock (_lock)
             {
@@ -230,6 +202,14 @@ namespace Ryujinx.Cpu.LightningJit.Cache
             entry = default;
             entryIndex = 0;
             return false;
+        }
+        
+        public void Dispose()
+        {
+            foreach (ReservedRegion jitRegion in _jitRegions)
+            {
+                jitRegion.Dispose();
+            }
         }
     }
 }

@@ -245,7 +245,7 @@ namespace Ryujinx.Tests.Memory
                 // Create a large mapping.
                 mainMemory.MapView(backing, 0, 0, vaSize);
 
-                TestMethods.DebugNativeWriteLoop writeFunc = TestMethods.GenerateDebugNativeWriteLoop();
+                TestMethods.DebugNativeWriteLoop writeFunc = TestMethods.GenerateDebugNativeWriteLoop(_translator.JitCache);
                 nint writePtr = mainMemory.GetPointer(vaSize - 0x1000, 4);
 
                 Thread testThread = new(() =>
@@ -339,7 +339,7 @@ namespace Ryujinx.Tests.Memory
 
             fixed (void* localMap = &state.LocalCounts)
             {
-                TestMethods.DebugThreadLocalMapGetOrReserve getOrReserve = TestMethods.GenerateDebugThreadLocalMapGetOrReserve((nint)localMap);
+                TestMethods.DebugThreadLocalMapGetOrReserve getOrReserve = TestMethods.GenerateDebugThreadLocalMapGetOrReserve(_translator.JitCache, (nint)localMap);
 
                 for (int i = 0; i < ThreadLocalMap<int>.MapSize; i++)
                 {

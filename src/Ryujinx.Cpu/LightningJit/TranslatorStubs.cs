@@ -19,6 +19,8 @@ namespace Ryujinx.Cpu.LightningJit
     {
         private delegate ulong GetFunctionAddressDelegate(nint framePointer, ulong address);
 
+        private readonly JitCache _jitCache;
+        
         private readonly Lazy<nint> _slowDispatchStub;
 
         private bool _disposed;
@@ -76,12 +78,15 @@ namespace Ryujinx.Cpu.LightningJit
         /// Initializes a new instance of the <see cref="TranslatorStubs"/> class with the specified
         /// <see cref="Translator"/> instance.
         /// </summary>
+        /// <param name="jitCache">Jit cache to map functions in</param>
         /// <param name="functionTable">Function table used to store pointers to the functions that the guest code will call</param>
         /// <param name="noWxCache">Cache used on platforms that enforce W^X, otherwise should be null</param>
         /// <exception cref="ArgumentNullException"><paramref name="translator"/> is null</exception>
-        public TranslatorStubs(IAddressTable<ulong> functionTable, NoWxCache noWxCache)
+        public TranslatorStubs(JitCache jitCache, IAddressTable<ulong> functionTable, NoWxCache noWxCache)
         {
             ArgumentNullException.ThrowIfNull(functionTable);
+
+            _jitCache = jitCache;
 
             _functionTable = functionTable;
             _noWxCache = noWxCache;
@@ -113,12 +118,12 @@ namespace Ryujinx.Cpu.LightningJit
                 {
                     if (_dispatchStub.IsValueCreated)
                     {
-                        JitCache.Unmap(_dispatchStub.Value);
+                        _jitCache.Unmap(_dispatchStub.Value);
                     }
 
                     if (_dispatchLoop.IsValueCreated)
                     {
-                        JitCache.Unmap(Marshal.GetFunctionPointerForDelegate(_dispatchLoop.Value));
+                        _jitCache.Unmap(Marshal.GetFunctionPointerForDelegate(_dispatchLoop.Value));
                     }
                 }
 
@@ -363,7 +368,7 @@ namespace Ryujinx.Cpu.LightningJit
             }
             else
             {
-                return JitCache.Map(code);
+                return _jitCache.Map(code);
             }
         }
 

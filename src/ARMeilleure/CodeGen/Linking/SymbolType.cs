@@ -3,7 +3,7 @@ namespace ARMeilleure.CodeGen.Linking
     /// <summary>
     /// Types of <see cref="Symbol"/>.
     /// </summary>
-    enum SymbolType : byte
+    public enum SymbolType : byte
     {
         /// <summary>
         /// Refers to nothing, i.e no symbol.

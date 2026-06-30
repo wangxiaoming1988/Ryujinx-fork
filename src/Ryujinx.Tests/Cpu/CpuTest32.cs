@@ -10,6 +10,8 @@ using MemoryPermission = Ryujinx.Tests.Unicorn.MemoryPermission;
 namespace Ryujinx.Tests.Cpu
 {
     [TestFixture]
+    [Parallelizable(ParallelScope.All)]
+    [FixtureLifeCycle(LifeCycle.InstancePerTestCase)]
     public class CpuTest32
     {
         protected static readonly uint Size = (uint)MemoryBlock.GetPageSize();

@@ -1,6 +1,6 @@
 namespace ARMeilleure.CodeGen.Unwinding
 {
-    struct UnwindInfo
+    public struct UnwindInfo
     {
         public const int Stride = 4; // Bytes.
 

@@ -19,6 +19,7 @@ namespace Ryujinx.Cpu.LightningJit
         private static bool IsNoWxPlatform => false;
 
         private readonly ConcurrentQueue<KeyValuePair<ulong, TranslatedFunction>> _oldFuncs;
+        private readonly JitCache _jitCache;
         private readonly NoWxCache _noWxCache;
         private bool _disposed;
 
@@ -39,12 +40,12 @@ namespace Ryujinx.Cpu.LightningJit
             }
             else
             {
-                JitCache.Initialize(new JitMemoryAllocator(forJit: true));
+                _jitCache = new(new JitMemoryAllocator(forJit: true));
             }
 
             Functions = new TranslatorCache<TranslatedFunction>();
             FunctionTable = functionTable;
-            Stubs = new TranslatorStubs(FunctionTable, _noWxCache);
+            Stubs = new TranslatorStubs(_jitCache, FunctionTable, _noWxCache);
 
             FunctionTable.Fill = (ulong)Stubs.SlowDispatchStub;
 
@@ -100,7 +101,7 @@ namespace Ryujinx.Cpu.LightningJit
 
                 if (oldFunc != func)
                 {
-                    JitCache.Unmap(func.FuncPointer);
+                    _jitCache.Unmap(func.FuncPointer);
                     func = oldFunc;
                 }
 
@@ -121,7 +122,7 @@ namespace Ryujinx.Cpu.LightningJit
         private TranslatedFunction Translate(ulong address, ExecutionMode mode)
         {
             CompiledFunction func = Compile(address, mode);
-            nint funcPointer = JitCache.Map(func.Code);
+            nint funcPointer = _jitCache.Map(func.Code);
 
             return new TranslatedFunction(funcPointer, (ulong)func.GuestCodeLength);
         }
@@ -164,14 +165,14 @@ namespace Ryujinx.Cpu.LightningJit
 
             foreach (TranslatedFunction func in functions)
             {
-                JitCache.Unmap(func.FuncPointer);
+                _jitCache.Unmap(func.FuncPointer);
             }
 
             Functions.Clear();
 
             while (_oldFuncs.TryDequeue(out KeyValuePair<ulong, TranslatedFunction> kv))
             {
-                JitCache.Unmap(kv.Value.FuncPointer);
+                _jitCache.Unmap(kv.Value.FuncPointer);
             }
         }
 
@@ -188,6 +189,7 @@ namespace Ryujinx.Cpu.LightningJit
                     else
                     {
                         ClearJitCache();
+                        _jitCache.Dispose();
                     }
 
                     Stubs.Dispose();

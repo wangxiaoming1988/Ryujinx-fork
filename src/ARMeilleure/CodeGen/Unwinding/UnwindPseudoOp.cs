@@ -1,6 +1,6 @@
 namespace ARMeilleure.CodeGen.Unwinding
 {
-    enum UnwindPseudoOp
+    public enum UnwindPseudoOp
     {
         PushReg = 0,
         SetFrame = 1,
