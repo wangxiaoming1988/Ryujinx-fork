@@ -154,7 +154,7 @@
       "ID": "SettingsTabSystemGCLowLatency",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Niedriglatenz-Garbage-Collector verwenden",
         "el_GR": "",
         "en_US": "Use Low-latency Garbage Collector",
         "es_ES": "Usa recolección de basura de baja latencia",
@@ -13379,7 +13379,7 @@
       "ID": "GCLowLatencyTooltip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Versetzt den Garbage Collector der CLR in den Niedriglatenz-Modus.\n\nDies kann Ruckler verringern, allerdings auf Kosten der Leistung.\n\nIm Zweifelsfall AUS lassen.",
         "el_GR": "",
         "en_US": "Sets the garbage collector for the CLR to low-latency mode.\n\nThis may decrease stuttering at the cost of performance.\n\nLeave OFF if unsure.",
         "es_ES": "Configura el recolector de basura del CLR en modo baja latencia.\n\nEsto puede reducir los tartamudeos a costa del rendimiento.\n\nDéjar desactivado si no está seguro.",
