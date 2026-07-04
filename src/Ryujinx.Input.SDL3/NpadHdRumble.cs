@@ -41,7 +41,7 @@ namespace Ryujinx.Input.SDL3
             }
 
             int serialNumber = 0;
-            string? serial = SDL_GetGamepadSerial(gamepadHandle);
+            string serial = SDL_GetGamepadSerial(gamepadHandle);
             if (serial is not null)
             {
                 int.TryParse(serial, out serialNumber);

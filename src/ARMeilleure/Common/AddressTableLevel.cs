@@ -6,7 +6,7 @@ namespace ARMeilleure.Common
     public readonly struct AddressTableLevel
     {
         /// <summary>
-        /// Gets the index of the <see cref="Level"/> in the guest address.
+        /// Gets the index of the <see cref="Index"/> in the guest address.
         /// </summary>
         public int Index { get; }
 

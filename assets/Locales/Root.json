@@ -1,4 +1,4 @@
-﻿{
+{
   "Locales": [
     {
       "ID": "SettingsTabInputDirectMouseAccess",
@@ -11425,11 +11425,11 @@
         "zh_TW": "目前控制器設定已更新。"
       }
     },
-      {
-        "ID": "DialogControllerSettingsModifiedConfirmSubMessage",
-        "Translations": {
-          "ar_SA": "هل تريد الحفظ ؟",
-          "de_DE": "Controller-Einstellungen speichern?",
+    {
+      "ID": "DialogControllerSettingsModifiedConfirmSubMessage",
+      "Translations": {
+        "ar_SA": "هل تريد الحفظ ؟",
+        "de_DE": "Controller-Einstellungen speichern?",
         "el_GR": "Θέλετε να αποθηκεύσετε;",
         "en_US": "Do you want to save?",
         "es_ES": "¿Guardar cambios?",
@@ -11446,63 +11446,63 @@
         "th_TH": "คุณต้องการบันทึกหรือไม่?",
         "tr_TR": "Kaydetmek istiyor musunuz?",
         "uk_UA": "Ви хочете зберегти?",
-          "zh_CN": "是否保存？",
-          "zh_TW": "您想要儲存嗎?"
-        }
-      },
-      {
-        "ID": "DialogControllerSettingsResetKeybindsConfirmMessage",
-        "Translations": {
-          "ar_SA": "",
-          "de_DE": "",
-          "el_GR": "",
-          "en_US": "Reset the selected device keybinds to their default values?",
-          "es_ES": "¿Restablecer las asignaciones del dispositivo seleccionado a sus valores predeterminados?",
-          "fr_FR": "Réinitialiser les assignations du périphérique sélectionné à leurs valeurs par défaut ?",
-          "he_IL": "",
-          "it_IT": "",
-          "ja_JP": "",
-          "ko_KR": "",
-          "no_NO": "",
-          "pl_PL": "",
-          "pt_BR": "",
-          "ru_RU": "",
-          "sv_SE": "",
-          "th_TH": "",
-          "tr_TR": "",
-          "uk_UA": "",
-          "zh_CN": "要将选定设备的按键绑定重置为默认值吗?",
-          "zh_TW": ""
-        }
-      },
-      {
-        "ID": "DialogControllerSettingsResetKeybindsConfirmSubMessage",
-        "Translations": {
-          "ar_SA": "",
-          "de_DE": "",
-          "el_GR": "",
-          "en_US": "This is a destructive action and will overwrite the current bindings for this device.",
-          "es_ES": "Esta acción es destructiva y sobrescribirá las asignaciones actuales de este dispositivo.",
-          "fr_FR": "Cette action est destructive et écrasera les assignations actuelles de ce périphérique.",
-          "he_IL": "",
-          "it_IT": "",
-          "ja_JP": "",
-          "ko_KR": "",
-          "no_NO": "",
-          "pl_PL": "",
-          "pt_BR": "",
-          "ru_RU": "",
-          "sv_SE": "",
-          "th_TH": "",
-          "tr_TR": "",
-          "uk_UA": "",
-          "zh_CN": "这是一个破坏性的操作,会覆盖此设备当前的绑定。",
-          "zh_TW": ""
-        }
-      },
-      {
-        "ID": "DialogLoadFileErrorMessage",
-        "Translations": {
+        "zh_CN": "是否保存？",
+        "zh_TW": "您想要儲存嗎?"
+      }
+    },
+    {
+      "ID": "DialogControllerSettingsResetKeybindsConfirmMessage",
+      "Translations": {
+        "ar_SA": "",
+        "de_DE": "",
+        "el_GR": "",
+        "en_US": "Reset the selected device keybinds to their default values?",
+        "es_ES": "¿Restablecer las asignaciones del dispositivo seleccionado a sus valores predeterminados?",
+        "fr_FR": "Réinitialiser les assignations du périphérique sélectionné à leurs valeurs par défaut ?",
+        "he_IL": "",
+        "it_IT": "",
+        "ja_JP": "",
+        "ko_KR": "",
+        "no_NO": "",
+        "pl_PL": "",
+        "pt_BR": "",
+        "ru_RU": "",
+        "sv_SE": "",
+        "th_TH": "",
+        "tr_TR": "",
+        "uk_UA": "",
+        "zh_CN": "要将选定设备的按键绑定重置为默认值吗?",
+        "zh_TW": ""
+      }
+    },
+    {
+      "ID": "DialogControllerSettingsResetKeybindsConfirmSubMessage",
+      "Translations": {
+        "ar_SA": "",
+        "de_DE": "",
+        "el_GR": "",
+        "en_US": "This is a destructive action and will overwrite the current bindings for this device.",
+        "es_ES": "Esta acción es destructiva y sobrescribirá las asignaciones actuales de este dispositivo.",
+        "fr_FR": "Cette action est destructive et écrasera les assignations actuelles de ce périphérique.",
+        "he_IL": "",
+        "it_IT": "",
+        "ja_JP": "",
+        "ko_KR": "",
+        "no_NO": "",
+        "pl_PL": "",
+        "pt_BR": "",
+        "ru_RU": "",
+        "sv_SE": "",
+        "th_TH": "",
+        "tr_TR": "",
+        "uk_UA": "",
+        "zh_CN": "这是一个破坏性的操作,会覆盖此设备当前的绑定。",
+        "zh_TW": ""
+      }
+    },
+    {
+      "ID": "DialogLoadFileErrorMessage",
+      "Translations": {
         "ar_SA": "{0}. ملف خاطئ: {1}",
         "de_DE": "{0}. Fehlerhafte Datei: {1}",
         "el_GR": "",

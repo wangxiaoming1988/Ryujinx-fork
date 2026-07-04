@@ -47,7 +47,7 @@
         "tr_TR": "",
         "uk_UA": "Файл: {0:n} МБ • Гра: {1:n} МБ\n\nЕкономія: {2:n} МБ",
         "zh_CN": "文件: {0:n} MB • 游戏: {1:n} MB\n\n节省: {2:n} MB",
-        "zh_TW": "檔案: {0:n} MB • 遊戲: {1:n} MB\n\n節省: {2:n} MB" 
+        "zh_TW": "檔案: {0:n} MB • 遊戲: {1:n} MB\n\n節省: {2:n} MB"
       }
     },
     {
@@ -58,7 +58,7 @@
         "el_GR": "",
         "en_US": "XCI does not require trimming. Check logs for details.",
         "es_ES": "El XCI no necesita ser recortado. Verifica los logs para detalles.",
-		    "fr_FR": "Le XCI n’a pas besoin d’être réduit. Référez-vous aux journaux pour détails.",
+        "fr_FR": "Le XCI n’a pas besoin d’être réduit. Référez-vous aux journaux pour détails.",
         "he_IL": "",
         "it_IT": "Non è necessario ridurre la dimensione del XCI. Controlla i log per dettagli.",
         "ja_JP": "",
@@ -120,7 +120,7 @@
         "sv_SE": "XCI-filen är skrivskyddad och kunde inte göras skrivbar. Kontrollera loggen för mer information",
         "th_TH": "XCI เป็นอ่านอย่างเดียวและไม่สามารถเขียนได้ ตรวจสอบบันทึกสำหรับรายละเอียด",
         "tr_TR": "",
-		    "uk_UA": "XCI тільки для читання і не можна записати. Перевірте логи для деталей.",
+        "uk_UA": "XCI тільки для читання і не можна записати. Перевірте логи для деталей.",
         "zh_CN": "XCI 只读，无法写入。查看日志以获取详情。",
         "zh_TW": "XCI 檔案唯讀，無法寫入。檢查日誌以取得詳情。"
       }
@@ -133,7 +133,7 @@
         "el_GR": "",
         "en_US": "XCI size changed since last scan. Ensure the file is not being written to and try again.",
         "es_ES": "El tamaño de XCI ha cambiado desde que fue escaneado. Verifica que no se esté escribiendo al archivo y vuelve a intentarlo.",
-		    "fr_FR": "La taille de XCI a changé depuis son analyse. Vérifiez que le fichier n’est pas en cours d’écriture, puis réessayez.",
+        "fr_FR": "La taille de XCI a changé depuis son analyse. Vérifiez que le fichier n’est pas en cours d’écriture, puis réessayez.",
         "he_IL": "",
         "it_IT": "La dimensione di XCI è cambiata da quando è stato scansionato. Controlla che il file non sia scritto e riprova.",
         "ja_JP": "",
@@ -166,7 +166,7 @@
         "no_NO": "XCI har data i den ledige plassen. Det er ikke trygt å trimme den.",
         "pl_PL": "XCI zawiera dane w obszarze wolnego miejsca. Nie jest bezpieczne go przycinać.",
         "pt_BR": "XCI tem dados na área de espaço livre. Não é seguro reduzi-lo.",
-		    "ru_RU": "XCI содержит данные в свободной области. Его обрезка небезопасна.",
+        "ru_RU": "XCI содержит данные в свободной области. Его обрезка небезопасна.",
         "sv_SE": "XCI har data i det lediga utrymmet. Det är inte säkert att optimera.",
         "th_TH": "XCI มีข้อมูลในพื้นที่ว่าง จึงไม่ปลอดภัยที่จะทำการตัดแต่ง",
         "tr_TR": "",
@@ -216,11 +216,11 @@
         "no_NO": "XCI kunne ikke åpnes for skriving. Sjekk loggene for detaljer.",
         "pl_PL": "Nie można otworzyć XCI do zapisu. Sprawdź dzienniki, aby uzyskać szczegóły.",
         "pt_BR": "XCI não pôde ser aberto para gravação. Verifique os logs para detalhes.",
-		    "ru_RU": "Не удалось открыть XCI для записи. Проверьте журналы для подробностей.",
+        "ru_RU": "Не удалось открыть XCI для записи. Проверьте журналы для подробностей.",
         "sv_SE": "XCI kunde inte öppnas för skrivning. Kontrollera loggen för detaljer.",
         "th_TH": "ไม่สามารถเปิด XCI เพื่อเขียนข้อมูลได้ โปรดตรวจสอบบันทึกสำหรับรายละเอียด",
         "tr_TR": "",
-		    "uk_UA": "Не вдалося відкрити XCI для запису. Перевірте журнали для деталей.",
+        "uk_UA": "Не вдалося відкрити XCI для запису. Перевірте журнали для деталей.",
         "zh_CN": "XCI 不能写入。查看日志以获得更多细节。",
         "zh_TW": "XCI 無法開啟以進行寫入。請檢查日誌以取得更多資訊。"
       }

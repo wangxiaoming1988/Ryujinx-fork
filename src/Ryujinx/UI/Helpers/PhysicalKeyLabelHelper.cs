@@ -108,7 +108,7 @@ namespace Ryujinx.Ava.UI.Helpers
                 try
                 {
                     string labelsJson = File.ReadAllText(labelsPath);
-                    Dictionary<string, string>? labels = JsonSerializer.Deserialize<Dictionary<string, string>>(labelsJson, _serializerOptions);
+                    Dictionary<string, string> labels = JsonSerializer.Deserialize<Dictionary<string, string>>(labelsJson, _serializerOptions);
 
                     if (labels != null)
                     {

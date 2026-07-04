@@ -11,7 +11,11 @@ namespace Ryujinx.HLE.HOS.Services.Notification
 
         private readonly KEvent _getNotificationSendingNotifierEvent;
         private int _getNotificationSendingNotifierEventHandle;
-        public INotificationSystemEventAccessor(ServiceCtx context) { }
+
+        public INotificationSystemEventAccessor(ServiceCtx context)
+        {
+            _getNotificationSendingNotifierEvent = new KEvent(context.Device.System.KernelContext);
+        }
 
         [CommandCmif(0)] // 9.0.0+
         // GetNotificationSendingNotifier() -> nn::notification::server::INotificationSystemEventAccessor

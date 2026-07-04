@@ -1767,7 +1767,7 @@ namespace Ryujinx.Ava.UI.ViewModels
             }
         }
 
-        private async Task<IReadOnlyList<string>?> PickFolders(LocaleKeys titleKey)
+        private async Task<IReadOnlyList<string>> PickFolders(LocaleKeys titleKey)
         {
             return (await StorageProvider.OpenMultiFolderPickerAsync(new FolderPickerOpenOptions 
             { 
@@ -2161,7 +2161,7 @@ namespace Ryujinx.Ava.UI.ViewModels
                 Window.Position.X + (int)(Window.Bounds.Width / 2),
                 Window.Position.Y + (int)(Window.Bounds.Height / 2));
 
-            Avalonia.Platform.Screen? screen =
+            Avalonia.Platform.Screen screen =
                 Window.Screens.ScreenFromVisual(Window) ??
                 Window.Screens.ScreenFromPoint(windowCenter) ??
                 Window.Screens.Primary;

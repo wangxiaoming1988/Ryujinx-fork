@@ -48,7 +48,7 @@
         "uk_UA": "Вибрано XCI: {0}/{1} (Відображається: {2})",
         "zh_CN": "XCI 已选: {0}/{1}（显示: {2}）",
         "zh_TW": "XCI 已選擇: {0}/{1}（顯示: {2}）"
-          }
+      }
     },
     {
       "ID": "StatusTrimmingLabel",
@@ -103,7 +103,7 @@
     {
       "ID": "SelectAllButton",
       "Translations": {
-		    "ar_SA": "اختر الكل",
+        "ar_SA": "اختر الكل",
         "de_DE": "Alles auswählen",
         "el_GR": "Επιλογή όλων",
         "en_US": "Select All",
@@ -366,7 +366,7 @@
         "no_NO": null,
         "pl_PL": null,
         "pt_BR": null,
-		    "ru_RU": "{0} МБ",
+        "ru_RU": "{0} МБ",
         "sv_SE": null,
         "th_TH": null,
         "tr_TR": null,

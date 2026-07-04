@@ -1,6 +1,6 @@
 {
   "Locales": [
-	  {
+    {
       "ID": "TrimmingXCILabel",
       "Translations": {
         "ar_SA": "جاري تقليم: {0}",
@@ -19,7 +19,7 @@
         "ru_RU": "Обрезка: {0}",
         "sv_SE": "Trimmar: {0}",
         "th_TH": "กำลังตัด: {0}",
-		    "tr_TR": "{0} Kısaltılıyor:",
+        "tr_TR": "{0} Kısaltılıyor:",
         "uk_UA": "Обрізка: {0}",
         "zh_CN": "正在修剪: {0}",
         "zh_TW": "正在修剪: {0}"

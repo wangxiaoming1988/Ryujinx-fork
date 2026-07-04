@@ -1105,7 +1105,7 @@ namespace Ryujinx.Ava.Systems.PlayReport
             
             return $"At the main menu";
             
-            static string LocFinal(string? location) => location switch
+            static string LocFinal(string location) => location switch
             {
                 "0" => "Somewhere in Miitopia",
                 "1" => "Wandering around Greenhorne",
@@ -1151,8 +1151,10 @@ namespace Ryujinx.Ava.Systems.PlayReport
             {
                 return "At the main menu";
             }
-
-            static string MarioOrLuigiGamemode(string? gamemode) => gamemode switch
+            
+            return "";
+            
+            static string MarioOrLuigiGamemode(string gamemode) => gamemode switch
             {
                 "0" => "mario",
                 "1" => "luigi",
@@ -1161,14 +1163,14 @@ namespace Ryujinx.Ava.Systems.PlayReport
                 _ => gamemode
             };
             
-            static string OtherGameMode(string? gamemode) => gamemode switch
-            {
-                "2" => "Boost Rush",
-                "3" => "Challenges",
-                "4" => "Coin Battle",
-                "5" => "Coin Battle Editor",
-                _ => ""
-            };
+            // static string OtherGameMode(string gamemode) => gamemode switch
+            // {
+            //     "2" => "Boost Rush",
+            //     "3" => "Challenges",
+            //     "4" => "Coin Battle",
+            //     "5" => "Coin Battle Editor",
+            //     _ => ""
+            // };
 
             static string SpecialMapNames(int? course) => course switch
             {
@@ -1196,9 +1198,6 @@ namespace Ryujinx.Ava.Systems.PlayReport
             // Glacier seals = 16, water leaf = 15
             // desert ice = 14, acorn squid = 13
             // all other course numbers are to be considered a hazard
-            
-            return "";
-            
         }
     }
 }

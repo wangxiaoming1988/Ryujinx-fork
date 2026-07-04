@@ -3,7 +3,7 @@
     {
       "ID": "TrimXCIButton",
       "Translations": {
-	      "ar_SA": "تقليم XCI",
+        "ar_SA": "تقليم XCI",
         "de_DE": "Zuschneiden der XCI",
         "el_GR": "Κοπή XCI",
         "en_US": "Trim XCI",
@@ -19,7 +19,7 @@
         "ru_RU": "Обрезать XCI",
         "sv_SE": "Optimera XCI",
         "th_TH": "ลดขนาด XCI",
-		    "tr_TR": "XCI'yi Kırp",
+        "tr_TR": "XCI'yi Kırp",
         "uk_UA": "Нарізка XCI",
         "zh_CN": "精简 XCI",
         "zh_TW": "修剪 XCI"

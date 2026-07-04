@@ -767,8 +767,9 @@ namespace Ryujinx.Input.HLE
             {
                 foreach (AssignedInputDevice assignedController in assignedControllers)
                 {
-                    foreach (string gamepadId in gamepadDriver.GamepadsIds)
+                    for (int index = 0; index < gamepadDriver.GamepadsIds.Length; index++)
                     {
+                        string gamepadId = gamepadDriver.GamepadsIds[index];
                         if (string.Equals(gamepadId, assignedController.Id, StringComparison.Ordinal))
                         {
                             yield return assignedController;
@@ -782,14 +783,14 @@ namespace Ryujinx.Input.HLE
 
             if (config is StandardControllerInputConfig)
             {
-                foreach (string gamepadId in gamepadDriver.GamepadsIds)
+                for (int index = 0; index < gamepadDriver.GamepadsIds.Length; index++)
                 {
+                    string gamepadId = gamepadDriver.GamepadsIds[index];
                     if (string.Equals(gamepadId, config.Id, StringComparison.Ordinal))
                     {
                         yield return new AssignedInputDevice
                         {
-                            Type = AssignedInputDeviceType.Controller,
-                            Id = gamepadId,
+                            Type = AssignedInputDeviceType.Controller, Id = gamepadId,
                         };
                         yield break;
                     }
@@ -1092,7 +1093,7 @@ namespace Ryujinx.Input.HLE
                         : _assignedControllerConfigs.FirstOrDefault(),
                     _controllerDriver
                 ),
-                _ => ((IGamepad?)null, (InputConfig?)null, (IGamepadDriver?)null)
+                _ => ((IGamepad)null, (InputConfig)null, (IGamepadDriver)null)
             };
 
             _controllerGamepad = _gamepad;

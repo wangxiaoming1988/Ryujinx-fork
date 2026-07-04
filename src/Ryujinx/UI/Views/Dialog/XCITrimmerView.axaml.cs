@@ -11,16 +11,16 @@ using System.Threading.Tasks;
 
 namespace Ryujinx.Ava.UI.Views.Dialog
 {
-    public partial class XCITrimmerView : RyujinxControl<XCITrimmerViewModel>
+    public partial class XciTrimmerView : RyujinxControl<XciTrimmerViewModel>
     {
-        public XCITrimmerView()
+        public XciTrimmerView()
         {
             InitializeComponent();
         }
 
         private void ToggleSelect(object sender, RoutedEventArgs e)
         {
-            if (DataContext is XCITrimmerViewModel vm)
+            if (DataContext is XciTrimmerViewModel vm)
                 vm.ToggleSelect();
         }
 
@@ -31,9 +31,9 @@ namespace Ryujinx.Ava.UI.Views.Dialog
                 PrimaryButtonText = string.Empty,
                 SecondaryButtonText = string.Empty,
                 CloseButtonText = string.Empty,
-                Content = new XCITrimmerView
+                Content = new XciTrimmerView
                 {
-                    ViewModel = new XCITrimmerViewModel(RyujinxApp.MainWindow.ViewModel)
+                    ViewModel = new XciTrimmerViewModel(RyujinxApp.MainWindow.ViewModel)
                 },
                 Title = LocaleManager.Instance[LocaleKeys.MenuBar_Actions_XCITrimmerButton]
             };
@@ -58,7 +58,7 @@ namespace Ryujinx.Ava.UI.Views.Dialog
 
         private void Close(object sender, RoutedEventArgs e)
         {
-            ((ContentDialog)Parent).Hide();
+            ((ContentDialog)Parent!).Hide();
         }
 
         private void Cancel(Object sender, RoutedEventArgs e)
@@ -69,7 +69,7 @@ namespace Ryujinx.Ava.UI.Views.Dialog
         public void Sort_Checked(object sender, RoutedEventArgs args)
         {
             if (sender is RadioButton { Tag: string sortField })
-                ViewModel.SortingField = Enum.Parse<XCITrimmerViewModel.SortField>(sortField);
+                ViewModel.SortingField = Enum.Parse<XciTrimmerViewModel.SortField>(sortField);
         }
 
         public void Order_Checked(object sender, RoutedEventArgs args)

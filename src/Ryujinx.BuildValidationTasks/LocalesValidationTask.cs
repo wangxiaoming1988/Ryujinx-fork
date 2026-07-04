@@ -128,7 +128,7 @@ namespace Ryujinx.BuildValidationTasks
 
                 using (StreamWriter sw = new(path))
                 {
-                    sw.Write(jsonString);
+                    sw.Write($"{jsonString}\n");
                 }
             }
 

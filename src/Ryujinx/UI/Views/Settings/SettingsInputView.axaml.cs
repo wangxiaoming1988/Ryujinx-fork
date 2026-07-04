@@ -44,7 +44,7 @@ namespace Ryujinx.Ava.UI.Views.Settings
                 return;
             }
 
-            MainWindow? mainWindow = RyujinxApp.MainWindow;
+            MainWindow mainWindow = RyujinxApp.MainWindow;
             if (mainWindow?.ViewModel?.AppHost?.NpadManager is not { } npadManager)
             {
                 return;
