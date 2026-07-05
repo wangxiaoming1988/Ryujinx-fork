@@ -701,16 +701,17 @@ namespace Ryujinx.Input.HLE
 
             VibrationValue leftVibrationValue = dualVibrationValue.Item1;
             VibrationValue rightVibrationValue = dualVibrationValue.Item2;
+            
+            float low = Math.Min(1f, (float)((rightVibrationValue.AmplitudeLow * 0.85 + rightVibrationValue.AmplitudeHigh * 0.15) * controllerConfig.Rumble.StrongRumble));
+            float high = Math.Min(1f, (float)((leftVibrationValue.AmplitudeLow * 0.15 + leftVibrationValue.AmplitudeHigh * 0.85) * controllerConfig.Rumble.WeakRumble));
 
             leftVibrationValue.AmplitudeLow *= controllerConfig.Rumble.WeakRumble;
             leftVibrationValue.AmplitudeHigh *= controllerConfig.Rumble.StrongRumble;
             rightVibrationValue.AmplitudeLow *= controllerConfig.Rumble.WeakRumble;
             rightVibrationValue.AmplitudeHigh *= controllerConfig.Rumble.StrongRumble;
 
-            if (!controllerConfig.Rumble.UseHDRumble || gamepad.HDRumble(leftVibrationValue, rightVibrationValue) == false)
+            if (!controllerConfig.Rumble.UseHDRumble || !gamepad.HDRumble(leftVibrationValue, rightVibrationValue))
             {
-                float low = Math.Min(1f, (float)(rightVibrationValue.AmplitudeLow * 0.85 + rightVibrationValue.AmplitudeHigh * 0.15));
-                float high = Math.Min(1f, (float)(leftVibrationValue.AmplitudeLow * 0.15 + leftVibrationValue.AmplitudeHigh * 0.85));
                 gamepad.Rumble(low, high, 0xFFFFFFFF);
             }
 
