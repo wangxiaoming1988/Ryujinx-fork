@@ -9,7 +9,9 @@ using Ryujinx.Common.Logging;
 using Ryujinx.HLE;
 using Ryujinx.HLE.Loaders.Processes;
 using Ryujinx.Horizon;
+using System.Collections.Generic;
 using System.Text;
+using System.Text.Json;
 
 namespace Ryujinx.Ava.Systems
 {
@@ -135,18 +137,46 @@ namespace Ryujinx.Ava.Systems
 
             if (!formattedValue.Handled)
                 return;
+            
 
-            _discordPresencePlaying.Details = TruncateToByteLength(
-                formattedValue.Reset
-                    ? $"Playing {_currentApp.Title}"
-                    : formattedValue.FormattedString
-            );
+            
+            try // New format that attempts to deserialize json, and if it fails (using old method)...
+            {
+                Dictionary<string, string> outDictionary = JsonSerializer.Deserialize<Dictionary<string, string>>(formattedValue.FormattedString);
+                
+                _discordPresencePlaying.Details = TruncateToByteLength(
+                    outDictionary["Details"].IsNullOrEmpty()
+                        ? $"Playing {_currentApp.Title}"
+                        : outDictionary["Details"]
+                );
+            
+                _discordPresencePlaying.State = TruncateToByteLength(
+                    outDictionary["State"].IsNullOrEmpty()
+                        ? $"Total play time: {ValueFormatUtils.FormatTimeSpan(_currentApp.TimePlayed)}"
+                        : outDictionary["State"]
+                );
 
-            if (_discordClient.CurrentPresence.Details.Equals(_discordPresencePlaying.Details))
+            }
+            catch // Utilize original code
+            {
+                _discordPresencePlaying.Details = TruncateToByteLength(
+                    formattedValue.Reset
+                        ? $"Playing {_currentApp.Title}"
+                        : formattedValue.FormattedString
+                );
+            }
+
+            if (_discordClient.CurrentPresence.Details.Equals(_discordPresencePlaying.Details) && _discordClient.CurrentPresence.State.Equals(_discordPresencePlaying.State))
                 return; //don't trigger an update if the set presence Details are identical to current
 
             _discordClient.SetPresence(_discordPresencePlaying);
             Logger.Info?.Print(LogClass.UI, "Updated Discord RPC based on a supported play report.");
+        }
+
+        public static string PrepareMultilineRpcString(string line1 = "", string line2 = "")
+        {
+            Dictionary<string, string> rpcdict = new() { { "Details", line1 }, {"State", line2} };
+            return JsonSerializer.Serialize(rpcdict);
         }
 
         private static string TruncateToByteLength(string input)
