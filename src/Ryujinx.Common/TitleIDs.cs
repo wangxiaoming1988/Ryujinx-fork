@@ -199,6 +199,7 @@ namespace Ryujinx.Common
             "0100744001588000", // Cars 3: Driven to Win
             "0100b41013c82000", // Cruis'n Blast
             "010085900337e000", // Death Squared
+            "0100a0d022a68000", // DELTARUNE
             "01001b300b9be000", // Diablo III: Eternal Collection
             "010027400cdc6000", // Divinity Original 2 - Definitive Edition
             "01008c8012920000", // Dying Light Platinum Edition
@@ -211,6 +212,7 @@ namespace Ryujinx.Common
             "010013c00e930000", // Hollow Knight: Silksong
             "010085500130a000", // Lego City: Undercover
             "010073c01af34000", // LEGO Horizon Adventures
+            "0100419014456000", // Mary Skelter Finale
             "0100d71004694000", // Minecraft
             "01007430037f6000", // Monopoly
             "0100853015e86000", // No Man's Sky
