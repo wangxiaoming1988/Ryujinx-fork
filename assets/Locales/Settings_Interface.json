@@ -54,7 +54,7 @@
       "ID": "StartGamesWithoutUICheckboxLabelToolTip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Blendet die Benutzeroberfläche von Ryujinx automatisch aus, sobald ein Spiel gestartet wird. Während des Spiels kann die Oberfläche mit F4 eingeblendet werden.",
         "el_GR": "",
         "en_US": "Automatically hides Ryujinx's UI whenever a game launches. While in-game, press F4 to show the UI.",
         "es_ES": "",

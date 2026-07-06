@@ -4,7 +4,7 @@
       "ID": "ScanSkylanderFilePickerTitle",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Wähle eine BIN-, SKY-, DMP- oder DUMP-Datei aus, um einen Skylander zu scannen.",
         "el_GR": "",
         "en_US": "Select a BIN, SKY, DMP, or DUMP file to scan a Skylander from",
         "es_ES": "Selecciona un archivo BIN, SKY, DMP o DUMP para escanear un Skylander",

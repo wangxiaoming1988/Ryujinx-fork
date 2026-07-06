@@ -4,7 +4,7 @@
       "ID": "ScanAmiiboFromBinFilePickerTitle",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Wähle eine BIN-Datei aus, um ein Amiibo zu scannen.",
         "el_GR": "",
         "en_US": "Select a BIN file to scan an Amiibo from",
         "es_ES": "Selecciona un archivo BIN para escanear un Amiibo",
@@ -104,7 +104,7 @@
       "ID": "RenameAmiiboTitle",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Amiibo umbenennen",
         "el_GR": "",
         "en_US": "Rename Amiibo",
         "es_ES": "Renombrar Amiibo",
@@ -154,7 +154,7 @@
       "ID": "ScanAmiiboMessage",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Bitte scanne jetzt dein Amiibo.",
         "el_GR": "",
         "en_US": "Please scan your Amiibo now.",
         "es_ES": "Escanea tu Amiibo ahora.",

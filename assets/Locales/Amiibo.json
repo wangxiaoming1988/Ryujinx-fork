@@ -104,7 +104,7 @@
       "ID": "PauseEmulationWhileScanningAmiibo",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Emulation während des Scannens pausieren",
         "el_GR": "",
         "en_US": "Pause Emulation While Scanning",
         "es_ES": "",

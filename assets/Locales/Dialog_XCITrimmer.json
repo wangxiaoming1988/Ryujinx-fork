@@ -4,7 +4,7 @@
       "ID": "PrimaryMessage",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Entfernt ungenutzten Speicherplatz aus der XCI-Datei, um ihre Dateigröße zu verringern.",
         "el_GR": "",
         "en_US": "Removes unused space from the XCI to reduce its file size.",
         "es_ES": "Elimina el espacio no utilizado del XCI para reducir su tamaño.",
@@ -29,7 +29,7 @@
       "ID": "SecondaryMessage",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Datei: {0:n} MB • Spiel: {1:n} MB\n\nErsparnis: {2:n} MB",
         "el_GR": "",
         "en_US": "File: {0:n} MB • Game: {1:n} MB\n\nSavings: {2:n} MB",
         "es_ES": "Archivo: {0:n} MB • Juego: {1:n} MB\n\nAhorro: {2:n} MB",
@@ -54,7 +54,7 @@
       "ID": "NoTrimNecessaryMessage",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "XCI muss nicht getrimmt werden. Prüfen Sie die Logs für Details.",
         "el_GR": "",
         "en_US": "XCI does not require trimming. Check logs for details.",
         "es_ES": "El XCI no necesita ser recortado. Verifica los logs para detalles.",
@@ -79,7 +79,7 @@
       "ID": "NoUntrimPossibleMessage",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Das Trimmen der XCI kann nicht rückgängig gemacht werden. Prüfen Sie die Logs für Details.",
         "el_GR": "",
         "en_US": "XCI cannot be untrimmed. Check logs for details.",
         "es_ES": "El recorte del XCI no puede ser deshecho. Verifica los registros para detalles.",
@@ -104,7 +104,7 @@
       "ID": "ReadOnlyFileCannotFixMessage",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "XCI ist schreibgeschützt und konnte nicht schreibbar gemacht werden. Prüfen Sie die Logs für Details.",
         "el_GR": "",
         "en_US": "XCI is read-only and could not be made writable. Check logs for details.",
         "es_ES": "XCI es solo lectura y no se puede escribir. Verifica los registros para detalles.",
@@ -129,7 +129,7 @@
       "ID": "SizeChangedMessage",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "XCI-Größe hat sich seit dem letzten Scan geändert. Stellen Sie sicher, dass die Datei nicht beschrieben wird, und versuchen Sie es erneut.",
         "el_GR": "",
         "en_US": "XCI size changed since last scan. Ensure the file is not being written to and try again.",
         "es_ES": "El tamaño de XCI ha cambiado desde que fue escaneado. Verifica que no se esté escribiendo al archivo y vuelve a intentarlo.",
@@ -154,7 +154,7 @@
       "ID": "FreeSpaceCheckFailedMessage",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "XCI enthält Daten im freien Speicherbereich. Es ist unsicher zu trimmen.",
         "el_GR": "",
         "en_US": "XCI has data in the free space area. It is not safe to trim.",
         "es_ES": "XCI tiene datos en el área de espacio libre. No es seguro recortarlo.",
@@ -179,7 +179,7 @@
       "ID": "InvalidDataMessage",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "XCI enthält ungültige Daten. Prüfen Sie die Logs für Details.",
         "el_GR": "",
         "en_US": "XCI contains invalid data. Check logs for details.",
         "es_ES": "XCI contiene datos inválidos. Lee el registro para detalles.",
@@ -204,7 +204,7 @@
       "ID": "WriteErrorMessage",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "XCI konnte nicht zum Schreiben geöffnet werden. Prüfen Sie die Logs für Details.",
         "el_GR": "",
         "en_US": "XCI could not be opened for writing. Check logs for details.",
         "es_ES": "XCI no se puede abrir para escribir. Lee el registro para detalles.",
@@ -229,7 +229,7 @@
       "ID": "TrimFailedMessage",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Trimmen der XCI fehlgeschlagen.",
         "el_GR": "",
         "en_US": "Failed to trim XCI.",
         "es_ES": "El recorte del XCI falló.",
@@ -254,7 +254,7 @@
       "ID": "TrimCancelledMessage",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Der Vorgang wurde abgebrochen.",
         "el_GR": "",
         "en_US": "The operation was cancelled.",
         "es_ES": "La operación fue cancelada.",
@@ -279,7 +279,7 @@
       "ID": "NoOperationPerformedMessage",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Es wurde keine Aktion durchgeführt.",
         "el_GR": "",
         "en_US": "No operation was performed.",
         "es_ES": "No se realizó ninguna operación.",

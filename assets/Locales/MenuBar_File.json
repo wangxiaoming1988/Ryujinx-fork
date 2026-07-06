@@ -154,7 +154,7 @@
       "ID": "OpenScreenshotsFolderButton",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "Screenshots-Ordner öffnen",
+        "de_DE": "Bildschirmfoto-Ordner öffnen",
         "el_GR": "",
         "en_US": "Open Screenshots Folder",
         "es_ES": "Abrir Carpeta de Capturas de Pantalla",
@@ -179,7 +179,7 @@
       "ID": "AssociateFileTypesButton",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Dateitypen zuordnen",
         "el_GR": "",
         "en_US": "Associate File Types",
         "es_ES": "",
@@ -204,7 +204,7 @@
       "ID": "RemoveFileTypeAssociationsButton",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Dateityp-Zuordnungen entfernen",
         "el_GR": "",
         "en_US": "Remove File Type Associations",
         "es_ES": "",
@@ -229,7 +229,7 @@
       "ID": "FileTypeAssociationsToolTip",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Ordnet unterstützte Dateitypen (NSP, XCI, NCA, NRO, NSO) Ryujinx zu, sodass sie beim Doppelklick im Dateimanager automatisch geöffnet werden. Das Entfernen der Dateityp-Zuordnungen deaktiviert dieses Verhalten.",
         "el_GR": "",
         "en_US": "Associates supported file types (NSP, XCI, NCA, NRO, NSO) with Ryujinx so they open automatically when double-clicked in your file manager. Removing file type associations stops this behavior.",
         "es_ES": "",

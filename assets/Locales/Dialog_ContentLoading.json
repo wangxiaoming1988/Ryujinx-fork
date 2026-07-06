@@ -4,7 +4,7 @@
       "ID": "UpdatesAddedMessage",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Updates hinzugefügt: {0}",
         "el_GR": "",
         "en_US": "Updates Added: {0}",
         "es_ES": "Actualizaciones Añadidas: {0}",
@@ -29,7 +29,7 @@
       "ID": "UpdatesRemovedMessage",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Updates entfernt: {0}",
         "el_GR": "",
         "en_US": "Updates Removed: {0}",
         "es_ES": "Actualizaciones Eliminadas: {0}",
@@ -54,7 +54,7 @@
       "ID": "DLCAddedMessage",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "DLC hinzugefügt: {0}",
         "el_GR": "",
         "en_US": "DLC Added: {0}",
         "es_ES": "DLC Añadidos: {0}",
@@ -79,7 +79,7 @@
       "ID": "DLCRemovedMessage",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "DLC entfernt: {0}",
         "el_GR": "",
         "en_US": "DLC Removed: {0}",
         "es_ES": "DLC Eliminados: {0}",

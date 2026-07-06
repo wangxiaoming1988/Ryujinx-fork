@@ -29,7 +29,7 @@
       "ID": "NoUnpackedApplicationFoundInFolder",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Bitte wähle einen entpackten Anwendungsordner mit gültigem ExeFS oder NSO/NRO aus.",
         "el_GR": "",
         "en_US": "Please select an unpacked application folder with a valid ExeFS or NSO/NRO.",
         "es_ES": "",

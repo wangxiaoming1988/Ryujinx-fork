@@ -4,7 +4,7 @@
       "ID": "StatusCountLabel",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "XCI ausgewählt: {0}/{1}",
         "el_GR": "",
         "en_US": "XCI Selected: {0}/{1}",
         "es_ES": "XCI Seleccionados: {0}/{1}",
@@ -29,7 +29,7 @@
       "ID": "StatusCountWithFilterLabel",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "XCI ausgewählt: {0}/{1} (Sichtbar: {2})",
         "el_GR": "",
         "en_US": "XCI Selected: {0}/{1} (Displayed: {2})",
         "es_ES": "XCI Seleccionados: {0}/{1} (Mostrados: {2})",
@@ -54,7 +54,7 @@
       "ID": "StatusTrimmingLabel",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Trimmen: {0}/{1}...",
         "el_GR": "",
         "en_US": "Trimming: {0}/{1}...",
         "es_ES": "Recortando: {0}/{1}...",
@@ -79,7 +79,7 @@
       "ID": "StatusUntrimmingLabel",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Trimmung von {0} wieder aufheben...",
         "el_GR": "",
         "en_US": "Untrimming {0}...",
         "es_ES": "Deshaciendo el recorte {0}...",
@@ -154,7 +154,7 @@
       "ID": "TrimmedLabel",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Getrimmt",
         "el_GR": "",
         "en_US": "Trimmed",
         "es_ES": "Recortado",
@@ -179,7 +179,7 @@
       "ID": "UntrimmedLabel",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Ungetrimmt",
         "el_GR": "",
         "en_US": "Untrimmed",
         "es_ES": "Sin Recortar",
@@ -204,7 +204,7 @@
       "ID": "PartialLabel",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Teilweise",
         "el_GR": "",
         "en_US": "Partial",
         "es_ES": "Parcial",
@@ -229,7 +229,7 @@
       "ID": "FailedLabel",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Fehlgeschlagen",
         "el_GR": "",
         "en_US": "Failed",
         "es_ES": "Fallido",
@@ -304,7 +304,7 @@
       "ID": "SavedLabel",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Gespeichert:",
         "el_GR": "",
         "en_US": "Saved:",
         "es_ES": "Ahorrado:",
@@ -379,7 +379,7 @@
       "ID": "TrimButton",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Trimmen",
         "el_GR": "",
         "en_US": "Trim",
         "es_ES": "Recortar",
@@ -404,7 +404,7 @@
       "ID": "UntrimButton",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Trimmen aufheben",
         "el_GR": "",
         "en_US": "Untrim",
         "es_ES": "Desrecortar",

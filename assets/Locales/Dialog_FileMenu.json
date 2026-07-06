@@ -4,7 +4,7 @@
       "ID": "LoadApplicationFromFileFilePickerTitle",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Wähle eine Switch-Anwendungsdatei zum Laden aus",
         "el_GR": "",
         "en_US": "Select a Switch application file to load",
         "es_ES": "Selecciona un archivo de aplicación de Switch para cargar",
@@ -29,7 +29,7 @@
       "ID": "LoadUnpackedApplicationFromFolderFilePickerTitle",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Wähle einen Ordner mit einer entpackten Switch-Anwendung zum Laden",
         "el_GR": "",
         "en_US": "Select a folder containing an unpacked Switch application to load",
         "es_ES": "Selecciona una carpeta que contenga una aplicación de Switch descomprimida para cargar",
@@ -54,7 +54,7 @@
       "ID": "LoadUpdatesAndDLCFromFolderFilePickerTitle",
       "Translations": {
         "ar_SA": "",
-        "de_DE": "",
+        "de_DE": "Wähle einen oder mehrere Ordner zum Laden von Updates und DLC aus",
         "el_GR": "",
         "en_US": "Select one or more folders to bulk load updates and DLC from",
         "es_ES": "Selecciona una o más carpetas para cargar de forma masiva actualizaciones y DLC",
