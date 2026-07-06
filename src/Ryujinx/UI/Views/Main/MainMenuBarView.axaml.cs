@@ -36,7 +36,7 @@ namespace Ryujinx.Ava.UI.Views.Main
 
             ToggleFileTypesMenuItem.ItemsSource = GenerateToggleFileTypeItems();
             ChangeLanguageMenuItem.ItemsSource = GenerateLanguageMenuItems();
-            MiiAppletMenuItem.Command = Commands.Create(OpenMiiApplet);
+            MiiEditorMenuItem.Command = Commands.Create(OpenMiiEditor);
             CloseRyujinxMenuItem.Command = Commands.Create(() => Window?.Close());
             OpenSettingsMenuItem.Command = Commands.Create(OpenSettings);
             PauseEmulationMenuItem.Command = Commands.Create(() => ViewModel.AppHost?.Pause());
@@ -150,11 +150,11 @@ namespace Ryujinx.Ava.UI.Views.Main
             ViewModel.LoadConfigurableHotKeys();
         }
 
-        public AppletMetadata MiiApplet => new(ViewModel.ContentManager, LocaleManager.Instance[LocaleKeys.MenuBar_Actions_MiiEditorButton], 0x0100000000001009);
+        public AppletMetadata MiiEditor => new(ViewModel.ContentManager, LocaleManager.Instance[LocaleKeys.MenuBar_Actions_MiiEditorButton], 0x0100000000001009);
 
-        public async Task OpenMiiApplet()
+        public async Task OpenMiiEditor()
         {
-            if (!MiiApplet.CanStart(out ApplicationData appData, out BlitStruct<ApplicationControlProperty> nacpData))
+            if (!MiiEditor.CanStart(out ApplicationData appData, out BlitStruct<ApplicationControlProperty> nacpData))
                 return;
 
             await ViewModel.LoadApplication(appData, ViewModel.IsFullScreen || ViewModel.StartGamesInFullscreen, nacpData);
@@ -172,18 +172,13 @@ namespace Ryujinx.Ava.UI.Views.Main
                 ViewModel.IsAmiiboBinRequested = ViewModel.IsAmiiboRequested && AmiiboBinReader.HasAmiiboKeyFile;
         }
 
-        private void ScanSkylanderMenuItem_AttachedToVisualTree(object sender, VisualTreeAttachmentEventArgs e)
+        private void SkylanderMenuItem_AttachedToVisualTree(object sender, VisualTreeAttachmentEventArgs e)
         {
             if (sender is MenuItem)
+            {
                 ViewModel.IsSkylanderRequested = ViewModel.AppHost.Device.System.SearchingForSkylander(out _);
-                ViewModel.ShowSkylanderActions = string.Equals(ViewModel.AppHost.Device.Processes.ActiveApplication.ProgramIdText.ToUpper(), "0100CCC0002E6000");
-        }
-
-        private void RemoveSkylanderMenuItem_AttachedToVisualTree(object sender, VisualTreeAttachmentEventArgs e)
-        {
-            if (sender is MenuItem)
                 ViewModel.HasSkylander = ViewModel.AppHost.Device.System.HasSkylander(out _);
-                ViewModel.ShowSkylanderActions = string.Equals(ViewModel.AppHost.Device.Processes.ActiveApplication.ProgramIdText.ToUpper(), "0100CCC0002E6000");
+            }
         }
 
         private void ChangeWindowSize(string resolution)

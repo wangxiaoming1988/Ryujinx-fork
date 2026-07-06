@@ -152,7 +152,7 @@
                     Margin="5"
                     HotKey="Escape"
                     Command="{Binding Close}">
-                    <TextBlock Text="{ext:Locale InputDialogCancel}" />
+                    <TextBlock Text="{ext:Locale Common_Buttons_Cancel}" />
                 </Button>
             </DockPanel>
         </DockPanel>

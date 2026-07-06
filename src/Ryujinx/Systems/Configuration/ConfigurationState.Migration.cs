@@ -115,7 +115,7 @@ namespace Ryujinx.Ava.Systems.Configuration
             System.SkipUserProfilesManager.Value = cff.SkipUserProfiles;
             System.UseHypervisor.Value = cff.UseHypervisor;
             System.GCLowLatency.Value = cff.GCLowLatency;
-
+ 
             UI.GuiColumns.FavColumn.Value = shouldLoadFromFile ? cff.GuiColumns.FavColumn : UI.GuiColumns.FavColumn.Value;
             UI.GuiColumns.IconColumn.Value = shouldLoadFromFile ? cff.GuiColumns.IconColumn : UI.GuiColumns.IconColumn.Value;
             UI.GuiColumns.AppColumn.Value = shouldLoadFromFile ? cff.GuiColumns.AppColumn : UI.GuiColumns.AppColumn.Value;
@@ -151,6 +151,7 @@ namespace Ryujinx.Ava.Systems.Configuration
             UI.WindowStartup.WindowPositionX.Value = shouldLoadFromFile ? cff.WindowStartup.WindowPositionX : UI.WindowStartup.WindowPositionX.Value;
             UI.WindowStartup.WindowPositionY.Value = shouldLoadFromFile ? cff.WindowStartup.WindowPositionY : UI.WindowStartup.WindowPositionY.Value;
             UI.WindowStartup.WindowMaximized.Value = shouldLoadFromFile ? cff.WindowStartup.WindowMaximized : UI.WindowStartup.WindowMaximized.Value;
+            UI.PauseEmulationWhileScanningAmiibo.Value = cff.PauseEmulationWhileScanningAmiibo;
 
             Hid.EnableKeyboard.Value = cff.EnableKeyboard;
             Hid.EnableMouse.Value = cff.EnableMouse;

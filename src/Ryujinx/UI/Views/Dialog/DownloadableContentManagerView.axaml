@@ -190,7 +190,7 @@
                     MinWidth="90"
                     Margin="5"
                     Click="Close">
-                    <TextBlock Text="{ext:Locale InputDialogCancel}" />
+                    <TextBlock Text="{ext:Locale Common_Buttons_Cancel}" />
                 </Button>
             </StackPanel>
         </Panel>

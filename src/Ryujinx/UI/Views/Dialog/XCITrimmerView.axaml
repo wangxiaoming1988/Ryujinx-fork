@@ -173,7 +173,7 @@
                                 <Binding Path="!Cancel" />
                             </MultiBinding>
                         </Button.IsVisible>
-                        <TextBlock Text="{ext:Locale InputDialogCancel}" />
+                        <TextBlock Text="{ext:Locale Common_Buttons_Cancel}" />
                     </Button>
                     <Button Name="CloseButton" MinWidth="90" Click="Close" IsVisible="{Binding !Processing}">
                         <TextBlock Text="{ext:Locale SettingsButtonClose}" />

@@ -69,7 +69,7 @@ namespace Ryujinx.Ava.UI.Views.User
                 AllowMultiple = false,
                 FileTypeFilter = new List<FilePickerFileType>
                 {
-                    new(LocaleManager.Instance[LocaleKeys.AllSupportedFormats])
+                    new(LocaleManager.Instance[LocaleKeys.Common_FilePicker_AllSupportedFormats])
                     {
                         Patterns = ["*.jpg", "*.jpeg", "*.png", "*.bmp"],
                         AppleUniformTypeIdentifiers = ["public.jpeg", "public.png", "com.microsoft.bmp"],

@@ -40,10 +40,11 @@
         <KeyBinding Gesture="F9" Command="{Binding ToggleDockMode}" />
         <KeyBinding Gesture="Escape" Command="{Binding ExitCurrentState}" />
         <KeyBinding Gesture="Ctrl+A" Command="{Binding OpenAmiiboWindow}" />
-        <KeyBinding Gesture="Ctrl+B" Command="{Binding OpenBinFile}" />
+        <KeyBinding Gesture="Ctrl+B" Command="{Binding ScanAmiiboFromBin}" />
         <KeyBinding Gesture="Ctrl+R" Command="{Binding RestartEmulation}" />
         <KeyBinding Gesture="Ctrl+Shift+R" Command="{Binding ReloadRenderDocApi}" />
         <KeyBinding Gesture="Ctrl+Shift+C" Command="{Binding ToggleCapture}" />
+        <KeyBinding Gesture="Ctrl+S" Command="{Binding ToggleSkylanderCommand}" />
         <KeyBinding Gesture="Ctrl+M" Command="{Binding SimulateWakeUpMessage}" />
         <KeyBinding Gesture="Cmd+O" Command="{Binding LoadApplicationFromFile}" />
         <KeyBinding Gesture="Ctrl+O" Command="{Binding LoadApplicationFromFile}" />

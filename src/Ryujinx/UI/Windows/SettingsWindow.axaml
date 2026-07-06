@@ -155,7 +155,7 @@
                     Command="{Binding OkButton}" />
                 <Button
                     HotKey="Escape"
-                    Content="{ext:Locale SettingsButtonCancel}"
+                    Content="{ext:Locale Common_Buttons_Cancel}"
                     Command="{Binding CancelButton}" />
                 <Button
                     Content="{ext:Locale SettingsButtonApply}"

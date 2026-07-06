@@ -154,7 +154,7 @@ namespace Ryujinx.Ava.UI.ViewModels
                 AllowMultiple = true,
                 FileTypeFilter = new List<FilePickerFileType>
                 {
-                    new(LocaleManager.Instance[LocaleKeys.AllSupportedFormats])
+                    new(LocaleManager.Instance[LocaleKeys.Common_FilePicker_AllSupportedFormats])
                     {
                         Patterns = ["*.nsp"],
                         AppleUniformTypeIdentifiers = ["com.ryujinx.nsp"],

@@ -137,7 +137,7 @@
                     InputGesture="Ctrl + A"
                     IsEnabled="{Binding IsAmiiboRequested}" />
                 <MenuItem
-                    Command="{Binding OpenBinFile}"
+                    Command="{Binding ScanAmiiboFromBin}"
                     AttachedToVisualTree="ScanBinAmiiboMenuItem_AttachedToVisualTree"
                     Header="{ext:Locale MenuBar_Actions_ScanAmiiboFromBinButton}"
                     Icon="{ext:Icon fa-solid fa-chess-rook}"
@@ -146,21 +146,12 @@
                     IsEnabled="{Binding IsAmiiboBinRequested}" />
                 <Separator IsVisible="{Binding CanScanAmiiboBinaries}"/>
                 <MenuItem
-                    Command="{Binding OpenSkylanderWindow}"
-                    AttachedToVisualTree="ScanSkylanderMenuItem_AttachedToVisualTree"
-                    Header="{ext:Locale MenuBar_Actions_ScanSkylanderButton}"
+                    Command="{Binding ToggleSkylanderCommand}"
+                    AttachedToVisualTree="SkylanderMenuItem_AttachedToVisualTree"
+                    Header="{Binding SkylanderButtonHeader}"
                     Icon="{ext:Icon fa-solid fa-dragon}"
-                    IsVisible="{Binding ShowSkylanderActions}"
                     InputGesture="Ctrl + S"
-                    IsEnabled="{Binding IsSkylanderRequested}" />
-                <MenuItem
-                    Command="{Binding RemoveSkylander}"
-                    AttachedToVisualTree="RemoveSkylanderMenuItem_AttachedToVisualTree"
-                    Header="{ext:Locale MenuBar_Actions_RemoveSkylanderButton}"
-                    Icon="{ext:Icon fa-solid fa-dragon}"
-                    IsVisible="{Binding ShowSkylanderActions}"
-                    InputGesture="Ctrl + D"
-                    IsEnabled="{Binding HasSkylander}" />
+                    IsEnabled="{Binding SkylanderButtonEnabled}" />
                 <MenuItem 
                     Command="{Binding SimulateWakeUpMessage}" 
                     Header="{ext:Locale MenuBar_Actions_SimulateWakeUpMessageButton}" 
@@ -215,7 +206,7 @@
                 <Separator />
                 <MenuItem Header="{ext:Locale MenuBar_Actions_ToolsLabel}" Icon="{ext:Icon fa-solid fa-toolbox}">
                     <MenuItem
-                        Name="MiiAppletMenuItem" Header="{ext:Locale MenuBar_Actions_MiiEditorButton}" Icon="{ext:Icon fa-solid fa-face-grin-wide}" />
+                        Name="MiiEditorMenuItem" Header="{ext:Locale MenuBar_Actions_MiiEditorButton}" Icon="{ext:Icon fa-solid fa-face-grin-wide}" />
                     <MenuItem Name="XCITrimmerMenuItem" Header="{ext:Locale MenuBar_Actions_XCITrimmerButton}" Icon="{ext:Icon fa-solid fa-scissors}" />
                 </MenuItem>
             </MenuItem>

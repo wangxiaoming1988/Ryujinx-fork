@@ -187,7 +187,7 @@ namespace Ryujinx.Ava.UI.Applet
                         StringLengthMax = 25
                     };
                     (UserResult result, string userInput) =
-                        await SwkbdAppletDialog.ShowInputDialog(LocaleManager.Instance[LocaleKeys.CabinetDialog], args);
+                        await SwkbdAppletDialog.ShowInputDialog(LocaleManager.Instance[LocaleKeys.Dialog_Amiibo_RenameAmiiboTitle], args);
                     if (result == UserResult.Ok)
                     {
                         inputText = userInput;
@@ -212,11 +212,11 @@ namespace Ryujinx.Ava.UI.Applet
             {
                 dialogCloseEvent.Set();
                 await ContentDialogHelper.CreateInfoDialog(
-                    LocaleManager.Instance[LocaleKeys.CabinetScanDialog],
+                    LocaleManager.Instance[LocaleKeys.Dialog_Amiibo_ScanAmiiboMessage],
                     string.Empty,
                     LocaleManager.Instance[LocaleKeys.InputDialogOk],
                     string.Empty,
-                    LocaleManager.Instance[LocaleKeys.CabinetTitle]
+                    LocaleManager.Instance[LocaleKeys.Dialog_Amiibo_ScanAmiiboTitle]
                 );
             });
             dialogCloseEvent.WaitOne();

@@ -502,14 +502,19 @@ namespace Ryujinx.Ava.Systems.Configuration
         public bool DebuggerSuspendOnStart { get; set; }
 
         /// <summary>
-        ///     Show toggles for dirty hacks in the UI.
+        /// Show toggles for dirty hacks in the UI.
         /// </summary>
         public bool ShowDirtyHacks { get; set; }
 
         /// <summary>
-        ///     The packed values of the enabled dirty hacks.
+        /// The packed values of the enabled dirty hacks.
         /// </summary>
         public ulong[] DirtyHacks { get; set; }
+
+        /// <summary>
+        /// Pause emulation while scanning Amiibo
+        /// </summary>
+        public bool PauseEmulationWhileScanningAmiibo { get; set; }
 
         /// <summary>
         /// Loads a configuration file from disk
