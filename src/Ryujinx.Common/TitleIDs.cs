@@ -17,6 +17,7 @@ namespace Ryujinx.Common
                           //Dragon Quest Franchise
             "010008900705c000", // Dragon Quest Builders
             "010042000a986000", // Dragon Quest Builders 2
+            "010021701c45e000", // Dragon Quest VII Reimagined Demo
             
                           //Fire Emblem Franchise
             "0100a6301214e000", // Fire Emblem Engage
@@ -33,7 +34,6 @@ namespace Ryujinx.Common
             "01007e3006dda000", // Kirby Star Allies
             "01003fb00c5a8000", // Super Kirby Clash
             
-            
                           //The Zelda Franchise
             "01000b900d8b0000", // Cadence of Hyrule
             "0100ae00096ea000", // Hyrule Warriors: Definitive Edition
@@ -43,8 +43,7 @@ namespace Ryujinx.Common
             "01002da013484000", // The Legend of Zelda: Skyward Sword HD
             "0100f2c0115b6000", // The Legend of Zelda: Tears of the Kingdom
             "01008cf01baac000", // The Legend of Zelda: Echoes of Wisdom
-            
-
+                
                           //Luigi Franchise
             "010048701995e000", // Luigi's Mansion 2 HD
             "0100dca0064a6000", // Luigi's Mansion 3
@@ -75,16 +74,13 @@ namespace Ryujinx.Common
             "010049900f546002", // Super Mario 3D All-Stars | Super Mario Sunshine
             "010049900f546003", // Super Mario 3D All-Stars | Super Mario Galaxy
             "010028600ebda000", // Super Mario 3D World + Bowser's Fury
-            "010049900F546001", // Super Mario 64
             "0100ea80032ea000", // Super Mario Bros. U Deluxe
             "010015100b514000", // Super Mario Bros. Wonder
-            "010049900F546003", // Super Mario Galaxy
             "01009b90006dc000", // Super Mario Maker 2
             "0100000000010000", // SUPER MARIO ODYSSEY
             "010036b0034e4000", // Super Mario Party
             "0100965017338000", // Super Mario Party Jamboree
             "0100bc0018138000", // Super Mario RPG
-            "010049900F546002", // Super Mario Sunshine
             "0100a3900c3e2000", // Paper Mario: The Origami King
             "0100ecd018ebe000", // Paper Mario: The Thousand-Year Door
             "01009cC022b96000", // Super Mario Galaxy
@@ -149,6 +145,7 @@ namespace Ryujinx.Common
             "010067b017588000", // Endless Ocean Luminous
             "01003da010e8a000", // Miitopia
             "01006b5012b32000", // Part Time UFO
+            "0100107027310000", // Rhythm Heave Groove: Starter Demo
             "0100704000B3A000", // Snipperclips
             "01006a800016e000", // Super Smash Bros. Ultimate
             "0100a9400c9c2000", // Tokyo Mirage Sessions #FE Encore
@@ -176,7 +173,7 @@ namespace Ryujinx.Common
             "01004ad014bf0000", // Sonic Frontiers
             "01009aa000faa000", // Sonic Mania
             "01005ea01c0fc000", // SONIC X SHADOW GENERATIONS
-            "01005ea01c0fc001", // ^
+            "01005ea01c0fc001", // ^ TODO: (Needs to be differentiated like 3D All Stars)
             "01006e001823c000", // Sonic Racing: CrossWorlds
             "010064b0242be000", // Sonic Racing: CrossWorlds - Demo
 
@@ -212,6 +209,7 @@ namespace Ryujinx.Common
             "010013c00e930000", // Hollow Knight: Silksong
             "010085500130a000", // Lego City: Undercover
             "010073c01af34000", // LEGO Horizon Adventures
+            "0100653026dde000", // MARVEL Cosmic Invasion Demo
             "0100419014456000", // Mary Skelter Finale
             "0100d71004694000", // Minecraft
             "01007430037f6000", // Monopoly
@@ -233,6 +231,8 @@ namespace Ryujinx.Common
             "01008d100d43e000", // Saints Row IV
             "0100de600beee000", // Saints Row: The Third - The Full Package
             "01001180021fa000", // Shovel Knight: Specter of Torment
+            "0100ccc0002e6000", // Skylanders Imaginators (US)
+            "010048d000bfc000", // Skylanders Imaginators (EU)
             "010079f00671c000", // Sparkle 2: Evo
             "010077b00e046000", // Spyro: Reignited Trilogy
             "0100e1D01eb2e000", // Squeakross: Home Squeak Home
