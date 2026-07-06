@@ -1088,6 +1088,12 @@ namespace Ryujinx.Graphics.Nvdec.Vp9.Types
 
         public void GetMvs(Span<Vp9MvRef> mvs)
         {
+            if (FrameIsIntraOnly())
+            {
+                mvs.Clear();
+                return;
+            }
+
             if (mvs.Length > CurFrameMvs.Length)
             {
                 throw new ArgumentException(

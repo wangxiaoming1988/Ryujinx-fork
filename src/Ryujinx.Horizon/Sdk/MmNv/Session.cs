@@ -5,22 +5,32 @@ namespace Ryujinx.Horizon.Sdk.MmNv
         public Module Module { get; }
         public uint Id { get; }
         public bool IsAutoClearEvent { get; }
-        public uint ClockRateMin { get; private set; }
-        public int ClockRateMax { get; private set; }
+        public uint RequestedClockRate { get; private set; }
+        public uint LastTimeout { get; private set; }
+        public bool HasActiveRequest { get; private set; }
 
         public Session(uint id, Module module, bool isAutoClearEvent)
         {
             Module = module;
             Id = id;
             IsAutoClearEvent = isAutoClearEvent;
-            ClockRateMin = 0;
-            ClockRateMax = -1;
+            RequestedClockRate = 0;
+            LastTimeout = uint.MaxValue;
+            HasActiveRequest = false;
         }
 
-        public void SetAndWait(uint clockRateMin, int clockRateMax)
+        public void SetAndWait(uint clockRate, uint timeout)
         {
-            ClockRateMin = clockRateMin;
-            ClockRateMax = clockRateMax;
+            RequestedClockRate = clockRate;
+            LastTimeout = timeout;
+            HasActiveRequest = true;
+        }
+
+        public void ClearRequest(uint timeout)
+        {
+            RequestedClockRate = 0;
+            LastTimeout = timeout;
+            HasActiveRequest = false;
         }
     }
 }
