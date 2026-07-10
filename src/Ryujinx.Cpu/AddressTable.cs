@@ -81,12 +81,13 @@ namespace ARMeilleure.Common
 
         private bool _disposed;
         private TEntry** _table;
+        private TEntry* _sparseTable;
         private readonly List<AddressTablePage> _pages;
         private TEntry _fill;
 
-        private readonly MemoryBlock _sparseFill;
-        private readonly SparseMemoryBlock _fillBottomLevel;
-        private readonly TEntry* _fillBottomLevelPtr;
+        private MemoryBlock _sparseFill;
+        private SparseMemoryBlock _fillBottomLevel;
+        private TEntry* _fillBottomLevelPtr;
 
         private readonly List<TableSparseBlock> _sparseReserved;
         private readonly ReaderWriterLockSlim _sparseLock;
@@ -122,16 +123,23 @@ namespace ARMeilleure.Common
             {
                 ObjectDisposedException.ThrowIf(_disposed, this);
 
-                lock (_pages)
+                if (Sparse)
                 {
-                    return (nint)GetRootPage();
+                    return (nint)_sparseTable;
+                }
+                else
+                {
+                    lock (_pages)
+                    {
+                        return (nint)GetRootPage();
+                    }
                 }
             }
         }
 
         /// <summary>
         /// Constructs a new instance of the <see cref="AddressTable{TEntry}"/> class with the specified list of
-        /// <see cref="Level"/>.
+        /// <see cref="AddressTableLevel"/>.
         /// </summary>
         /// <param name="levels">Levels for the address table</param>
         /// <param name="sparse">True if the bottom page should be sparsely mapped</param>
@@ -156,18 +164,8 @@ namespace ARMeilleure.Common
             if (sparse)
             {
                 // If the address table is sparse, allocate a fill block
-
-                _sparseFill = new MemoryBlock(268435456ul, MemoryAllocationFlags.Mirrorable); //low Power TC uses size: 65536ul
-
-                ulong bottomLevelSize = (1ul << levels.Last().Length) * (ulong)sizeof(TEntry);
-
-                _fillBottomLevel = new SparseMemoryBlock(bottomLevelSize, null, _sparseFill);
-                _fillBottomLevelPtr = (TEntry*)_fillBottomLevel.Block.Pointer;
-
                 _sparseReserved = [];
                 _sparseLock = new ReaderWriterLockSlim();
-
-                _sparseBlockSize = bottomLevelSize;
             }
         }
 
@@ -209,13 +207,24 @@ namespace ARMeilleure.Common
         public void SignalCodeRange(ulong address, ulong size)
         {
             AddressTableLevel bottom = Levels.Last();
-            ulong bottomLevelEntries = 1ul << bottom.Length;
-
-            ulong entryIndex = address >> bottom.Index;
+            
             ulong entries = size >> bottom.Index;
-            entries += entryIndex - BitUtils.AlignDown(entryIndex, bottomLevelEntries);
+            
+            if (Sparse)
+            {
+                ulong bottomLevelSize = (ulong)BitUtils.Pow2RoundUp((int)entries) * (ulong)sizeof(TEntry);
+                
+                _sparseFill = new MemoryBlock(bottomLevelSize, MemoryAllocationFlags.Mirrorable);
 
-            _sparseBlockSize = Math.Max(_sparseBlockSize, BitUtils.AlignUp(entries, bottomLevelEntries) * (ulong)sizeof(TEntry));
+                _fillBottomLevel = new SparseMemoryBlock(bottomLevelSize, null, _sparseFill);
+                _fillBottomLevelPtr = (TEntry*)_fillBottomLevel.Block.Pointer;
+
+                _sparseBlockSize = bottomLevelSize;
+                
+                _sparseTable = (TEntry*)Allocate((int)entries, Fill, leaf: true);
+
+                _sparseTable -= Levels.Last().GetValue(address);
+            }
         }
 
         /// <inheritdoc/>
@@ -234,15 +243,26 @@ namespace ARMeilleure.Common
                 throw new ArgumentException($"Address 0x{address:X} is not mapped onto the table.", nameof(address));
             }
 
-            lock (_pages)
+            if (Sparse)
             {
-                TEntry* page = GetPage(address);
+                long index = Levels.Last().GetValue(address);
+                
+                EnsureMapped((nint)(_sparseTable + index));
+                
+                return ref _sparseTable[index];
+            }
+            else
+            {
+                lock (_pages)
+                {
+                    TEntry* page = GetPage(address);
 
-                long index = Levels[^1].GetValue(address);
+                    long index = Levels.Last().GetValue(address);
 
-                EnsureMapped((nint)(page + index));
+                    EnsureMapped((nint)(page + index));
 
-                return ref page[index];
+                    return ref page[index];
+                }
             }
         }
 

@@ -19,46 +19,22 @@ namespace ARMeilleure.Common
                 new( 7,  8),
                 new( 1,  6)
         ];
-
-        private static readonly AddressTableLevel[] _levels64BitSparseTiny =
+        
+        private static readonly AddressTableLevel[] _monoSparse64Bit =
         [
-            new( 11, 28),
-                new( 2, 9)
+            new( 2, 37)
         ];
 
-        private static readonly AddressTableLevel[] _levels32BitSparseTiny =
+        private static readonly AddressTableLevel[] _monoSparse32Bit =
         [
-            new( 10, 22),
-                new( 1, 9)
+            new( 1, 31)
         ];
-
-        private static readonly AddressTableLevel[] _levels64BitSparseGiant =
-        [
-            new( 38, 1),
-                new( 2, 36)
-        ];
-
-        private static readonly AddressTableLevel[] _levels32BitSparseGiant =
-        [
-            new( 31, 1),
-                new( 1, 30)
-        ];
-
-        //high power will run worse on DDR3 systems and some DDR4 systems due to the higher ram utilization
-        //low power will never run worse than non-sparse, but for most systems it won't be necessary
-        //high power is always used, but I've left low power in here for future reference
-        public static AddressTableLevel[] GetArmPreset(bool for64Bits, bool sparse, bool lowPower = false)
+        
+        public static AddressTableLevel[] GetArmPreset(bool for64Bits, bool sparse)
         {
             if (sparse)
             {
-                if (lowPower)
-                {
-                    return for64Bits ? _levels64BitSparseTiny : _levels32BitSparseTiny;
-                }
-                else
-                {
-                    return for64Bits ? _levels64BitSparseGiant : _levels32BitSparseGiant;
-                }
+                return for64Bits ? _monoSparse64Bit : _monoSparse32Bit;
             }
             else
             {

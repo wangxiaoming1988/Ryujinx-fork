@@ -3,6 +3,7 @@ using Ryujinx.Cpu.LightningJit.CodeGen;
 using Ryujinx.Cpu.LightningJit.CodeGen.Arm64;
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
@@ -189,7 +190,7 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
             }
             else if (inlineLookup)
             {
-                // Inline table lookup. Only enabled when the sparse function table is enabled with 2 levels.
+                // Inline table lookup. Only enabled when the sparse function table is enabled with 1 level.
 
                 Operand indexReg = Register(NextFreeRegister(tempRegister + 1, tempGuestAddress));
 
@@ -203,18 +204,15 @@ namespace Ryujinx.Cpu.LightningJit.Arm32.Target.Arm64
                 // Index into the table.
                 asm.Mov(rn, tableBase);
 
-                for (int i = 0; i < funcTable.Levels.Length; i++)
-                {
-                    AddressTableLevel level = funcTable.Levels[i];
-                    asm.Ubfx(indexReg, guestAddress, level.Index, level.Length);
-                    asm.Lsl(indexReg, indexReg, Const(3));
+                AddressTableLevel level = funcTable.Levels.Last();
+                asm.Ubfx(indexReg, guestAddress, level.Index, level.Length);
+                asm.Lsl(indexReg, indexReg, Const(3));
 
-                    // Index into the page.
-                    asm.Add(rn, rn, indexReg);
+                // Index into the page.
+                asm.Add(rn, rn, indexReg);
 
-                    // Load the page address.
-                    asm.LdrRiUn(rn, rn, 0);
-                }
+                // Load the page address.
+                asm.LdrRiUn(rn, rn, 0);
 
                 if (tempGuestAddress != -1)
                 {

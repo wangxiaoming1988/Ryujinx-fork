@@ -161,7 +161,7 @@ namespace ARMeilleure.Translation
             context.BranchIfTrue(lblFallback, masked);
 
             Operand index = default;
-            Operand page = Const((long)_functionTable.Base);
+            Operand page = Const(_functionTable.Base);
 
             for (int i = 0; i < _functionTable.Levels.Length; i++)
             {
