@@ -1,5 +1,4 @@
 using Humanizer;
-using Humanizer.Localisation;
 using Ryujinx.Ava.Common.Locale;
 using System;
 using System.Globalization;
