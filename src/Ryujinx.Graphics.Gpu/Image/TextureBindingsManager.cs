@@ -202,7 +202,7 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <returns>True if the given texture has become blacklisted, indicating that its host texture may have changed.</returns>
         private bool UpdateScale(Texture texture, TextureUsageFlags usageFlags, int index, ShaderStage stage)
         {
-            float result = 1f;
+            Vector4<float> result = new() { X = 1f };
             bool changed = false;
 
             if ((usageFlags & TextureUsageFlags.NeedsScaleValue) != 0 && texture != null)
@@ -226,25 +226,32 @@ namespace Ryujinx.Graphics.Gpu.Image
                                 if (activeTarget != null && (activeTarget.Info.Width / (float)texture.Info.Width) == (activeTarget.Info.Height / (float)texture.Info.Height))
                                 {
                                     // If the texture's size is a multiple of the sampler size, enable interpolation using gl_FragCoord. (helps "invent" new integer values between scaled pixels)
-                                    result = -scale;
+                                    result.X = -scale;
                                     break;
                                 }
                             }
 
-                            result = scale;
+                            result.X = scale;
                             break;
 
                         case ShaderStage.Vertex:
                             int fragmentIndex = (int)ShaderStage.Fragment - 1;
                             index += _textureBindings[fragmentIndex].Length + _imageBindings[fragmentIndex].Length;
 
-                            result = texture.ScaleFactor;
+                            result.X = texture.ScaleFactor;
                             break;
 
                         case ShaderStage.Compute:
-                            result = texture.ScaleFactor;
+                            result.X = texture.ScaleFactor;
                             break;
                     }
+                }
+
+                if (texture.TryGetFoldedLayout(out TextureHostLayout foldedLayout))
+                {
+                    result.Y = foldedLayout.Pages;
+                    result.Z = foldedLayout.LogicalWidth;
+                    result.W = foldedLayout.PageHeight;
                 }
             }
 

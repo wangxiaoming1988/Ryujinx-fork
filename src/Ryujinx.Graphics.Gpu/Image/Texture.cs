@@ -1,3 +1,4 @@
+using Ryujinx.Common;
 using Ryujinx.Common.Logging;
 using Ryujinx.Common.Memory;
 using Ryujinx.Graphics.GAL;
@@ -207,6 +208,7 @@ namespace Ryujinx.Graphics.Gpu.Image
 
             ScaleFactor = scaleFactor;
             ScaleMode = scaleMode;
+            DisableScalingIfFolded();
 
             InitializeData(true);
         }
@@ -232,6 +234,7 @@ namespace Ryujinx.Graphics.Gpu.Image
             ScaleMode = scaleMode;
 
             InitializeTexture(context, physicalMemory, info, sizeInfo, range);
+            DisableScalingIfFolded();
         }
 
         /// <summary>
@@ -262,6 +265,34 @@ namespace Ryujinx.Graphics.Gpu.Image
 
             _views = [];
             _poolOwners = [];
+        }
+
+        /// <summary>
+        /// Gets the folded host layout used to keep oversized linear textures under host GPU limits.
+        /// </summary>
+        /// <param name="layout">Folded host layout, if active</param>
+        /// <returns>True if this texture is stored folded on the host GPU</returns>
+        public bool TryGetFoldedLayout(out TextureHostLayout layout)
+        {
+            FormatInfo hostFormatInfo = TextureCompatibility.ToHostCompatibleFormat(Info, _context.Capabilities);
+
+            return TextureHostLayout.TryGetFoldedLinear2D(Info, _context.Capabilities, hostFormatInfo, ScaleFactor, out layout);
+        }
+
+        private bool CanUseFoldedLayout()
+        {
+            FormatInfo hostFormatInfo = TextureCompatibility.ToHostCompatibleFormat(Info, _context.Capabilities);
+
+            return TextureHostLayout.TryGetFoldedLinear2D(Info, _context.Capabilities, hostFormatInfo, 1f, out _);
+        }
+
+        private void DisableScalingIfFolded()
+        {
+            if (CanUseFoldedLayout())
+            {
+                ScaleFactor = 1f;
+                ScaleMode = TextureScaleMode.Blacklisted;
+            }
         }
 
         /// <summary>
@@ -512,6 +543,12 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <param name="scale">The new scale factor for this texture</param>
         public void SetScale(float scale)
         {
+            if (scale != 1f && CanUseFoldedLayout())
+            {
+                scale = 1f;
+                ScaleMode = TextureScaleMode.Blacklisted;
+            }
+
             bool unscaled = ScaleMode == TextureScaleMode.Blacklisted || (ScaleMode == TextureScaleMode.Undesired && scale == 1);
             TextureScaleMode newScaleMode = unscaled ? ScaleMode : TextureScaleMode.Scaled;
 
@@ -789,6 +826,11 @@ namespace Ryujinx.Graphics.Gpu.Image
 
             MemoryOwner<byte> result = linear;
 
+            if (TryGetFoldedLayout(out TextureHostLayout foldedLayout))
+            {
+                result = FoldLinearTexture(result, foldedLayout, Info.FormatInfo.BytesPerPixel);
+            }
+
             // Handle compressed cases not supported by the host:
             // - ASTC is usually not supported on desktop cards.
             // - BC4/BC5 is not supported on 3D textures.
@@ -982,6 +1024,21 @@ namespace Ryujinx.Graphics.Gpu.Image
 
                 if (Info.IsLinear)
                 {
+                    if (TryGetFoldedLayout(out TextureHostLayout foldedLayout))
+                    {
+                        using MemoryOwner<byte> unfolded = UnfoldLinearTexture(data, foldedLayout, Info.FormatInfo.BytesPerPixel);
+
+                        return LayoutConverter.ConvertLinearToLinearStrided(
+                            output,
+                            Info.Width,
+                            Info.Height,
+                            Info.FormatInfo.BlockWidth,
+                            Info.FormatInfo.BlockHeight,
+                            Info.Stride,
+                            Info.FormatInfo.BytesPerPixel,
+                            unfolded.Span);
+                    }
+
                     data = LayoutConverter.ConvertLinearToLinearStrided(
                         output,
                         Info.Width,
@@ -1014,6 +1071,134 @@ namespace Ryujinx.Graphics.Gpu.Image
             }
 
             return data;
+        }
+
+        private static MemoryOwner<byte> FoldLinearTexture(MemoryOwner<byte> data, TextureHostLayout layout, int bytesPerPixel)
+        {
+            int lineBytes = layout.LogicalWidth * bytesPerPixel;
+            int logicalStride = BitUtils.AlignUp(lineBytes, LayoutConverter.HostStrideAlignment);
+            int hostStride = BitUtils.AlignUp(layout.HostWidth * bytesPerPixel, LayoutConverter.HostStrideAlignment);
+            int hostSize = hostStride * layout.HostHeight;
+
+            MemoryOwner<byte> folded = MemoryOwner<byte>.Rent(hostSize);
+            Span<byte> destination = folded.Span[..hostSize];
+            destination.Clear();
+
+            ReadOnlySpan<byte> source = data.Span[..(logicalStride * layout.LogicalHeight)];
+
+            for (int page = 0; page < layout.Pages; page++)
+            {
+                int pageStart = page * layout.PageHeight;
+                int pageEnd = pageStart + layout.PageHeight;
+
+                for (int gutterY = 0; gutterY < layout.GutterY; gutterY++)
+                {
+                    int sourceY = Math.Clamp(pageStart - layout.GutterY + gutterY, 0, layout.LogicalHeight - 1);
+
+                    CopyFoldedLinearRow(
+                        source,
+                        destination,
+                        sourceY,
+                        gutterY,
+                        page,
+                        layout,
+                        logicalStride,
+                        hostStride,
+                        bytesPerPixel,
+                        lineBytes);
+                }
+
+                for (int pageY = 0; pageY < layout.PageHeight; pageY++)
+                {
+                    CopyFoldedLinearRow(
+                        source,
+                        destination,
+                        pageStart + pageY,
+                        layout.GutterY + pageY,
+                        page,
+                        layout,
+                        logicalStride,
+                        hostStride,
+                        bytesPerPixel,
+                        lineBytes);
+                }
+
+                for (int gutterY = 0; gutterY < layout.GutterY; gutterY++)
+                {
+                    int sourceY = Math.Clamp(pageEnd + gutterY, 0, layout.LogicalHeight - 1);
+
+                    CopyFoldedLinearRow(
+                        source,
+                        destination,
+                        sourceY,
+                        layout.GutterY + layout.PageHeight + gutterY,
+                        page,
+                        layout,
+                        logicalStride,
+                        hostStride,
+                        bytesPerPixel,
+                        lineBytes);
+                }
+            }
+
+            data.Dispose();
+
+            return folded;
+        }
+
+        private static void CopyFoldedLinearRow(
+            ReadOnlySpan<byte> source,
+            Span<byte> destination,
+            int sourceY,
+            int destinationY,
+            int page,
+            TextureHostLayout layout,
+            int logicalStride,
+            int hostStride,
+            int bytesPerPixel,
+            int lineBytes)
+        {
+            ReadOnlySpan<byte> sourceRow = source.Slice(sourceY * logicalStride, lineBytes);
+            int pageX = page * layout.PageStrideWidth;
+            int destinationRowOffset = destinationY * hostStride;
+            int interiorOffset = destinationRowOffset + (pageX + layout.GutterX) * bytesPerPixel;
+
+            sourceRow.CopyTo(destination.Slice(interiorOffset, lineBytes));
+
+            ReadOnlySpan<byte> firstPixel = sourceRow[..bytesPerPixel];
+            ReadOnlySpan<byte> lastPixel = sourceRow.Slice(lineBytes - bytesPerPixel, bytesPerPixel);
+
+            for (int gutterX = 0; gutterX < layout.GutterX; gutterX++)
+            {
+                firstPixel.CopyTo(destination.Slice(destinationRowOffset + (pageX + gutterX) * bytesPerPixel, bytesPerPixel));
+                lastPixel.CopyTo(destination.Slice(
+                    destinationRowOffset + (pageX + layout.GutterX + layout.LogicalWidth + gutterX) * bytesPerPixel,
+                    bytesPerPixel));
+            }
+        }
+
+        private static MemoryOwner<byte> UnfoldLinearTexture(ReadOnlySpan<byte> data, TextureHostLayout layout, int bytesPerPixel)
+        {
+            int lineBytes = layout.LogicalWidth * bytesPerPixel;
+            int logicalStride = BitUtils.AlignUp(lineBytes, LayoutConverter.HostStrideAlignment);
+            int hostStride = BitUtils.AlignUp(layout.HostWidth * bytesPerPixel, LayoutConverter.HostStrideAlignment);
+            int logicalSize = logicalStride * layout.LogicalHeight;
+
+            MemoryOwner<byte> unfolded = MemoryOwner<byte>.Rent(logicalSize);
+            Span<byte> destination = unfolded.Span[..logicalSize];
+            destination.Clear();
+
+            for (int y = 0; y < layout.LogicalHeight; y++)
+            {
+                int page = y / layout.PageHeight;
+                int pageY = y - page * layout.PageHeight;
+                int sourceOffset = (layout.GutterY + pageY) * hostStride +
+                    (page * layout.PageStrideWidth + layout.GutterX) * bytesPerPixel;
+
+                data.Slice(sourceOffset, lineBytes).CopyTo(destination.Slice(y * logicalStride, lineBytes));
+            }
+
+            return unfolded;
         }
 
         /// <summary>

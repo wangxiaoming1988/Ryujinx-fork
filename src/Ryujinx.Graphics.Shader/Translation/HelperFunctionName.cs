@@ -15,6 +15,10 @@ namespace Ryujinx.Graphics.Shader.Translation
         ShuffleUp,
         ShuffleXor,
         TexelFetchScale,
+        TextureCoordXFold,
+        TextureCoordYFold,
         TextureSizeUnscale,
+        TexelFetchCoordXFold,
+        TexelFetchCoordYFold,
     }
 }

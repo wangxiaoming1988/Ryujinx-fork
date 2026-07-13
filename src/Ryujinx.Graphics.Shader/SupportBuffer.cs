@@ -78,7 +78,7 @@ namespace Ryujinx.Graphics.Shader
                 new StructureField(AggregateType.Vector4 | AggregateType.FP32, "viewport_inverse"),
                 new StructureField(AggregateType.Vector4 | AggregateType.FP32, "viewport_size"),
                 new StructureField(AggregateType.S32, "frag_scale_count"),
-                new StructureField(AggregateType.Array | AggregateType.FP32, "render_scale", RenderScaleMaxCount),
+                new StructureField(AggregateType.Array | AggregateType.Vector4 | AggregateType.FP32, "render_scale", RenderScaleMaxCount),
                 new StructureField(AggregateType.Vector4 | AggregateType.S32, "tfe_offset"),
                 new StructureField(AggregateType.S32, "tfe_vertex_count")
             ]);

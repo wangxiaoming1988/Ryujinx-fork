@@ -24,6 +24,7 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                     node = InsertCoordNormalization(context.Hfm, node, context.ResourceManager, context.GpuAccessor, context.Stage);
                     node = InsertCoordGatherBias(node, context.ResourceManager, context.GpuAccessor);
                     node = InsertConstOffsets(node, context.ResourceManager, context.GpuAccessor, context.Stage);
+                    node = InsertFoldedTextureCoordinates(context.Hfm, node, context.ResourceManager, context.Stage);
 
                     if (texOp.Type == SamplerType.TextureBuffer && !context.GpuAccessor.QueryHostSupportsSnormBufferTextureFormat())
                     {
@@ -128,11 +129,65 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                         }
                     }
 
-                    Operand[] callArgs = [Const(functionId), dest, Const(samplerIndex)];
+                    Operand[] callArgs = [Const(functionId), dest, Const(samplerIndex), Const(texOp.Index)];
 
                     node.List.AddAfter(node, new Operation(Instruction.Call, 0, unscaledSize, callArgs));
                 }
             }
+
+            return node;
+        }
+
+        private static LinkedListNode<INode> InsertFoldedTextureCoordinates(
+            HelperFunctionManager hfm,
+            LinkedListNode<INode> node,
+            ResourceManager resourceManager,
+            ShaderStage stage)
+        {
+            TextureOperation texOp = (TextureOperation)node.Value;
+
+            bool isBindless = (texOp.Flags & TextureFlags.Bindless) != 0;
+            bool intCoords = (texOp.Flags & TextureFlags.IntCoords) != 0;
+            bool isIndexed = resourceManager.IsArrayOfTexturesOrImages(texOp.Binding, isImage: false);
+
+            if (isBindless ||
+                isIndexed ||
+                !stage.SupportsRenderScale ||
+                !TypeSupportsFold(texOp.Type))
+            {
+                return node;
+            }
+
+            int samplerIndex = resourceManager.FindTextureDescriptorIndex(texOp.Binding);
+            int functionIdX = hfm.GetOrCreateFunctionId(intCoords ? HelperFunctionName.TexelFetchCoordXFold : HelperFunctionName.TextureCoordXFold);
+            int functionIdY = hfm.GetOrCreateFunctionId(intCoords ? HelperFunctionName.TexelFetchCoordYFold : HelperFunctionName.TextureCoordYFold);
+
+            Operand coordX = texOp.GetSource(0);
+            Operand coordY = texOp.GetSource(1);
+            Operand foldedCoordX = Local();
+            Operand foldedCoordY = Local();
+
+            node.List.AddBefore(node, new Operation(
+                Instruction.Call,
+                0,
+                foldedCoordX,
+                Const(functionIdX),
+                coordX,
+                coordY,
+                Const(samplerIndex)));
+
+            node.List.AddBefore(node, new Operation(
+                Instruction.Call,
+                0,
+                foldedCoordY,
+                Const(functionIdY),
+                coordY,
+                Const(samplerIndex)));
+
+            texOp.SetSource(0, foldedCoordX);
+            texOp.SetSource(1, foldedCoordY);
+
+            resourceManager.SetUsageFlagsForTextureQuery(texOp.Binding, texOp.Type);
 
             return node;
         }
@@ -744,6 +799,11 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
         private static bool TypeSupportsScale(SamplerType type)
         {
             return (type & SamplerType.Mask) == SamplerType.Texture2D;
+        }
+
+        private static bool TypeSupportsFold(SamplerType type)
+        {
+            return (type & (SamplerType.Mask | SamplerType.Array | SamplerType.Multisample)) == SamplerType.Texture2D;
         }
     }
 }

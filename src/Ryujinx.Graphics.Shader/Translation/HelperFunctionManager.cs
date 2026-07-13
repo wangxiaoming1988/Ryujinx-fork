@@ -7,6 +7,9 @@ namespace Ryujinx.Graphics.Shader.Translation
 {
     class HelperFunctionManager
     {
+        private const int FoldedLinearTextureGutterX = 1;
+        private const int FoldedLinearTextureGutterY = 0;
+
         private readonly List<Function> _functionList;
         private readonly Dictionary<int, int> _functionIds;
         private readonly ShaderStage _stage;
@@ -77,7 +80,11 @@ namespace Ryujinx.Graphics.Shader.Translation
                 HelperFunctionName.ConvertDoubleToFloat => GenerateConvertDoubleToFloatFunction(),
                 HelperFunctionName.ConvertFloatToDouble => GenerateConvertFloatToDoubleFunction(),
                 HelperFunctionName.TexelFetchScale => GenerateTexelFetchScaleFunction(),
+                HelperFunctionName.TextureCoordXFold => GenerateTextureCoordXFoldFunction(),
+                HelperFunctionName.TextureCoordYFold => GenerateTextureCoordYFoldFunction(),
                 HelperFunctionName.TextureSizeUnscale => GenerateTextureSizeUnscaleFunction(),
+                HelperFunctionName.TexelFetchCoordXFold => GenerateTexelFetchCoordXFoldFunction(),
+                HelperFunctionName.TexelFetchCoordYFold => GenerateTexelFetchCoordYFoldFunction(),
                 _ => throw new ArgumentException($"Invalid function name {functionName}"),
             };
         }
@@ -369,7 +376,7 @@ namespace Ryujinx.Graphics.Shader.Translation
             Operand samplerIndex = Argument(1);
             Operand index = GetScaleIndex(context, samplerIndex);
 
-            Operand scale = context.Load(StorageKind.ConstantBuffer, 0, Const((int)SupportBufferField.RenderScale), index);
+            Operand scale = LoadRenderScaleComponent(context, index, 0);
 
             Operand scaleIsOne = context.FPCompareEqual(scale, ConstF(1f));
             Operand lblScaleNotOne = Label();
@@ -420,7 +427,25 @@ namespace Ryujinx.Graphics.Shader.Translation
             Operand samplerIndex = Argument(1);
             Operand index = GetScaleIndex(context, samplerIndex);
 
-            Operand scale = context.FPAbsolute(context.Load(StorageKind.ConstantBuffer, 0, Const((int)SupportBufferField.RenderScale), index));
+            Operand scale = context.FPAbsolute(LoadRenderScaleComponent(context, index, 0));
+            Operand pages = LoadRenderScaleComponent(context, index, 1);
+            Operand componentIndex = Argument(2);
+
+            Operand noFold = context.FPCompareLess(pages, ConstF(1.5f));
+            Operand lblNoFold = Label();
+
+            context.BranchIfTrue(lblNoFold, noFold);
+
+            Operand pagesInt = context.FP32ConvertToS32(pages);
+            Operand logicalWidth = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 2));
+            Operand pageHeight = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 3));
+            Operand isX = context.ICompareEqual(componentIndex, Const(0));
+            Operand isY = context.ICompareEqual(componentIndex, Const(1));
+            Operand logicalHeight = context.IMultiply(pageHeight, pagesInt);
+            Operand foldedSize = context.ConditionalSelect(isX, logicalWidth, context.ConditionalSelect(isY, logicalHeight, input));
+
+            context.Return(foldedSize);
+            context.MarkLabel(lblNoFold);
 
             Operand scaleIsOne = context.FPCompareEqual(scale, ConstF(1f));
             Operand lblScaleNotOne = Label();
@@ -433,7 +458,139 @@ namespace Ryujinx.Graphics.Shader.Translation
 
             context.Return(context.FP32ConvertToS32(inputUnscaled));
 
-            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "TextureSizeUnscale", true, 2, 0);
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "TextureSizeUnscale", true, 3, 0);
+        }
+
+        private Function GenerateTextureCoordXFoldFunction()
+        {
+            EmitterContext context = new();
+
+            Operand inputX = Argument(0);
+            Operand inputY = Argument(1);
+            Operand samplerIndex = Argument(2);
+            Operand index = GetScaleIndex(context, samplerIndex);
+            Operand pages = LoadRenderScaleComponent(context, index, 1);
+
+            Operand noFold = context.FPCompareLess(pages, ConstF(1.5f));
+            Operand lblFold = Label();
+
+            context.BranchIfFalse(lblFold, noFold);
+            context.Return(inputX);
+            context.MarkLabel(lblFold);
+
+            Operand logicalWidth = LoadRenderScaleComponent(context, index, 2);
+            Operand pageHeight = LoadRenderScaleComponent(context, index, 3);
+            Operand logicalHeight = context.FPMultiply(pageHeight, pages);
+            Operand yScaled = context.FPMultiply(inputY, logicalHeight);
+            Operand maxPage = context.FPSubtract(pages, ConstF(1f));
+            Operand page = context.FPMinimum(
+                context.FPMaximum(context.FPFloor(context.FPDivide(yScaled, pageHeight)), ConstF(0f)),
+                maxPage);
+            Operand pageStrideWidth = context.FPAdd(logicalWidth, ConstF(FoldedLinearTextureGutterX * 2f));
+            Operand hostWidth = context.FPMultiply(pageStrideWidth, pages);
+            Operand hostX = context.FPAdd(
+                context.FPAdd(context.FPMultiply(page, pageStrideWidth), ConstF(FoldedLinearTextureGutterX)),
+                context.FPMultiply(inputX, logicalWidth));
+            Operand xFolded = context.FPDivide(hostX, hostWidth);
+
+            context.Return(xFolded);
+
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "TextureCoordXFold", true, 3, 0);
+        }
+
+        private Function GenerateTextureCoordYFoldFunction()
+        {
+            EmitterContext context = new();
+
+            Operand inputY = Argument(0);
+            Operand samplerIndex = Argument(1);
+            Operand index = GetScaleIndex(context, samplerIndex);
+            Operand pages = LoadRenderScaleComponent(context, index, 1);
+
+            Operand noFold = context.FPCompareLess(pages, ConstF(1.5f));
+            Operand lblFold = Label();
+
+            context.BranchIfFalse(lblFold, noFold);
+            context.Return(inputY);
+            context.MarkLabel(lblFold);
+
+            Operand pageHeight = LoadRenderScaleComponent(context, index, 3);
+            Operand logicalHeight = context.FPMultiply(pageHeight, pages);
+            Operand yScaled = context.FPMultiply(inputY, logicalHeight);
+            Operand maxPage = context.FPSubtract(pages, ConstF(1f));
+            Operand page = context.FPMinimum(
+                context.FPMaximum(context.FPFloor(context.FPDivide(yScaled, pageHeight)), ConstF(0f)),
+                maxPage);
+            Operand localY = context.FPSubtract(yScaled, context.FPMultiply(page, pageHeight));
+            Operand hostHeight = context.FPAdd(pageHeight, ConstF(FoldedLinearTextureGutterY * 2f));
+            Operand yFolded = context.FPDivide(context.FPAdd(localY, ConstF(FoldedLinearTextureGutterY)), hostHeight);
+
+            context.Return(yFolded);
+
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "TextureCoordYFold", true, 2, 0);
+        }
+
+        private Function GenerateTexelFetchCoordXFoldFunction()
+        {
+            EmitterContext context = new();
+
+            Operand inputX = Argument(0);
+            Operand inputY = Argument(1);
+            Operand samplerIndex = Argument(2);
+            Operand index = GetScaleIndex(context, samplerIndex);
+            Operand pages = LoadRenderScaleComponent(context, index, 1);
+
+            Operand noFold = context.FPCompareLess(pages, ConstF(1.5f));
+            Operand lblFold = Label();
+
+            context.BranchIfFalse(lblFold, noFold);
+            context.Return(inputX);
+            context.MarkLabel(lblFold);
+
+            Operand width = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 2));
+            Operand pageHeight = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 3));
+            Operand pagesInt = context.FP32ConvertToS32(pages);
+            Operand page = context.Add(Instruction.Divide, Local(), inputY, pageHeight);
+
+            page = context.IMinimumS32(context.IMaximumS32(page, Const(0)), context.ISubtract(pagesInt, Const(1)));
+
+            Operand pageStrideWidth = context.IAdd(width, Const(FoldedLinearTextureGutterX * 2));
+            Operand hostX = context.IAdd(
+                context.IAdd(inputX, context.IMultiply(page, pageStrideWidth)),
+                Const(FoldedLinearTextureGutterX));
+
+            context.Return(hostX);
+
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "TexelFetchCoordXFold", true, 3, 0);
+        }
+
+        private Function GenerateTexelFetchCoordYFoldFunction()
+        {
+            EmitterContext context = new();
+
+            Operand inputY = Argument(0);
+            Operand samplerIndex = Argument(1);
+            Operand index = GetScaleIndex(context, samplerIndex);
+            Operand pages = LoadRenderScaleComponent(context, index, 1);
+
+            Operand noFold = context.FPCompareLess(pages, ConstF(1.5f));
+            Operand lblFold = Label();
+
+            context.BranchIfFalse(lblFold, noFold);
+            context.Return(inputY);
+            context.MarkLabel(lblFold);
+
+            Operand pageHeight = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 3));
+            Operand pagesInt = context.FP32ConvertToS32(pages);
+            Operand page = context.Add(Instruction.Divide, Local(), inputY, pageHeight);
+
+            page = context.IMinimumS32(context.IMaximumS32(page, Const(0)), context.ISubtract(pagesInt, Const(1)));
+
+            Operand localY = context.ISubtract(inputY, context.IMultiply(page, pageHeight));
+
+            context.Return(context.IAdd(localY, Const(FoldedLinearTextureGutterY)));
+
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "TexelFetchCoordYFold", true, 2, 0);
         }
 
         private Operand GetScaleIndex(EmitterContext context, Operand index)
@@ -446,6 +603,11 @@ namespace Ryujinx.Graphics.Shader.Translation
                 default:
                     return context.IAdd(Const(1), index);
             }
+        }
+
+        private static Operand LoadRenderScaleComponent(EmitterContext context, Operand index, int component)
+        {
+            return context.Load(StorageKind.ConstantBuffer, 0, Const((int)SupportBufferField.RenderScale), index, Const(component));
         }
 
         public static Operand GetBitOffset(EmitterContext context, Operand offset)

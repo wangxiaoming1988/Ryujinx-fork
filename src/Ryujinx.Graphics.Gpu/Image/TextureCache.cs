@@ -1282,8 +1282,6 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <returns>The texture creation information</returns>
         public static TextureCreateInfo GetCreateInfo(TextureInfo info, Capabilities caps, float scale)
         {
-            const int MetalMaxTexture2DDimension = 16384;
-
             FormatInfo formatInfo = TextureCompatibility.ToHostCompatibleFormat(info, caps);
 
             if (info.Target == Target.TextureBuffer && !caps.SupportsSnormBufferTextureFormat)
@@ -1324,20 +1322,32 @@ namespace Ryujinx.Graphics.Gpu.Image
                 height = (int)MathF.Ceiling(height * scale);
             }
 
-            if (OperatingSystem.IsMacOS() &&
+            if (TextureHostLayout.TryGetFoldedLinear2D(info, caps, formatInfo, scale, out TextureHostLayout foldedLayout))
+            {
+                Logger.Warning?.Print(
+                    LogClass.Gpu,
+                    $"Folding oversized linear 2D texture for Metal: guest={foldedLayout.LogicalWidth}x{foldedLayout.LogicalHeight}, " +
+                    $"host={foldedLayout.HostWidth}x{foldedLayout.HostHeight}, pages={foldedLayout.Pages}, " +
+                    $"pageHeight={foldedLayout.PageHeight}, gutterX={foldedLayout.GutterX}, gutterY={foldedLayout.GutterY}, " +
+                    $"format={formatInfo.Format}, gpuVa=0x{info.GpuAddress:X}.");
+
+                width = foldedLayout.HostWidth;
+                height = foldedLayout.HostHeight;
+            }
+            else if (OperatingSystem.IsMacOS() &&
                 caps.Api == TargetApi.Vulkan &&
                 info.IsLinear &&
                 info.Target == Target.Texture2D &&
-                (width > MetalMaxTexture2DDimension || height > MetalMaxTexture2DDimension))
+                (width > TextureHostLayout.MetalMaxTexture2DDimension || height > TextureHostLayout.MetalMaxTexture2DDimension))
             {
                 Logger.Warning?.Print(
                     LogClass.Gpu,
                     $"Clamping oversized linear 2D texture for Metal: guest={width}x{height}, " +
-                    $"host={Math.Min(width, MetalMaxTexture2DDimension)}x{Math.Min(height, MetalMaxTexture2DDimension)}, " +
+                    $"host={Math.Min(width, TextureHostLayout.MetalMaxTexture2DDimension)}x{Math.Min(height, TextureHostLayout.MetalMaxTexture2DDimension)}, " +
                     $"format={formatInfo.Format}, gpuVa=0x{info.GpuAddress:X}.");
 
-                width = Math.Min(width, MetalMaxTexture2DDimension);
-                height = Math.Min(height, MetalMaxTexture2DDimension);
+                width = Math.Min(width, TextureHostLayout.MetalMaxTexture2DDimension);
+                height = Math.Min(height, TextureHostLayout.MetalMaxTexture2DDimension);
             }
 
             return new TextureCreateInfo(
