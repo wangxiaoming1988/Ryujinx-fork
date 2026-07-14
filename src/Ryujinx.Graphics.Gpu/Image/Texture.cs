@@ -207,6 +207,7 @@ namespace Ryujinx.Graphics.Gpu.Image
 
             ScaleFactor = scaleFactor;
             ScaleMode = scaleMode;
+            DisableScalingIfBufferBacked();
 
             InitializeData(true);
         }
@@ -232,6 +233,7 @@ namespace Ryujinx.Graphics.Gpu.Image
             ScaleMode = scaleMode;
 
             InitializeTexture(context, physicalMemory, info, sizeInfo, range);
+            DisableScalingIfBufferBacked();
         }
 
         /// <summary>
@@ -262,6 +264,36 @@ namespace Ryujinx.Graphics.Gpu.Image
 
             _views = [];
             _poolOwners = [];
+        }
+
+        /// <summary>
+        /// Gets the buffer-backed host layout used for oversized linear textures on Metal.
+        /// </summary>
+        /// <param name="layout">Buffer-backed host layout, if active</param>
+        /// <returns>True if this texture is sampled from a host buffer</returns>
+        public bool TryGetBufferBackedLayout(out TextureHostLayout layout)
+        {
+            FormatInfo hostFormatInfo = TextureCompatibility.ToHostCompatibleFormat(Info, _context.Capabilities);
+
+            return TextureHostLayout.TryGetBufferBackedLinear2D(Info, _context.Capabilities, hostFormatInfo, ScaleFactor, out layout);
+        }
+
+        public bool IsBufferBacked => TryGetBufferBackedLayout(out _);
+
+        private bool CanUseBufferBackedLayout()
+        {
+            FormatInfo hostFormatInfo = TextureCompatibility.ToHostCompatibleFormat(Info, _context.Capabilities);
+
+            return TextureHostLayout.TryGetBufferBackedLinear2D(Info, _context.Capabilities, hostFormatInfo, 1f, out _);
+        }
+
+        private void DisableScalingIfBufferBacked()
+        {
+            if (CanUseBufferBackedLayout())
+            {
+                ScaleFactor = 1f;
+                ScaleMode = TextureScaleMode.Blacklisted;
+            }
         }
 
         /// <summary>
@@ -512,6 +544,12 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <param name="scale">The new scale factor for this texture</param>
         public void SetScale(float scale)
         {
+            if (scale != 1f && CanUseBufferBackedLayout())
+            {
+                scale = 1f;
+                ScaleMode = TextureScaleMode.Blacklisted;
+            }
+
             bool unscaled = ScaleMode == TextureScaleMode.Blacklisted || (ScaleMode == TextureScaleMode.Undesired && scale == 1);
             TextureScaleMode newScaleMode = unscaled ? ScaleMode : TextureScaleMode.Scaled;
 
@@ -592,7 +630,7 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// </summary>
         public void SynchronizeMemory()
         {
-            if (Target == Target.TextureBuffer)
+            if (Target == Target.TextureBuffer || IsBufferBacked)
             {
                 return;
             }
@@ -1307,6 +1345,11 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <returns>A view of this texture with the requested target, or null if the target is invalid for this texture</returns>
         public ITexture GetTargetTexture(Target target)
         {
+            if (target == Target.TextureBuffer && IsBufferBacked)
+            {
+                return HostTexture;
+            }
+
             if (target == Target)
             {
                 return HostTexture;

@@ -105,11 +105,24 @@ namespace Ryujinx.Graphics.Gpu.Memory
         /// <param name="scale">Scale value</param>
         public void UpdateRenderScale(int index, float scale)
         {
+            UpdateRenderScale(index, new Vector4<float> { X = scale });
+        }
+
+        /// <summary>
+        /// Updates the render scale and texture layout metadata for shader input textures or images.
+        /// </summary>
+        /// <param name="index">Index of the scale</param>
+        /// <param name="data">Scale and texture layout metadata</param>
+        public void UpdateRenderScale(int index, Vector4<float> data)
+        {
             Span<Vector4<float>> renderScaleSpan = _data.RenderScale.AsSpan();
-            
-            if (renderScaleSpan[1 + index].X != scale)
+
+            if (renderScaleSpan[1 + index].X != data.X ||
+                renderScaleSpan[1 + index].Y != data.Y ||
+                renderScaleSpan[1 + index].Z != data.Z ||
+                renderScaleSpan[1 + index].W != data.W)
             {
-                renderScaleSpan[1 + index].X = scale;
+                renderScaleSpan[1 + index] = data;
                 DirtyRenderScale(1 + index, 1);
             }
         }

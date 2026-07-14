@@ -16,6 +16,11 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
         {
             if (node.Value is TextureOperation texOp)
             {
+                if ((texOp.Flags & TextureFlags.BufferTexture2D) != 0)
+                {
+                    return LowerBufferTexture2D(context, node);
+                }
+
                 node = InsertTexelFetchScale(context.Hfm, node, context.ResourceManager, context.Stage);
                 node = InsertTextureSizeUnscale(context.Hfm, node, context.ResourceManager, context.Stage);
 
@@ -135,6 +140,196 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
             }
 
             return node;
+        }
+
+        private static LinkedListNode<INode> LowerBufferTexture2D(
+            TransformContext context,
+            LinkedListNode<INode> node)
+        {
+            TextureOperation texOp = (TextureOperation)node.Value;
+
+            if (!context.ResourceManager.TryGetCbufSlotAndHandleForTexture(texOp.Binding, out int cbufSlot, out int handle))
+            {
+                return node;
+            }
+
+            int samplerIndex = context.ResourceManager.FindTextureDescriptorIndex(texOp.Binding);
+
+            context.ResourceManager.SetUsageFlagsForTextureQuery(texOp.Binding, SamplerType.Texture2D);
+
+            if (texOp.Inst == Instruction.TextureQuerySize)
+            {
+                int functionId = context.Hfm.GetOrCreateFunctionId(HelperFunctionName.BufferTexture2DSize);
+                Operand dest = texOp.Dest;
+
+                texOp.Detach();
+                node.Value = new Operation(
+                    Instruction.Call,
+                    0,
+                    dest,
+                    Const(functionId),
+                    Const(samplerIndex),
+                    Const(texOp.Index));
+
+                return node;
+            }
+
+            if (texOp.Inst == Instruction.TextureQuerySamples)
+            {
+                Operand dest = texOp.Dest;
+
+                texOp.Detach();
+                node.Value = new Operation(Instruction.Copy, dest, Const(1));
+
+                return node;
+            }
+
+            if (texOp.Inst == Instruction.Lod)
+            {
+                Operand dest = texOp.Dest;
+
+                texOp.Detach();
+                node.Value = new Operation(Instruction.Copy, dest, ConstF(0f));
+
+                return node;
+            }
+
+            if (texOp.Inst != Instruction.TextureSample || texOp.SourcesCount < 2)
+            {
+                return node;
+            }
+
+            bool intCoords = (texOp.Flags & TextureFlags.IntCoords) != 0;
+            bool normalized = !intCoords && context.GpuAccessor.QueryTextureCoordNormalized(handle, cbufSlot);
+            Operand[] linearIndices;
+            Operand weightX = null;
+            Operand weightY = null;
+
+            if (intCoords)
+            {
+                int functionIdIndex = context.Hfm.GetOrCreateFunctionId(HelperFunctionName.BufferTexture2DNearestIndexInt);
+                linearIndices = [Local()];
+
+                node.List.AddBefore(node, new Operation(
+                    Instruction.Call,
+                    0,
+                    linearIndices[0],
+                    Const(functionIdIndex),
+                    texOp.GetSource(0),
+                    texOp.GetSource(1),
+                    Const(samplerIndex)));
+            }
+            else
+            {
+                int functionIdIndices = context.Hfm.GetOrCreateFunctionId(HelperFunctionName.BufferTexture2DBilinearIndices);
+                linearIndices = [Local(), Local(), Local(), Local()];
+                weightX = Local();
+                weightY = Local();
+
+                node.List.AddBefore(node, new Operation(
+                    Instruction.Call,
+                    0,
+                    linearIndices[0],
+                    Const(functionIdIndices),
+                    texOp.GetSource(0),
+                    texOp.GetSource(1),
+                    Const(samplerIndex),
+                    Const(normalized ? 1 : 0),
+                    linearIndices[1],
+                    linearIndices[2],
+                    linearIndices[3],
+                    weightX,
+                    weightY));
+            }
+
+            Operand[] dests = new Operand[texOp.DestsCount];
+
+            for (int index = 0; index < dests.Length; index++)
+            {
+                dests[index] = texOp.GetDest(index);
+            }
+
+            int componentMask = texOp.Index;
+            int bufferTextureState = context.GpuAccessor.QueryHostBufferTexture2D(handle, cbufSlot);
+            int set = texOp.Set;
+            int binding = texOp.Binding;
+
+            texOp.Detach();
+            Operand rawValue;
+            Operand[] samples = new Operand[linearIndices.Length];
+
+            for (int index = 0; index < samples.Length; index++)
+            {
+                samples[index] = Local();
+            }
+
+            node.Value = CreateBufferTextureSample(set, binding, samples[0], linearIndices[0]);
+
+            LinkedListNode<INode> insertionPoint = node;
+
+            for (int index = 1; index < samples.Length; index++)
+            {
+                insertionPoint = node.List.AddAfter(
+                    insertionPoint,
+                    CreateBufferTextureSample(set, binding, samples[index], linearIndices[index]));
+            }
+
+            if (intCoords)
+            {
+                rawValue = samples[0];
+            }
+            else
+            {
+                Operand deltaTop = Local();
+                Operand top = Local();
+                Operand deltaBottom = Local();
+                Operand bottom = Local();
+                Operand deltaRows = Local();
+                rawValue = Local();
+
+                insertionPoint = node.List.AddAfter(insertionPoint, new Operation(Instruction.FP32 | Instruction.Subtract, deltaTop, samples[1], samples[0]));
+                insertionPoint = node.List.AddAfter(insertionPoint, new Operation(Instruction.FP32 | Instruction.FusedMultiplyAdd, top, deltaTop, weightX, samples[0]));
+                insertionPoint = node.List.AddAfter(insertionPoint, new Operation(Instruction.FP32 | Instruction.Subtract, deltaBottom, samples[3], samples[2]));
+                insertionPoint = node.List.AddAfter(insertionPoint, new Operation(Instruction.FP32 | Instruction.FusedMultiplyAdd, bottom, deltaBottom, weightX, samples[2]));
+                insertionPoint = node.List.AddAfter(insertionPoint, new Operation(Instruction.FP32 | Instruction.Subtract, deltaRows, bottom, top));
+                insertionPoint = node.List.AddAfter(insertionPoint, new Operation(Instruction.FP32 | Instruction.FusedMultiplyAdd, rawValue, deltaRows, weightY, top));
+            }
+
+            int destIndex = 0;
+
+            for (int component = 0; component < 4; component++)
+            {
+                if ((componentMask & (1 << component)) == 0)
+                {
+                    continue;
+                }
+
+                int swizzle = (bufferTextureState >> (1 + component * 3)) & 7;
+                Operand source = swizzle switch
+                {
+                    2 => rawValue,
+                    5 or 6 or 7 => ConstF(1f),
+                    _ => ConstF(0f),
+                };
+
+                insertionPoint = node.List.AddAfter(insertionPoint, new Operation(Instruction.Copy, dests[destIndex++], source));
+            }
+
+            return node;
+        }
+
+        private static TextureOperation CreateBufferTextureSample(int set, int binding, Operand dest, Operand linearIndex)
+        {
+            return new TextureOperation(
+                Instruction.TextureSample,
+                SamplerType.TextureBuffer,
+                TextureFormat.Unknown,
+                TextureFlags.IntCoords,
+                set,
+                binding,
+                1,
+                [dest],
+                [linearIndex]);
         }
 
         private static LinkedListNode<INode> InsertCoordNormalization(
@@ -745,5 +940,6 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
         {
             return (type & SamplerType.Mask) == SamplerType.Texture2D;
         }
+
     }
 }

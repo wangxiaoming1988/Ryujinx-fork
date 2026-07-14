@@ -241,6 +241,28 @@ namespace Ryujinx.Graphics.Shader.IntermediateRepresentation
             TurnInto(Instruction.Copy, source);
         }
 
+        public void Detach()
+        {
+            foreach (Operand source in _sources)
+            {
+                if (source != null && source.Type == OperandType.LocalVariable)
+                {
+                    source.UseOps.Remove(this);
+                }
+            }
+
+            foreach (Operand dest in _dests)
+            {
+                if (dest != null && dest.Type == OperandType.LocalVariable && dest.AsgOp == this)
+                {
+                    dest.AsgOp = null;
+                }
+            }
+
+            _sources = [];
+            _dests = [];
+        }
+
         public void TurnInto(Instruction newInst, Operand source)
         {
             Inst = newInst;

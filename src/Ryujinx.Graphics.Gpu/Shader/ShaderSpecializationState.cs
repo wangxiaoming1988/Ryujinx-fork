@@ -74,6 +74,7 @@ namespace Ryujinx.Graphics.Gpu.Shader
             TextureFormat = 1 << 0,
             SamplerType = 1 << 1,
             CoordNormalized = 1 << 2,
+            BufferTexture2D = 1 << 3,
         }
 
         /// <summary>
@@ -118,6 +119,11 @@ namespace Ryujinx.Graphics.Gpu.Shader
             /// Indicates if the coordinates used to sample the texture are normalized or not (0.0..1.0 or 0..Width/Height).
             /// </summary>
             public bool CoordNormalized;
+
+            /// <summary>
+            /// Packed state used by oversized 2D textures sampled through a host texture buffer.
+            /// </summary>
+            public int BufferTexture2D;
         }
 
         /// <summary>
@@ -392,6 +398,16 @@ namespace Ryujinx.Graphics.Gpu.Shader
         }
 
         /// <summary>
+        /// Indicates that buffer-backed 2D texture state was used during shader translation.
+        /// </summary>
+        public void RecordTextureBuffer2D(int stageIndex, int handle, int cbufSlot, int bufferTexture2D)
+        {
+            Box<TextureSpecializationState> state = GetOrCreateTextureSpecState(stageIndex, handle, cbufSlot);
+            state.Value.BufferTexture2D = bufferTexture2D;
+            state.Value.QueriedFlags |= QueriedTextureStateFlags.BufferTexture2D;
+        }
+
+        /// <summary>
         /// Checks if primitive topology was queried by the shader.
         /// </summary>
         /// <returns>True if queried, false otherwise</returns>
@@ -468,6 +484,14 @@ namespace Ryujinx.Graphics.Gpu.Shader
         public bool GetCoordNormalized(int stageIndex, int handle, int cbufSlot)
         {
             return GetTextureSpecState(stageIndex, handle, cbufSlot).Value.CoordNormalized;
+        }
+
+        /// <summary>
+        /// Gets the recorded buffer-backed 2D texture state.
+        /// </summary>
+        public int GetTextureBuffer2D(int stageIndex, int handle, int cbufSlot)
+        {
+            return GetTextureSpecState(stageIndex, handle, cbufSlot).Value.BufferTexture2D;
         }
 
         /// <summary>
@@ -808,6 +832,12 @@ namespace Ryujinx.Graphics.Gpu.Shader
             {
                 if ((specializationState.Value.QueriedFlags & QueriedTextureStateFlags.CoordNormalized) == QueriedTextureStateFlags.CoordNormalized &&
                     specializationState.Value.CoordNormalized != descriptor.UnpackTextureCoordNormalized())
+                {
+                    return false;
+                }
+
+                if ((specializationState.Value.QueriedFlags & QueriedTextureStateFlags.BufferTexture2D) == QueriedTextureStateFlags.BufferTexture2D &&
+                    specializationState.Value.BufferTexture2D != TextureHostLayout.GetBufferBackedLinear2DState(descriptor, isVulkan: true))
                 {
                     return false;
                 }

@@ -480,9 +480,21 @@ namespace Ryujinx.Graphics.Shader.Translation.Optimizations
                 }
             }
 
+            bool bufferTexture2D = !isImage &&
+                resourceManager.SupportsRenderScale &&
+                (texOp.Type & (SamplerType.Mask | SamplerType.Multisample | SamplerType.Shadow)) == SamplerType.Texture2D &&
+                gpuAccessor.QueryHostBufferTexture2D(cbufOffset, cbufSlot) != 0;
+
+            SamplerType resourceType = bufferTexture2D ? SamplerType.TextureBuffer : texOp.Type;
+
+            if (bufferTexture2D)
+            {
+                texOp.SetBufferTexture2DFlag();
+            }
+
             SetBindingPair setAndBinding = resourceManager.GetTextureOrImageBinding(
                 texOp.Inst,
-                texOp.Type,
+                resourceType,
                 texOp.Format,
                 texOp.Flags & ~TextureFlags.Bindless,
                 cbufSlot,

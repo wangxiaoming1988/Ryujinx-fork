@@ -134,6 +134,15 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
         }
 
         /// <inheritdoc/>
+        public int QueryHostBufferTexture2D(int handle, int cbufSlot)
+        {
+            int state = _oldSpecState.GetTextureBuffer2D(_stageIndex, handle, cbufSlot);
+            _newSpecState.RecordTextureBuffer2D(_stageIndex, handle, cbufSlot, state);
+
+            return state;
+        }
+
+        /// <inheritdoc/>
         /// <exception cref="DiskCacheLoadException">Constant buffer derived length is not available on the cache</exception>
         public int QueryTextureArrayLengthFromBuffer(int slot)
         {

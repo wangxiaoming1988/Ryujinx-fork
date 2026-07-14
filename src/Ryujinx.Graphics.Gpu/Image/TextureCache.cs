@@ -1282,8 +1282,6 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <returns>The texture creation information</returns>
         public static TextureCreateInfo GetCreateInfo(TextureInfo info, Capabilities caps, float scale)
         {
-            const int MetalMaxTexture2DDimension = 16384;
-
             FormatInfo formatInfo = TextureCompatibility.ToHostCompatibleFormat(info, caps);
 
             if (info.Target == Target.TextureBuffer && !caps.SupportsSnormBufferTextureFormat)
@@ -1318,6 +1316,32 @@ namespace Ryujinx.Graphics.Gpu.Image
 
             int depth = info.GetDepth() * info.GetLayers();
 
+            if (TextureHostLayout.TryGetBufferBackedLinear2D(info, caps, formatInfo, scale, out TextureHostLayout bufferLayout))
+            {
+                Logger.Warning?.Print(
+                    LogClass.Gpu,
+                    $"Using buffer-backed sampler for oversized linear Metal texture: guest={bufferLayout.Width}x{bufferLayout.Height}, " +
+                    $"stride={bufferLayout.Stride}, texels={bufferLayout.TexelCount}, format={formatInfo.Format}, " +
+                    $"swizzle={info.SwizzleR}/{info.SwizzleG}/{info.SwizzleB}/{info.SwizzleA}, gpuVa=0x{info.GpuAddress:X}.");
+
+                return new TextureCreateInfo(
+                    bufferLayout.TexelCount,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    formatInfo.BytesPerPixel,
+                    formatInfo.Format,
+                    info.DepthStencilMode,
+                    Target.TextureBuffer,
+                    SwizzleComponent.Red,
+                    SwizzleComponent.Green,
+                    SwizzleComponent.Blue,
+                    SwizzleComponent.Alpha);
+            }
+
             if (scale != 1f)
             {
                 width = (int)MathF.Ceiling(width * scale);
@@ -1328,16 +1352,16 @@ namespace Ryujinx.Graphics.Gpu.Image
                 caps.Api == TargetApi.Vulkan &&
                 info.IsLinear &&
                 info.Target == Target.Texture2D &&
-                (width > MetalMaxTexture2DDimension || height > MetalMaxTexture2DDimension))
+                (width > TextureHostLayout.MetalMaxTexture2DDimension || height > TextureHostLayout.MetalMaxTexture2DDimension))
             {
                 Logger.Warning?.Print(
                     LogClass.Gpu,
                     $"Clamping oversized linear 2D texture for Metal: guest={width}x{height}, " +
-                    $"host={Math.Min(width, MetalMaxTexture2DDimension)}x{Math.Min(height, MetalMaxTexture2DDimension)}, " +
+                    $"host={Math.Min(width, TextureHostLayout.MetalMaxTexture2DDimension)}x{Math.Min(height, TextureHostLayout.MetalMaxTexture2DDimension)}, " +
                     $"format={formatInfo.Format}, gpuVa=0x{info.GpuAddress:X}.");
 
-                width = Math.Min(width, MetalMaxTexture2DDimension);
-                height = Math.Min(height, MetalMaxTexture2DDimension);
+                width = Math.Min(width, TextureHostLayout.MetalMaxTexture2DDimension);
+                height = Math.Min(height, TextureHostLayout.MetalMaxTexture2DDimension);
             }
 
             return new TextureCreateInfo(

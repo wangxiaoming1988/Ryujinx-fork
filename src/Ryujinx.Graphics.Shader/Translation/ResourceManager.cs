@@ -57,6 +57,8 @@ namespace Ryujinx.Graphics.Shader.Translation
 
         public ResourceReservations Reservations { get; }
 
+        public bool SupportsRenderScale => _stage.SupportsRenderScale;
+
         public ResourceManager(ShaderStage stage, IGpuAccessor gpuAccessor, ResourceReservations reservations = null)
         {
             _gpuAccessor = gpuAccessor;

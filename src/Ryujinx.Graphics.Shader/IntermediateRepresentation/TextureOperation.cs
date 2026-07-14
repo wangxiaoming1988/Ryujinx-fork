@@ -65,5 +65,10 @@ namespace Ryujinx.Graphics.Shader.IntermediateRepresentation
         {
             Flags |= TextureFlags.LodLevel;
         }
+
+        public void SetBufferTexture2DFlag()
+        {
+            Flags |= TextureFlags.BufferTexture2D;
+        }
     }
 }

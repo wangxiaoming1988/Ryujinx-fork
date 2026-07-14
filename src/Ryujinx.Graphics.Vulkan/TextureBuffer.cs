@@ -49,7 +49,7 @@ namespace Ryujinx.Graphics.Vulkan
 
         public ITexture CreateView(TextureCreateInfo info, int firstLayer, int firstLevel)
         {
-            throw new NotSupportedException();
+            return new TextureBuffer(_gd, info);
         }
 
         public PinnedSpan<byte> GetData()

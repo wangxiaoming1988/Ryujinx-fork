@@ -61,6 +61,7 @@ namespace Ryujinx.Graphics.Gpu.Shader
             _channel = channel;
             _state = state;
             _compute = true;
+            _isVulkan = context.Capabilities.Api == TargetApi.Vulkan;
         }
 
         /// <inheritdoc/>
@@ -149,6 +150,17 @@ namespace Ryujinx.Graphics.Gpu.Shader
         {
             _state.SpecializationState?.RecordTextureSamplerType(_stageIndex, handle, cbufSlot);
             return GetTextureDescriptor(handle, cbufSlot).UnpackTextureTarget().ConvertSamplerType();
+        }
+
+        /// <inheritdoc/>
+        public int QueryHostBufferTexture2D(int handle, int cbufSlot)
+        {
+            TextureDescriptor descriptor = GetTextureDescriptor(handle, cbufSlot);
+            int state = TextureHostLayout.GetBufferBackedLinear2DState(descriptor, _isVulkan);
+
+            _state.SpecializationState?.RecordTextureBuffer2D(_stageIndex, handle, cbufSlot, state);
+
+            return state;
         }
 
         /// <inheritdoc/>

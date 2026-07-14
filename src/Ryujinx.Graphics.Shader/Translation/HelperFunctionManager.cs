@@ -78,6 +78,9 @@ namespace Ryujinx.Graphics.Shader.Translation
                 HelperFunctionName.ConvertFloatToDouble => GenerateConvertFloatToDoubleFunction(),
                 HelperFunctionName.TexelFetchScale => GenerateTexelFetchScaleFunction(),
                 HelperFunctionName.TextureSizeUnscale => GenerateTextureSizeUnscaleFunction(),
+                HelperFunctionName.BufferTexture2DNearestIndexInt => GenerateBufferTexture2DNearestIndexIntFunction(),
+                HelperFunctionName.BufferTexture2DBilinearIndices => GenerateBufferTexture2DBilinearIndicesFunction(),
+                HelperFunctionName.BufferTexture2DSize => GenerateBufferTexture2DSizeFunction(),
                 _ => throw new ArgumentException($"Invalid function name {functionName}"),
             };
         }
@@ -369,7 +372,7 @@ namespace Ryujinx.Graphics.Shader.Translation
             Operand samplerIndex = Argument(1);
             Operand index = GetScaleIndex(context, samplerIndex);
 
-            Operand scale = context.Load(StorageKind.ConstantBuffer, 0, Const((int)SupportBufferField.RenderScale), index);
+            Operand scale = LoadRenderScaleComponent(context, index, 0);
 
             Operand scaleIsOne = context.FPCompareEqual(scale, ConstF(1f));
             Operand lblScaleNotOne = Label();
@@ -420,7 +423,7 @@ namespace Ryujinx.Graphics.Shader.Translation
             Operand samplerIndex = Argument(1);
             Operand index = GetScaleIndex(context, samplerIndex);
 
-            Operand scale = context.FPAbsolute(context.Load(StorageKind.ConstantBuffer, 0, Const((int)SupportBufferField.RenderScale), index));
+            Operand scale = context.FPAbsolute(LoadRenderScaleComponent(context, index, 0));
 
             Operand scaleIsOne = context.FPCompareEqual(scale, ConstF(1f));
             Operand lblScaleNotOne = Label();
@@ -436,6 +439,91 @@ namespace Ryujinx.Graphics.Shader.Translation
             return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "TextureSizeUnscale", true, 2, 0);
         }
 
+        private Function GenerateBufferTexture2DNearestIndexIntFunction()
+        {
+            EmitterContext context = new();
+
+            Operand x = Argument(0);
+            Operand y = Argument(1);
+            Operand samplerIndex = Argument(2);
+            Operand index = GetScaleIndex(context, samplerIndex);
+            Operand width = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 1));
+            Operand height = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 2));
+            Operand stride = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 3));
+
+            x = context.IMinimumS32(context.IMaximumS32(x, Const(0)), context.ISubtract(width, Const(1)));
+            y = context.IMinimumS32(context.IMaximumS32(y, Const(0)), context.ISubtract(height, Const(1)));
+
+            context.Return(context.IAdd(context.IMultiply(y, stride), x));
+
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "BufferTexture2DNearestIndexInt", true, 3, 0);
+        }
+
+        private Function GenerateBufferTexture2DBilinearIndicesFunction()
+        {
+            EmitterContext context = new();
+
+            Operand coordX = Argument(0);
+            Operand coordY = Argument(1);
+            Operand samplerIndex = Argument(2);
+            Operand normalized = Argument(3);
+            Operand index = GetScaleIndex(context, samplerIndex);
+            Operand width = LoadRenderScaleComponent(context, index, 1);
+            Operand height = LoadRenderScaleComponent(context, index, 2);
+            Operand stride = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 3));
+            Operand isNormalized = context.ICompareNotEqual(normalized, Const(0));
+            Operand texelX = context.ConditionalSelect(isNormalized, context.FPMultiply(coordX, width), coordX);
+            Operand texelY = context.ConditionalSelect(isNormalized, context.FPMultiply(coordY, height), coordY);
+
+            texelX = context.FPSubtract(texelX, ConstF(0.5f));
+            texelY = context.FPSubtract(texelY, ConstF(0.5f));
+
+            Operand floorX = context.FPFloor(texelX);
+            Operand floorY = context.FPFloor(texelY);
+            Operand x0 = context.FP32ConvertToS32(floorX);
+            Operand y0 = context.FP32ConvertToS32(floorY);
+            Operand x1 = context.IAdd(x0, Const(1));
+            Operand y1 = context.IAdd(y0, Const(1));
+            Operand maxX = context.ISubtract(context.FP32ConvertToS32(width), Const(1));
+            Operand maxY = context.ISubtract(context.FP32ConvertToS32(height), Const(1));
+
+            x0 = context.IMinimumS32(context.IMaximumS32(x0, Const(0)), maxX);
+            x1 = context.IMinimumS32(context.IMaximumS32(x1, Const(0)), maxX);
+            y0 = context.IMinimumS32(context.IMaximumS32(y0, Const(0)), maxY);
+            y1 = context.IMinimumS32(context.IMaximumS32(y1, Const(0)), maxY);
+
+            Operand row0 = context.IMultiply(y0, stride);
+            Operand row1 = context.IMultiply(y1, stride);
+            Operand index00 = context.IAdd(row0, x0);
+            Operand index10 = context.IAdd(row0, x1);
+            Operand index01 = context.IAdd(row1, x0);
+            Operand index11 = context.IAdd(row1, x1);
+
+            context.Copy(Argument(4), index10);
+            context.Copy(Argument(5), index01);
+            context.Copy(Argument(6), index11);
+            context.Copy(Argument(7), context.FPSubtract(texelX, floorX));
+            context.Copy(Argument(8), context.FPSubtract(texelY, floorY));
+            context.Return(index00);
+
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "BufferTexture2DBilinearIndices", true, 4, 5);
+        }
+
+        private Function GenerateBufferTexture2DSizeFunction()
+        {
+            EmitterContext context = new();
+
+            Operand samplerIndex = Argument(0);
+            Operand component = Argument(1);
+            Operand index = GetScaleIndex(context, samplerIndex);
+            Operand width = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 1));
+            Operand height = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 2));
+
+            context.Return(context.ConditionalSelect(context.ICompareEqual(component, Const(0)), width, height));
+
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "BufferTexture2DSize", true, 2, 0);
+        }
+
         private Operand GetScaleIndex(EmitterContext context, Operand index)
         {
             switch (_stage)
@@ -446,6 +534,11 @@ namespace Ryujinx.Graphics.Shader.Translation
                 default:
                     return context.IAdd(Const(1), index);
             }
+        }
+
+        private static Operand LoadRenderScaleComponent(EmitterContext context, Operand index, int component)
+        {
+            return context.Load(StorageKind.ConstantBuffer, 0, Const((int)SupportBufferField.RenderScale), index, Const(component));
         }
 
         public static Operand GetBitOffset(EmitterContext context, Operand offset)

@@ -422,6 +422,17 @@ namespace Ryujinx.Graphics.Shader
         }
 
         /// <summary>
+        /// Queries whether a 2D guest texture should be sampled through a host texture buffer.
+        /// </summary>
+        /// <param name="handle">Texture handle</param>
+        /// <param name="cbufSlot">Constant buffer slot for the texture handle</param>
+        /// <returns>Zero when disabled, otherwise packed texture swizzle state</returns>
+        int QueryHostBufferTexture2D(int handle, int cbufSlot = -1)
+        {
+            return 0;
+        }
+
+        /// <summary>
         /// Gets the size in bytes of a bound constant buffer for the current shader stage.
         /// </summary>
         /// <param name="slot">The number of the constant buffer to get the size from</param>
