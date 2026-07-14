@@ -15,6 +15,7 @@ namespace Ryujinx.Graphics.Shader.IntermediateRepresentation
         Offset = 1 << 6,
         Offsets = 1 << 7,
         Coherent = 1 << 8,
+        BufferTexture2D = 1 << 9,
 
         AtomicMask = 15 << 16,
 

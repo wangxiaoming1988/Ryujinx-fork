@@ -1316,25 +1316,39 @@ namespace Ryujinx.Graphics.Gpu.Image
 
             int depth = info.GetDepth() * info.GetLayers();
 
+            if (TextureHostLayout.TryGetBufferBackedLinear2D(info, caps, formatInfo, scale, out TextureHostLayout bufferLayout))
+            {
+                Logger.Warning?.Print(
+                    LogClass.Gpu,
+                    $"Using buffer-backed sampler for oversized linear Metal texture: guest={bufferLayout.Width}x{bufferLayout.Height}, " +
+                    $"stride={bufferLayout.Stride}, texels={bufferLayout.TexelCount}, format={formatInfo.Format}, " +
+                    $"swizzle={info.SwizzleR}/{info.SwizzleG}/{info.SwizzleB}/{info.SwizzleA}, gpuVa=0x{info.GpuAddress:X}.");
+
+                return new TextureCreateInfo(
+                    bufferLayout.TexelCount,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    1,
+                    formatInfo.BytesPerPixel,
+                    formatInfo.Format,
+                    info.DepthStencilMode,
+                    Target.TextureBuffer,
+                    SwizzleComponent.Red,
+                    SwizzleComponent.Green,
+                    SwizzleComponent.Blue,
+                    SwizzleComponent.Alpha);
+            }
+
             if (scale != 1f)
             {
                 width = (int)MathF.Ceiling(width * scale);
                 height = (int)MathF.Ceiling(height * scale);
             }
 
-            if (TextureHostLayout.TryGetFoldedLinear2D(info, caps, formatInfo, scale, out TextureHostLayout foldedLayout))
-            {
-                Logger.Warning?.Print(
-                    LogClass.Gpu,
-                    $"Folding oversized linear 2D texture for Metal: guest={foldedLayout.LogicalWidth}x{foldedLayout.LogicalHeight}, " +
-                    $"host={foldedLayout.HostWidth}x{foldedLayout.HostHeight}, pages={foldedLayout.Pages}, " +
-                    $"pageHeight={foldedLayout.PageHeight}, gutterX={foldedLayout.GutterX}, gutterY={foldedLayout.GutterY}, " +
-                    $"format={formatInfo.Format}, gpuVa=0x{info.GpuAddress:X}.");
-
-                width = foldedLayout.HostWidth;
-                height = foldedLayout.HostHeight;
-            }
-            else if (OperatingSystem.IsMacOS() &&
+            if (OperatingSystem.IsMacOS() &&
                 caps.Api == TargetApi.Vulkan &&
                 info.IsLinear &&
                 info.Target == Target.Texture2D &&

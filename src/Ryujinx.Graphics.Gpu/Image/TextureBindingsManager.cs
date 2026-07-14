@@ -247,11 +247,11 @@ namespace Ryujinx.Graphics.Gpu.Image
                     }
                 }
 
-                if (texture.TryGetFoldedLayout(out TextureHostLayout foldedLayout))
+                if (texture.TryGetBufferBackedLayout(out TextureHostLayout bufferLayout))
                 {
-                    result.Y = foldedLayout.Pages;
-                    result.Z = foldedLayout.LogicalWidth;
-                    result.W = foldedLayout.PageHeight;
+                    result.Y = bufferLayout.Width;
+                    result.Z = bufferLayout.Height;
+                    result.W = bufferLayout.Stride;
                 }
             }
 
@@ -526,7 +526,10 @@ namespace Ryujinx.Graphics.Gpu.Image
                 ITexture hostTexture = texture?.GetTargetTexture(bindingInfo.Target);
                 ISampler hostSampler = sampler?.GetHostSampler(texture);
 
-                if (hostTexture != null && texture.Target == Target.TextureBuffer)
+                bool scaleChanged = (usageFlags & TextureUsageFlags.NeedsScaleValue) != 0 &&
+                    UpdateScale(texture, usageFlags, index, stage);
+
+                if (hostTexture != null && (texture.Target == Target.TextureBuffer || texture.IsBufferBacked))
                 {
                     // Ensure that the buffer texture is using the correct buffer as storage.
                     // Buffers are frequently re-created to accommodate larger data, so we need to re-bind
@@ -540,8 +543,7 @@ namespace Ryujinx.Graphics.Gpu.Image
                 {
                     bool textureOrSamplerChanged = state.Texture != hostTexture || state.Sampler != hostSampler;
 
-                    if ((usageFlags & TextureUsageFlags.NeedsScaleValue) != 0 &&
-                        UpdateScale(texture, usageFlags, index, stage))
+                    if (scaleChanged)
                     {
                         hostTexture = texture?.GetTargetTexture(bindingInfo.Target);
                         textureOrSamplerChanged = true;

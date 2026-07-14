@@ -886,9 +886,17 @@ namespace Ryujinx.Graphics.Shader.Instructions
                 return Register(dest++, RegisterType.Gpr);
             }
 
+            int bufferTexture2D = QueryBufferTexture2D(context, type, flags, imm);
+            SamplerType resourceType = bufferTexture2D != 0 ? SamplerType.TextureBuffer : type;
+
+            if (bufferTexture2D != 0)
+            {
+                flags |= TextureFlags.BufferTexture2D;
+            }
+
             SetBindingPair setAndBinding = isBindless ? default : context.ResourceManager.GetTextureOrImageBinding(
                 Instruction.Lod,
-                type,
+                resourceType,
                 TextureFormat.Unknown,
                 flags,
                 TextureOperation.DefaultCbufSlot,
@@ -1121,12 +1129,20 @@ namespace Ryujinx.Graphics.Shader.Instructions
             TextureFlags flags = isBindless ? TextureFlags.Bindless : TextureFlags.None;
             SetBindingPair setAndBinding;
 
+            int bufferTexture2D = QueryBufferTexture2D(context, type, flags, imm);
+            SamplerType resourceType = bufferTexture2D != 0 ? SamplerType.TextureBuffer : type;
+
+            if (bufferTexture2D != 0)
+            {
+                flags |= TextureFlags.BufferTexture2D;
+            }
+
             switch (query)
             {
                 case TexQuery.TexHeaderDimension:
                     setAndBinding = isBindless ? default : context.ResourceManager.GetTextureOrImageBinding(
                         Instruction.TextureQuerySize,
-                        type,
+                        resourceType,
                         TextureFormat.Unknown,
                         flags,
                         TextureOperation.DefaultCbufSlot,
@@ -1152,7 +1168,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
                 case TexQuery.TexHeaderTextureType:
                     setAndBinding = isBindless ? default : context.ResourceManager.GetTextureOrImageBinding(
                         Instruction.TextureQuerySamples,
-                        type,
+                        resourceType,
                         TextureFormat.Unknown,
                         flags,
                         TextureOperation.DefaultCbufSlot,
@@ -1196,15 +1212,35 @@ namespace Ryujinx.Graphics.Shader.Instructions
             Operand[] dests,
             Operand[] sources)
         {
+            int bufferTexture2D = QueryBufferTexture2D(context, type, flags, handle);
+            SamplerType resourceType = bufferTexture2D != 0 ? SamplerType.TextureBuffer : type;
+
+            if (bufferTexture2D != 0)
+            {
+                flags |= TextureFlags.BufferTexture2D;
+            }
+
             SetBindingPair setAndBinding = flags.HasFlag(TextureFlags.Bindless) ? default : context.ResourceManager.GetTextureOrImageBinding(
                 Instruction.TextureSample,
-                type,
+                resourceType,
                 TextureFormat.Unknown,
                 flags,
                 TextureOperation.DefaultCbufSlot,
                 handle);
 
             context.TextureSample(type, flags, setAndBinding, componentMask, dests, sources);
+        }
+
+        private static int QueryBufferTexture2D(EmitterContext context, SamplerType type, TextureFlags flags, int handle)
+        {
+            if ((flags & TextureFlags.Bindless) != 0 ||
+                !context.TranslatorContext.Stage.SupportsRenderScale ||
+                (type & (SamplerType.Mask | SamplerType.Multisample | SamplerType.Shadow)) != SamplerType.Texture2D)
+            {
+                return 0;
+            }
+
+            return context.TranslatorContext.GpuAccessor.QueryHostBufferTexture2D(handle);
         }
 
         private static SamplerType ConvertSamplerType(TexDim dimensions)

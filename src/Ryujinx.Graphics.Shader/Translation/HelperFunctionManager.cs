@@ -7,9 +7,6 @@ namespace Ryujinx.Graphics.Shader.Translation
 {
     class HelperFunctionManager
     {
-        private const int FoldedLinearTextureGutterX = 1;
-        private const int FoldedLinearTextureGutterY = 0;
-
         private readonly List<Function> _functionList;
         private readonly Dictionary<int, int> _functionIds;
         private readonly ShaderStage _stage;
@@ -80,11 +77,10 @@ namespace Ryujinx.Graphics.Shader.Translation
                 HelperFunctionName.ConvertDoubleToFloat => GenerateConvertDoubleToFloatFunction(),
                 HelperFunctionName.ConvertFloatToDouble => GenerateConvertFloatToDoubleFunction(),
                 HelperFunctionName.TexelFetchScale => GenerateTexelFetchScaleFunction(),
-                HelperFunctionName.TextureCoordXFold => GenerateTextureCoordXFoldFunction(),
-                HelperFunctionName.TextureCoordYFold => GenerateTextureCoordYFoldFunction(),
                 HelperFunctionName.TextureSizeUnscale => GenerateTextureSizeUnscaleFunction(),
-                HelperFunctionName.TexelFetchCoordXFold => GenerateTexelFetchCoordXFoldFunction(),
-                HelperFunctionName.TexelFetchCoordYFold => GenerateTexelFetchCoordYFoldFunction(),
+                HelperFunctionName.BufferTexture2DNearestIndexInt => GenerateBufferTexture2DNearestIndexIntFunction(),
+                HelperFunctionName.BufferTexture2DBilinearIndices => GenerateBufferTexture2DBilinearIndicesFunction(),
+                HelperFunctionName.BufferTexture2DSize => GenerateBufferTexture2DSizeFunction(),
                 _ => throw new ArgumentException($"Invalid function name {functionName}"),
             };
         }
@@ -428,24 +424,6 @@ namespace Ryujinx.Graphics.Shader.Translation
             Operand index = GetScaleIndex(context, samplerIndex);
 
             Operand scale = context.FPAbsolute(LoadRenderScaleComponent(context, index, 0));
-            Operand pages = LoadRenderScaleComponent(context, index, 1);
-            Operand componentIndex = Argument(2);
-
-            Operand noFold = context.FPCompareLess(pages, ConstF(1.5f));
-            Operand lblNoFold = Label();
-
-            context.BranchIfTrue(lblNoFold, noFold);
-
-            Operand pagesInt = context.FP32ConvertToS32(pages);
-            Operand logicalWidth = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 2));
-            Operand pageHeight = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 3));
-            Operand isX = context.ICompareEqual(componentIndex, Const(0));
-            Operand isY = context.ICompareEqual(componentIndex, Const(1));
-            Operand logicalHeight = context.IMultiply(pageHeight, pagesInt);
-            Operand foldedSize = context.ConditionalSelect(isX, logicalWidth, context.ConditionalSelect(isY, logicalHeight, input));
-
-            context.Return(foldedSize);
-            context.MarkLabel(lblNoFold);
 
             Operand scaleIsOne = context.FPCompareEqual(scale, ConstF(1f));
             Operand lblScaleNotOne = Label();
@@ -458,139 +436,92 @@ namespace Ryujinx.Graphics.Shader.Translation
 
             context.Return(context.FP32ConvertToS32(inputUnscaled));
 
-            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "TextureSizeUnscale", true, 3, 0);
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "TextureSizeUnscale", true, 2, 0);
         }
 
-        private Function GenerateTextureCoordXFoldFunction()
+        private Function GenerateBufferTexture2DNearestIndexIntFunction()
         {
             EmitterContext context = new();
 
-            Operand inputX = Argument(0);
-            Operand inputY = Argument(1);
+            Operand x = Argument(0);
+            Operand y = Argument(1);
             Operand samplerIndex = Argument(2);
             Operand index = GetScaleIndex(context, samplerIndex);
-            Operand pages = LoadRenderScaleComponent(context, index, 1);
+            Operand width = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 1));
+            Operand height = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 2));
+            Operand stride = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 3));
 
-            Operand noFold = context.FPCompareLess(pages, ConstF(1.5f));
-            Operand lblFold = Label();
+            x = context.IMinimumS32(context.IMaximumS32(x, Const(0)), context.ISubtract(width, Const(1)));
+            y = context.IMinimumS32(context.IMaximumS32(y, Const(0)), context.ISubtract(height, Const(1)));
 
-            context.BranchIfFalse(lblFold, noFold);
-            context.Return(inputX);
-            context.MarkLabel(lblFold);
+            context.Return(context.IAdd(context.IMultiply(y, stride), x));
 
-            Operand logicalWidth = LoadRenderScaleComponent(context, index, 2);
-            Operand pageHeight = LoadRenderScaleComponent(context, index, 3);
-            Operand logicalHeight = context.FPMultiply(pageHeight, pages);
-            Operand yScaled = context.FPMultiply(inputY, logicalHeight);
-            Operand maxPage = context.FPSubtract(pages, ConstF(1f));
-            Operand page = context.FPMinimum(
-                context.FPMaximum(context.FPFloor(context.FPDivide(yScaled, pageHeight)), ConstF(0f)),
-                maxPage);
-            Operand pageStrideWidth = context.FPAdd(logicalWidth, ConstF(FoldedLinearTextureGutterX * 2f));
-            Operand hostWidth = context.FPMultiply(pageStrideWidth, pages);
-            Operand hostX = context.FPAdd(
-                context.FPAdd(context.FPMultiply(page, pageStrideWidth), ConstF(FoldedLinearTextureGutterX)),
-                context.FPMultiply(inputX, logicalWidth));
-            Operand xFolded = context.FPDivide(hostX, hostWidth);
-
-            context.Return(xFolded);
-
-            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "TextureCoordXFold", true, 3, 0);
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "BufferTexture2DNearestIndexInt", true, 3, 0);
         }
 
-        private Function GenerateTextureCoordYFoldFunction()
+        private Function GenerateBufferTexture2DBilinearIndicesFunction()
         {
             EmitterContext context = new();
 
-            Operand inputY = Argument(0);
-            Operand samplerIndex = Argument(1);
-            Operand index = GetScaleIndex(context, samplerIndex);
-            Operand pages = LoadRenderScaleComponent(context, index, 1);
-
-            Operand noFold = context.FPCompareLess(pages, ConstF(1.5f));
-            Operand lblFold = Label();
-
-            context.BranchIfFalse(lblFold, noFold);
-            context.Return(inputY);
-            context.MarkLabel(lblFold);
-
-            Operand pageHeight = LoadRenderScaleComponent(context, index, 3);
-            Operand logicalHeight = context.FPMultiply(pageHeight, pages);
-            Operand yScaled = context.FPMultiply(inputY, logicalHeight);
-            Operand maxPage = context.FPSubtract(pages, ConstF(1f));
-            Operand page = context.FPMinimum(
-                context.FPMaximum(context.FPFloor(context.FPDivide(yScaled, pageHeight)), ConstF(0f)),
-                maxPage);
-            Operand localY = context.FPSubtract(yScaled, context.FPMultiply(page, pageHeight));
-            Operand hostHeight = context.FPAdd(pageHeight, ConstF(FoldedLinearTextureGutterY * 2f));
-            Operand yFolded = context.FPDivide(context.FPAdd(localY, ConstF(FoldedLinearTextureGutterY)), hostHeight);
-
-            context.Return(yFolded);
-
-            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "TextureCoordYFold", true, 2, 0);
-        }
-
-        private Function GenerateTexelFetchCoordXFoldFunction()
-        {
-            EmitterContext context = new();
-
-            Operand inputX = Argument(0);
-            Operand inputY = Argument(1);
+            Operand coordX = Argument(0);
+            Operand coordY = Argument(1);
             Operand samplerIndex = Argument(2);
+            Operand normalized = Argument(3);
             Operand index = GetScaleIndex(context, samplerIndex);
-            Operand pages = LoadRenderScaleComponent(context, index, 1);
+            Operand width = LoadRenderScaleComponent(context, index, 1);
+            Operand height = LoadRenderScaleComponent(context, index, 2);
+            Operand stride = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 3));
+            Operand isNormalized = context.ICompareNotEqual(normalized, Const(0));
+            Operand texelX = context.ConditionalSelect(isNormalized, context.FPMultiply(coordX, width), coordX);
+            Operand texelY = context.ConditionalSelect(isNormalized, context.FPMultiply(coordY, height), coordY);
 
-            Operand noFold = context.FPCompareLess(pages, ConstF(1.5f));
-            Operand lblFold = Label();
+            texelX = context.FPSubtract(texelX, ConstF(0.5f));
+            texelY = context.FPSubtract(texelY, ConstF(0.5f));
 
-            context.BranchIfFalse(lblFold, noFold);
-            context.Return(inputX);
-            context.MarkLabel(lblFold);
+            Operand floorX = context.FPFloor(texelX);
+            Operand floorY = context.FPFloor(texelY);
+            Operand x0 = context.FP32ConvertToS32(floorX);
+            Operand y0 = context.FP32ConvertToS32(floorY);
+            Operand x1 = context.IAdd(x0, Const(1));
+            Operand y1 = context.IAdd(y0, Const(1));
+            Operand maxX = context.ISubtract(context.FP32ConvertToS32(width), Const(1));
+            Operand maxY = context.ISubtract(context.FP32ConvertToS32(height), Const(1));
 
-            Operand width = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 2));
-            Operand pageHeight = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 3));
-            Operand pagesInt = context.FP32ConvertToS32(pages);
-            Operand page = context.Add(Instruction.Divide, Local(), inputY, pageHeight);
+            x0 = context.IMinimumS32(context.IMaximumS32(x0, Const(0)), maxX);
+            x1 = context.IMinimumS32(context.IMaximumS32(x1, Const(0)), maxX);
+            y0 = context.IMinimumS32(context.IMaximumS32(y0, Const(0)), maxY);
+            y1 = context.IMinimumS32(context.IMaximumS32(y1, Const(0)), maxY);
 
-            page = context.IMinimumS32(context.IMaximumS32(page, Const(0)), context.ISubtract(pagesInt, Const(1)));
+            Operand row0 = context.IMultiply(y0, stride);
+            Operand row1 = context.IMultiply(y1, stride);
+            Operand index00 = context.IAdd(row0, x0);
+            Operand index10 = context.IAdd(row0, x1);
+            Operand index01 = context.IAdd(row1, x0);
+            Operand index11 = context.IAdd(row1, x1);
 
-            Operand pageStrideWidth = context.IAdd(width, Const(FoldedLinearTextureGutterX * 2));
-            Operand hostX = context.IAdd(
-                context.IAdd(inputX, context.IMultiply(page, pageStrideWidth)),
-                Const(FoldedLinearTextureGutterX));
+            context.Copy(Argument(4), index10);
+            context.Copy(Argument(5), index01);
+            context.Copy(Argument(6), index11);
+            context.Copy(Argument(7), context.FPSubtract(texelX, floorX));
+            context.Copy(Argument(8), context.FPSubtract(texelY, floorY));
+            context.Return(index00);
 
-            context.Return(hostX);
-
-            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "TexelFetchCoordXFold", true, 3, 0);
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "BufferTexture2DBilinearIndices", true, 4, 5);
         }
 
-        private Function GenerateTexelFetchCoordYFoldFunction()
+        private Function GenerateBufferTexture2DSizeFunction()
         {
             EmitterContext context = new();
 
-            Operand inputY = Argument(0);
-            Operand samplerIndex = Argument(1);
+            Operand samplerIndex = Argument(0);
+            Operand component = Argument(1);
             Operand index = GetScaleIndex(context, samplerIndex);
-            Operand pages = LoadRenderScaleComponent(context, index, 1);
+            Operand width = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 1));
+            Operand height = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 2));
 
-            Operand noFold = context.FPCompareLess(pages, ConstF(1.5f));
-            Operand lblFold = Label();
+            context.Return(context.ConditionalSelect(context.ICompareEqual(component, Const(0)), width, height));
 
-            context.BranchIfFalse(lblFold, noFold);
-            context.Return(inputY);
-            context.MarkLabel(lblFold);
-
-            Operand pageHeight = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 3));
-            Operand pagesInt = context.FP32ConvertToS32(pages);
-            Operand page = context.Add(Instruction.Divide, Local(), inputY, pageHeight);
-
-            page = context.IMinimumS32(context.IMaximumS32(page, Const(0)), context.ISubtract(pagesInt, Const(1)));
-
-            Operand localY = context.ISubtract(inputY, context.IMultiply(page, pageHeight));
-
-            context.Return(context.IAdd(localY, Const(FoldedLinearTextureGutterY)));
-
-            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "TexelFetchCoordYFold", true, 2, 0);
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "BufferTexture2DSize", true, 2, 0);
         }
 
         private Operand GetScaleIndex(EmitterContext context, Operand index)

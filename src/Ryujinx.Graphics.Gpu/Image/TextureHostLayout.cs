@@ -1,4 +1,3 @@
-using Ryujinx.Common;
 using Ryujinx.Graphics.GAL;
 using Ryujinx.Graphics.Shader.Translation;
 using System;
@@ -8,42 +7,22 @@ namespace Ryujinx.Graphics.Gpu.Image
     readonly struct TextureHostLayout
     {
         public const int MetalMaxTexture2DDimension = 16384;
-        public const int FoldedLinearTextureGutterX = 1;
-        public const int FoldedLinearTextureGutterY = 0;
+        private const int BufferBackedLinear2DVersion = 1 << 13;
 
-        public int LogicalWidth { get; }
-        public int LogicalHeight { get; }
-        public int HostWidth { get; }
-        public int HostHeight { get; }
-        public int PageHeight { get; }
-        public int Pages { get; }
-        public int GutterX { get; }
-        public int GutterY { get; }
-        public int PageStrideWidth => LogicalWidth + GutterX * 2;
+        public int Width { get; }
+        public int Height { get; }
+        public int Stride { get; }
+        public int TexelCount { get; }
 
-        public bool IsFolded => Pages > 1;
-
-        private TextureHostLayout(
-            int logicalWidth,
-            int logicalHeight,
-            int hostWidth,
-            int hostHeight,
-            int pageHeight,
-            int pages,
-            int gutterX,
-            int gutterY)
+        private TextureHostLayout(int width, int height, int stride, int texelCount)
         {
-            LogicalWidth = logicalWidth;
-            LogicalHeight = logicalHeight;
-            HostWidth = hostWidth;
-            HostHeight = hostHeight;
-            PageHeight = pageHeight;
-            Pages = pages;
-            GutterX = gutterX;
-            GutterY = gutterY;
+            Width = width;
+            Height = height;
+            Stride = stride;
+            TexelCount = texelCount;
         }
 
-        public static bool TryGetFoldedLinear2D(
+        public static bool TryGetBufferBackedLinear2D(
             TextureInfo info,
             Capabilities caps,
             FormatInfo hostFormatInfo,
@@ -62,58 +41,56 @@ namespace Ryujinx.Graphics.Gpu.Image
                 info.GetDepth() != 1 ||
                 info.Samples != 1 ||
                 info.FormatInfo.IsCompressed ||
-                !IsSameHostFormat(info.FormatInfo, hostFormatInfo))
+                info.FormatInfo.Format != Format.R8Unorm ||
+                !IsSameHostFormat(info.FormatInfo, hostFormatInfo) ||
+                info.Width <= 0 ||
+                info.Width > MetalMaxTexture2DDimension ||
+                info.Height <= MetalMaxTexture2DDimension ||
+                info.Stride < info.Width)
             {
                 return false;
             }
 
-            int width = info.Width;
-            int height = info.Height;
-            int gutterX = FoldedLinearTextureGutterX;
-            int gutterY = FoldedLinearTextureGutterY;
-            int pageStrideWidth = width + gutterX * 2;
-            int maxPageHeight = MetalMaxTexture2DDimension - gutterY * 2;
+            long texelCount = (long)info.Stride * info.Height;
 
-            if (width <= 0 ||
-                height <= MetalMaxTexture2DDimension ||
-                pageStrideWidth > MetalMaxTexture2DDimension ||
-                maxPageHeight <= 0)
+            if (texelCount > int.MaxValue)
             {
                 return false;
             }
 
-            int minPages = Math.Max(2, BitUtils.DivRoundUp(height, maxPageHeight));
-            int maxPages = MetalMaxTexture2DDimension / pageStrideWidth;
+            layout = new TextureHostLayout(info.Width, info.Height, info.Stride, (int)texelCount);
 
-            for (int pages = minPages; pages <= maxPages; pages++)
+            return true;
+        }
+
+        public static int GetBufferBackedLinear2DState(in TextureDescriptor descriptor, bool isVulkan)
+        {
+            TextureTarget target = descriptor.UnpackTextureTarget();
+
+            if (!OperatingSystem.IsMacOS() ||
+                !isVulkan ||
+                descriptor.UnpackTextureDescriptorType() != TextureDescriptorType.Linear ||
+                target is not (TextureTarget.Texture2D or TextureTarget.Texture2DRect) ||
+                descriptor.UnpackLevels() != 1 ||
+                descriptor.UnpackWidth() <= 0 ||
+                descriptor.UnpackWidth() > MetalMaxTexture2DDimension ||
+                descriptor.UnpackHeight() <= MetalMaxTexture2DDimension ||
+                descriptor.UnpackStride() < descriptor.UnpackWidth() ||
+                descriptor.UnpackSrgb() ||
+                !FormatTable.TryGetTextureFormat(descriptor.UnpackFormat(), false, out FormatInfo formatInfo) ||
+                formatInfo.Format != Format.R8Unorm)
             {
-                if (height % pages != 0)
-                {
-                    continue;
-                }
-
-                int pageHeight = height / pages;
-                int hostWidth = pageStrideWidth * pages;
-                int hostHeight = pageHeight + gutterY * 2;
-
-                if (hostWidth <= MetalMaxTexture2DDimension &&
-                    hostHeight <= MetalMaxTexture2DDimension)
-                {
-                    layout = new TextureHostLayout(
-                        width,
-                        height,
-                        hostWidth,
-                        hostHeight,
-                        pageHeight,
-                        pages,
-                        gutterX,
-                        gutterY);
-
-                    return true;
-                }
+                return 0;
             }
 
-            return false;
+            int swizzle = (int)descriptor.UnpackSwizzleR() |
+                ((int)descriptor.UnpackSwizzleG() << 3) |
+                ((int)descriptor.UnpackSwizzleB() << 6) |
+                ((int)descriptor.UnpackSwizzleA() << 9);
+
+            // Keep a local code generation version in the specialization state so only shaders
+            // using this path are invalidated when its sampling implementation changes.
+            return BufferBackedLinear2DVersion | (swizzle << 1) | 1;
         }
 
         private static bool IsSameHostFormat(FormatInfo guestFormatInfo, FormatInfo hostFormatInfo)
