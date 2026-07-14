@@ -72,6 +72,7 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                                     break;
                                 default:
                                     context.GpuAccessor.Log($"Invalid input \"{ioVariable}\".");
+                                    operation.TurnIntoCopy(Const(0));
                                     break;
                             }
                         }
@@ -89,6 +90,7 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                         else
                         {
                             context.GpuAccessor.Log($"Invalid output \"{(IoVariable)operation.GetSource(0).Value}\".");
+                            operation.TurnIntoCopy(Const(0));
                         }
                     }
 
@@ -109,6 +111,8 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                         else
                         {
                             context.GpuAccessor.Log($"Invalid output \"{(IoVariable)operation.GetSource(0).Value}\".");
+                            operation.Detach();
+                            node.Value = new CommentNode("Dropped unmapped geometry output during compute conversion.");
                         }
                     }
 
