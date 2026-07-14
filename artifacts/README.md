@@ -1,13 +1,15 @@
 # macOS Runtime Package
 
-## Ryujinx 1.3.335 buffer-bilinear
+## Ryujinx 1.3.336 buffer-bilinear
 
-- File: `Ryujinx-1.3.335-buffer-bilinear-macos-arm64.zip`
+- File: `Ryujinx-1.3.336-buffer-bilinear-macos-arm64.zip`
 - Platform: macOS arm64 (Apple Silicon)
-- Bundle version: `1.3.335`
+- Bundle version: `1.3.336`
 - Source branch: `codex/buffer-bilinear-1.3.336`
-- Source commit: `63b83d32aee0a04de4ad49e30ce667b9e64bdd1b`
-- SHA-256: `0cc56b2e9e3476ebd394a45d4260c7c6b8772e7bbc5fe176ff2a08e68ef72048`
+- Source commit: `bd17fb51c9c65e02fdbf647347c3bd5c20e34ac8`
+- SHA-256: `1b7f99a900aa9ad60f13942017c6f40fd9d76971c12affd4093b6fbf8a008de5`
+
+The previous `1.3.335` package remains in this directory as a backup.
 
 The application bundle passed `codesign --verify --deep --strict`, and the ZIP archive passed an integrity test before being committed.
 
