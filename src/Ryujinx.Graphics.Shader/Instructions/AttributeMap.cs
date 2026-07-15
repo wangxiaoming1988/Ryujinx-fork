@@ -2,6 +2,7 @@ using Ryujinx.Graphics.Shader.IntermediateRepresentation;
 using Ryujinx.Graphics.Shader.Translation;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Numerics;
 using static Ryujinx.Graphics.Shader.IntermediateRepresentation.OperandHelper;
 
 namespace Ryujinx.Graphics.Shader.Instructions
@@ -203,6 +204,11 @@ namespace Ryujinx.Graphics.Shader.Instructions
 
             if (!IsSupportedByHost(context.TranslatorContext.GpuAccessor, context.TranslatorContext.Definitions.Stage, entry.IoVariable))
             {
+                if (TryStoreViewportMaskAsIndex(context, entry.IoVariable, isPerPatch, value))
+                {
+                    return;
+                }
+
                 context.TranslatorContext.GpuAccessor.Log($"Attribute offset 0x{offset:X} ({entry.IoVariable}) is not supported by the host for stage {context.TranslatorContext.Definitions.Stage}.");
                 return;
             }
@@ -256,6 +262,42 @@ namespace Ryujinx.Graphics.Shader.Instructions
             {
                 context.Store(storageKind, ioVariable, invocationId, value);
             }
+        }
+
+        internal static int GetViewportIndexFromMask(int mask)
+        {
+            return mask == 0 ? 0 : BitOperations.TrailingZeroCount((uint)mask);
+        }
+
+        private static bool TryStoreViewportMaskAsIndex(EmitterContext context, IoVariable ioVariable, bool isPerPatch, Operand value)
+        {
+            ShaderStage stage = context.TranslatorContext.Definitions.Stage;
+            IGpuAccessor gpuAccessor = context.TranslatorContext.GpuAccessor;
+
+            if (ioVariable != IoVariable.ViewportMask ||
+                isPerPatch ||
+                stage != ShaderStage.Geometry ||
+                !IsSupportedByHost(gpuAccessor, stage, IoVariable.ViewportIndex))
+            {
+                return false;
+            }
+
+            Operand viewportIndex;
+
+            if (value.Type == OperandType.Constant)
+            {
+                viewportIndex = Const(GetViewportIndexFromMask(value.Value));
+            }
+            else
+            {
+                Operand firstBit = context.FindLSB(value);
+                Operand hasViewport = context.ICompareNotEqual(value, Const(0));
+
+                viewportIndex = context.ConditionalSelect(hasViewport, firstBit, Const(0));
+            }
+
+            context.Store(StorageKind.Output, IoVariable.ViewportIndex, null, viewportIndex);
+            return true;
         }
 
         private static bool IsSupportedByHost(IGpuAccessor gpuAccessor, ShaderStage stage, IoVariable ioVariable)

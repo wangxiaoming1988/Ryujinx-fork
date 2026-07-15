@@ -1,5 +1,6 @@
 using Ryujinx.Graphics.GAL;
 using Ryujinx.Graphics.Gpu.Image;
+using Ryujinx.Graphics.Shader;
 using Ryujinx.Memory.Range;
 
 namespace Ryujinx.Graphics.Gpu.Memory
@@ -9,6 +10,11 @@ namespace Ryujinx.Graphics.Gpu.Memory
     /// </summary>
     readonly struct BufferTextureArrayBinding<T>
     {
+        /// <summary>
+        /// Shader stage accessing the texture.
+        /// </summary>
+        public ShaderStage Stage { get; }
+
         /// <summary>
         /// Backend texture or image array.
         /// </summary>
@@ -37,18 +43,21 @@ namespace Ryujinx.Graphics.Gpu.Memory
         /// <summary>
         /// Create a new buffer texture binding.
         /// </summary>
+        /// <param name="stage">Shader stage accessing the texture</param>
         /// <param name="array">Array</param>
         /// <param name="texture">Buffer texture</param>
         /// <param name="range">Physical ranges of memory where the buffer texture data is located</param>
         /// <param name="bindingInfo">Binding info</param>
         /// <param name="index">Index of the binding on the array</param>
         public BufferTextureArrayBinding(
+            ShaderStage stage,
             T array,
             ITexture texture,
             MultiRange range,
             TextureBindingInfo bindingInfo,
             int index)
         {
+            Stage = stage;
             Array = array;
             Texture = texture;
             Range = range;

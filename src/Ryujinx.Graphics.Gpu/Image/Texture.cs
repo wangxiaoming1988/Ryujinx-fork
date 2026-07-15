@@ -1345,9 +1345,9 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <returns>A view of this texture with the requested target, or null if the target is invalid for this texture</returns>
         public ITexture GetTargetTexture(Target target)
         {
-            if (target == Target.TextureBuffer && IsBufferBacked)
+            if (IsBufferBacked)
             {
-                return HostTexture;
+                return target == Target.TextureBuffer ? HostTexture : null;
             }
 
             if (target == Target)

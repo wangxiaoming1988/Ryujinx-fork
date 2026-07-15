@@ -662,7 +662,7 @@ namespace Ryujinx.Graphics.Gpu.Image
 
                 ITexture hostTexture = texture?.GetTargetTexture(bindingInfo.Target);
 
-                if (hostTexture != null && texture.Target == Target.TextureBuffer)
+                if (hostTexture != null && (texture.Target == Target.TextureBuffer || texture.IsBufferBacked))
                 {
                     // Ensure that the buffer texture is using the correct buffer as storage.
                     // Buffers are frequently re-created to accommodate larger data, so we need to re-bind

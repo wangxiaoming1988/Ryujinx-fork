@@ -217,6 +217,11 @@ namespace Ryujinx.Graphics.Gpu.Image
             public readonly Dictionary<Texture, int> Textures;
 
             /// <summary>
+            /// Cached buffer textures and their array indexes.
+            /// </summary>
+            public readonly List<(Texture Texture, int Index)> BufferTextures;
+
+            /// <summary>
             /// Backend texture array if the entry is for a texture, otherwise null.
             /// </summary>
             public readonly ITextureArray TextureArray;
@@ -247,6 +252,7 @@ namespace Ryujinx.Graphics.Gpu.Image
             private CacheEntry(TexturePool texturePool, SamplerPool samplerPool)
             {
                 Textures = new Dictionary<Texture, int>();
+                BufferTextures = [];
 
                 TexturePool = texturePool;
                 SamplerPool = samplerPool;
@@ -300,11 +306,51 @@ namespace Ryujinx.Graphics.Gpu.Image
             }
 
             /// <summary>
+            /// Adds a buffer texture to the cached buffer texture list.
+            /// </summary>
+            /// <param name="texture">Buffer texture</param>
+            /// <param name="index">Index of the texture on the array</param>
+            public void AddBufferTexture(Texture texture, int index)
+            {
+                BufferTextures.Add((texture, index));
+            }
+
+            /// <summary>
+            /// Rebinds storage for cached buffer textures.
+            /// </summary>
+            /// <param name="channel">GPU channel</param>
+            /// <param name="stage">Shader stage accessing the texture</param>
+            /// <param name="bindingInfo">Binding info for the texture array</param>
+            /// <param name="isImage">Whether the binding is for an image or sampler array</param>
+            public void RebindBufferTextures(GpuChannel channel, ShaderStage stage, in TextureBindingInfo bindingInfo, bool isImage)
+            {
+                foreach ((Texture texture, int index) in BufferTextures)
+                {
+                    ITexture hostTexture = texture.GetTargetTexture(bindingInfo.Target);
+
+                    if (hostTexture == null)
+                    {
+                        continue;
+                    }
+
+                    if (isImage)
+                    {
+                        channel.BufferManager.SetBufferTextureStorage(stage, ImageArray, hostTexture, texture.Range, bindingInfo, index);
+                    }
+                    else
+                    {
+                        channel.BufferManager.SetBufferTextureStorage(stage, TextureArray, hostTexture, texture.Range, bindingInfo, index);
+                    }
+                }
+            }
+
+            /// <summary>
             /// Clears all cached texture instances.
             /// </summary>
             public virtual void Reset()
             {
                 Textures.Clear();
+                BufferTextures.Clear();
             }
 
             /// <summary>
@@ -637,6 +683,7 @@ namespace Ryujinx.Graphics.Gpu.Image
             if (!poolModified && !isNewEntry && entry.ValidateTextures())
             {
                 entry.SynchronizeMemory(isStore, resScaleUnsupported);
+                entry.RebindBufferTextures(_channel, stage, bindingInfo, isImage);
 
                 if (isImage)
                 {
@@ -695,8 +742,10 @@ namespace Ryujinx.Graphics.Gpu.Image
                 ITexture hostTexture = texture?.GetTargetTexture(bindingInfo.Target);
                 ISampler hostSampler = sampler?.GetHostSampler(texture);
 
-                if (hostTexture != null && texture.Target == Target.TextureBuffer)
+                if (hostTexture != null && (texture.Target == Target.TextureBuffer || texture.IsBufferBacked))
                 {
+                    entry.AddBufferTexture(texture, index);
+
                     // Ensure that the buffer texture is using the correct buffer as storage.
                     // Buffers are frequently re-created to accommodate larger data, so we need to re-bind
                     // to ensure we're not using a old buffer that was already deleted.
@@ -784,6 +833,7 @@ namespace Ryujinx.Graphics.Gpu.Image
                 if (entry.MatchesSequenceNumber(_context.SequenceNumber))
                 {
                     entry.SynchronizeMemory(isStore, resScaleUnsupported);
+                    entry.RebindBufferTextures(_channel, stage, bindingInfo, isImage);
 
                     if (isImage)
                     {
@@ -813,6 +863,7 @@ namespace Ryujinx.Graphics.Gpu.Image
                 if (entry.MatchesBufferData(cachedTextureBuffer, cachedSamplerBuffer, separateSamplerBuffer, samplerWordOffset))
                 {
                     entry.SynchronizeMemory(isStore, resScaleUnsupported);
+                    entry.RebindBufferTextures(_channel, stage, bindingInfo, isImage);
 
                     if (isImage)
                     {
@@ -899,8 +950,10 @@ namespace Ryujinx.Graphics.Gpu.Image
                     hostSampler = sampler?.GetHostSampler(texture);
                 }
 
-                if (hostTexture != null && texture.Target == Target.TextureBuffer)
+                if (hostTexture != null && (texture.Target == Target.TextureBuffer || texture.IsBufferBacked))
                 {
+                    entry.AddBufferTexture(texture, index);
+
                     // Ensure that the buffer texture is using the correct buffer as storage.
                     // Buffers are frequently re-created to accommodate larger data, so we need to re-bind
                     // to ensure we're not using a old buffer that was already deleted.

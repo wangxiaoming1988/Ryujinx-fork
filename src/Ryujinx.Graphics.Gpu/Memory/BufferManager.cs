@@ -526,7 +526,9 @@ namespace Ryujinx.Graphics.Gpu.Memory
 
                 foreach (BufferTextureArrayBinding<ITextureArray> binding in _bufferTextureArrays)
                 {
-                    BufferRange range = bufferCache.GetBufferRange(binding.Range, BufferStage.None);
+                    BufferRange range = bufferCache.GetBufferRange(
+                        binding.Range,
+                        BufferStageUtils.TextureBuffer(binding.Stage, binding.BindingInfo.Flags));
                     binding.Texture.SetStorage(range);
 
                     textureArray[0] = binding.Texture;
@@ -536,7 +538,10 @@ namespace Ryujinx.Graphics.Gpu.Memory
                 foreach (BufferTextureArrayBinding<IImageArray> binding in _bufferImageArrays)
                 {
                     bool isStore = binding.BindingInfo.Flags.HasFlag(TextureUsageFlags.ImageStore);
-                    BufferRange range = bufferCache.GetBufferRange(binding.Range, BufferStage.None, isStore);
+                    BufferRange range = bufferCache.GetBufferRange(
+                        binding.Range,
+                        BufferStageUtils.TextureBuffer(binding.Stage, binding.BindingInfo.Flags),
+                        isStore);
                     binding.Texture.SetStorage(range);
 
                     textureArray[0] = binding.Texture;
@@ -897,7 +902,7 @@ namespace Ryujinx.Graphics.Gpu.Memory
         {
             _channel.MemoryManager.Physical.BufferCache.CreateBuffer(range, BufferStageUtils.TextureBuffer(stage, bindingInfo.Flags));
 
-            _bufferTextureArrays.Add(new BufferTextureArrayBinding<ITextureArray>(array, texture, range, bindingInfo, index));
+            _bufferTextureArrays.Add(new BufferTextureArrayBinding<ITextureArray>(stage, array, texture, range, bindingInfo, index));
         }
 
         /// <summary>
@@ -919,7 +924,7 @@ namespace Ryujinx.Graphics.Gpu.Memory
         {
             _channel.MemoryManager.Physical.BufferCache.CreateBuffer(range, BufferStageUtils.TextureBuffer(stage, bindingInfo.Flags));
 
-            _bufferImageArrays.Add(new BufferTextureArrayBinding<IImageArray>(array, texture, range, bindingInfo, index));
+            _bufferImageArrays.Add(new BufferTextureArrayBinding<IImageArray>(stage, array, texture, range, bindingInfo, index));
         }
 
         /// <summary>
