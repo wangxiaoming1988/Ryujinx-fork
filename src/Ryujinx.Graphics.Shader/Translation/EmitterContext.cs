@@ -570,8 +570,9 @@ namespace Ryujinx.Graphics.Shader.Translation
                     Operand primitiveIndex = this.Load(StorageKind.Input, IoVariable.GlobalId, Const(0));
                     Operand instanceIndex = this.Load(StorageKind.Input, IoVariable.GlobalId, Const(1));
                     Operand invocationId = this.Load(StorageKind.Input, IoVariable.GlobalId, Const(2));
-                    Operand vertexCount = this.Load(StorageKind.ConstantBuffer, vertexInfoCbBinding, Const((int)VertexInfoBufferField.VertexCounts), Const(0));
-                    Operand primitiveId = this.IAdd(this.IMultiply(instanceIndex, vertexCount), primitiveIndex);
+                    // Geometry output is packed by input primitive, not by input vertex.
+                    Operand primitivesCount = this.Load(StorageKind.ConstantBuffer, vertexInfoCbBinding, Const((int)VertexInfoBufferField.GeometryCounts), Const(0));
+                    Operand primitiveId = this.IAdd(this.IMultiply(instanceIndex, primitivesCount), primitiveIndex);
                     Operand ibOffset = this.IMultiply(primitiveId, Const(maxIndicesPerPrimitive));
                     ibOffset = this.IAdd(ibOffset, this.IMultiply(invocationId, Const(maxIndicesPerPrimitiveInvocation)));
                     ibOffset = this.IAdd(ibOffset, writtenIndices);

@@ -37,12 +37,8 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                     {
                         IoVariable ioVariable = (IoVariable)operation.GetSource(0).Value;
 
-                        if (TryGetOffset(context.ResourceManager, operation, StorageKind.Input, out int inputOffset))
+                        if (TryGetInputOffset(context, node, operation, out Operand inputOffset, out Operand primVertex))
                         {
-                            Operand primVertex = ioVariable == IoVariable.UserDefined
-                                ? operation.GetSource(2)
-                                : operation.GetSource(1);
-
                             Operand vertexElemOffset = GenerateVertexOffset(context.ResourceManager, node, inputOffset, primVertex);
 
                             newNode = node.List.AddBefore(node, new Operation(
@@ -71,7 +67,8 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                                     // Those are valid or expected for geometry shaders.
                                     break;
                                 default:
-                                    context.GpuAccessor.Log($"Invalid input \"{ioVariable}\".");
+                                    context.GpuAccessor.Log($"Invalid input \"{ioVariable}\" during geometry compute conversion " +
+                                        $"(sources={FormatSources(operation)}, iaIndexing={context.Definitions.IaIndexing}).");
                                     operation.TurnIntoCopy(Const(0));
                                     break;
                             }
@@ -79,17 +76,18 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                     }
                     else if (operation.StorageKind == StorageKind.Output)
                     {
-                        if (TryGetOffset(context.ResourceManager, operation, StorageKind.Output, out int outputOffset))
+                        if (TryGetOutputOffset(context, node, operation, out Operand outputOffset))
                         {
                             newNode = node.List.AddBefore(node, new Operation(
                                 Instruction.Load,
                                 StorageKind.LocalMemory,
                                 operation.Dest,
-                                new[] { Const(context.ResourceManager.LocalVertexDataMemoryId), Const(outputOffset) }));
+                                new[] { Const(context.ResourceManager.LocalVertexDataMemoryId), outputOffset }));
                         }
                         else
                         {
-                            context.GpuAccessor.Log($"Invalid output \"{(IoVariable)operation.GetSource(0).Value}\".");
+                            context.GpuAccessor.Log($"Invalid output load \"{(IoVariable)operation.GetSource(0).Value}\" during geometry compute conversion " +
+                                $"(sources={FormatSources(operation)}, oaIndexing={context.Definitions.OaIndexing}).");
                             operation.TurnIntoCopy(Const(0));
                         }
                     }
@@ -98,7 +96,7 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                 case Instruction.Store:
                     if (operation.StorageKind == StorageKind.Output)
                     {
-                        if (TryGetOffset(context.ResourceManager, operation, StorageKind.Output, out int outputOffset))
+                        if (TryGetOutputOffset(context, node, operation, out Operand outputOffset))
                         {
                             Operand value = operation.GetSource(operation.SourcesCount - 1);
 
@@ -106,11 +104,12 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                                 Instruction.Store,
                                 StorageKind.LocalMemory,
                                 (Operand)null,
-                                new[] { Const(context.ResourceManager.LocalVertexDataMemoryId), Const(outputOffset), value }));
+                                new[] { Const(context.ResourceManager.LocalVertexDataMemoryId), outputOffset, value }));
                         }
                         else
                         {
-                            context.GpuAccessor.Log($"Invalid output \"{(IoVariable)operation.GetSource(0).Value}\".");
+                            context.GpuAccessor.Log($"Invalid output store \"{(IoVariable)operation.GetSource(0).Value}\" during geometry compute conversion " +
+                                $"(sources={FormatSources(operation)}, oaIndexing={context.Definitions.OaIndexing}).");
                             operation.Detach();
                             node.Value = new CommentNode("Dropped unmapped geometry output during compute conversion.");
                         }
@@ -253,7 +252,7 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
         private static Operand GenerateVertexOffset(
             ResourceManager resourceManager,
             LinkedListNode<INode> node,
-            int elementOffset,
+            Operand elementOffset,
             Operand primVertex)
         {
             int vertexInfoCbBinding = resourceManager.Reservations.VertexInfoConstantBufferBinding;
@@ -293,11 +292,11 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
 
             Operand vertexElemOffset;
 
-            if (elementOffset != 0)
+            if (elementOffset.Type != OperandType.Constant || elementOffset.Value != 0)
             {
                 vertexElemOffset = Local();
 
-                node.List.AddBefore(node, new Operation(Instruction.Add, vertexElemOffset, new[] { vertexBaseOffset, Const(elementOffset) }));
+                node.List.AddBefore(node, new Operation(Instruction.Add, vertexElemOffset, new[] { vertexBaseOffset, elementOffset }));
             }
             else
             {
@@ -311,13 +310,14 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
         {
             int vertexInfoCbBinding = resourceManager.Reservations.VertexInfoConstantBufferBinding;
 
-            Operand vertexCount = Local();
+            Operand primitivesCount = Local();
             node.List.AddBefore(node, new Operation(
                 Instruction.Load,
                 StorageKind.ConstantBuffer,
-                vertexCount,
-                new[] { Const(vertexInfoCbBinding), Const((int)VertexInfoBufferField.VertexCounts), Const(0) }));
+                primitivesCount,
+                new[] { Const(vertexInfoCbBinding), Const((int)VertexInfoBufferField.GeometryCounts), Const(0) }));
 
+            // Geometry output is packed by input primitive, not by input vertex.
             Operand vertexIndex = Local();
             node.List.AddBefore(node, new Operation(
                 Instruction.Load,
@@ -333,7 +333,7 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                 new[] { Const((int)IoVariable.GlobalId), Const(1) }));
 
             Operand baseVertex = Local();
-            node.List.AddBefore(node, new Operation(Instruction.Multiply, baseVertex, new[] { instanceIndex, vertexCount }));
+            node.List.AddBefore(node, new Operation(Instruction.Multiply, baseVertex, new[] { instanceIndex, primitivesCount }));
 
             return node.List.AddBefore(node, new Operation(Instruction.Add, dest, new[] { baseVertex, vertexIndex }));
         }
@@ -379,6 +379,194 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
             }
 
             return isValidOutput;
+        }
+
+        private static bool TryGetInputOffset(
+            TransformContext context,
+            LinkedListNode<INode> node,
+            Operation operation,
+            out Operand inputOffset,
+            out Operand primVertex)
+        {
+            IoVariable ioVariable = (IoVariable)operation.GetSource(0).Value;
+
+            if (ioVariable == IoVariable.UserDefined)
+            {
+                bool isIndexed = context.Definitions.IaIndexing;
+
+                if (isIndexed && operation.SourcesCount == 3)
+                {
+                    primVertex = operation.GetSource(1);
+
+                    return TryGetUserDefinedLinearOffset(
+                        context,
+                        node,
+                        StorageKind.Input,
+                        operation.GetSource(2),
+                        out inputOffset);
+                }
+
+                if (operation.SourcesCount < 4)
+                {
+                    inputOffset = null;
+                    primVertex = null;
+                    return false;
+                }
+
+                // Normal geometry attribute loads are emitted as (location, vertex, component),
+                // while physically indexed loads use (vertex, location, component).
+                int locationIndex = isIndexed ? 2 : 1;
+                int componentIndex = operation.SourcesCount - 1;
+
+                primVertex = isIndexed ? operation.GetSource(1) : operation.GetSource(2);
+
+                return TryGetUserDefinedOffset(
+                    context,
+                    node,
+                    StorageKind.Input,
+                    operation.GetSource(locationIndex),
+                    operation.GetSource(componentIndex),
+                    isIndexed,
+                    out inputOffset);
+            }
+
+            if (TryGetOffset(context.ResourceManager, operation, StorageKind.Input, out int fixedOffset))
+            {
+                if (operation.SourcesCount < 2)
+                {
+                    inputOffset = null;
+                    primVertex = null;
+                    return false;
+                }
+
+                primVertex = operation.GetSource(1);
+                inputOffset = Const(fixedOffset);
+                return true;
+            }
+
+            inputOffset = null;
+            primVertex = null;
+            return false;
+        }
+
+        private static bool TryGetOutputOffset(
+            TransformContext context,
+            LinkedListNode<INode> node,
+            Operation operation,
+            out Operand outputOffset)
+        {
+            IoVariable ioVariable = (IoVariable)operation.GetSource(0).Value;
+
+            if (ioVariable == IoVariable.UserDefined)
+            {
+                bool isStore = operation.Inst == Instruction.Store;
+                bool isIndexed = context.Definitions.OaIndexing;
+
+                if (isIndexed &&
+                    ((isStore && operation.SourcesCount == 3) ||
+                     (!isStore && operation.SourcesCount == 2)))
+                {
+                    return TryGetUserDefinedLinearOffset(
+                        context,
+                        node,
+                        StorageKind.Output,
+                        operation.GetSource(1),
+                        out outputOffset);
+                }
+
+                int componentIndex = operation.SourcesCount - (isStore ? 2 : 1);
+
+                return TryGetUserDefinedOffset(
+                    context,
+                    node,
+                    StorageKind.Output,
+                    operation.GetSource(1),
+                    operation.GetSource(componentIndex),
+                    isIndexed,
+                    out outputOffset);
+            }
+
+            if (TryGetOffset(context.ResourceManager, operation, StorageKind.Output, out int fixedOffset))
+            {
+                outputOffset = Const(fixedOffset);
+                return true;
+            }
+
+            outputOffset = null;
+            return false;
+        }
+
+        private static bool TryGetUserDefinedOffset(
+            TransformContext context,
+            LinkedListNode<INode> node,
+            StorageKind storageKind,
+            Operand location,
+            Operand component,
+            bool isIndexed,
+            out Operand offset)
+        {
+            ResourceReservations reservations = context.ResourceManager.Reservations;
+
+            if (!isIndexed)
+            {
+                if (location.Type == OperandType.Constant &&
+                    component.Type == OperandType.Constant &&
+                    reservations.TryGetOffset(storageKind, location.Value, component.Value, out int fixedOffset))
+                {
+                    offset = Const(fixedOffset);
+                    return true;
+                }
+
+                offset = null;
+                return false;
+            }
+
+            Operand locationOffset = Local();
+            node.List.AddBefore(node, new Operation(Instruction.Multiply, locationOffset, new[] { location, Const(4) }));
+
+            Operand attributeOffset = Local();
+            node.List.AddBefore(node, new Operation(Instruction.Add, attributeOffset, new[] { locationOffset, component }));
+
+            return TryGetUserDefinedLinearOffset(context, node, storageKind, attributeOffset, out offset);
+        }
+
+        private static bool TryGetUserDefinedLinearOffset(
+            TransformContext context,
+            LinkedListNode<INode> node,
+            StorageKind storageKind,
+            Operand attributeOffset,
+            out Operand offset)
+        {
+            if (!context.ResourceManager.Reservations.TryGetOffset(storageKind, 0, 0, out int baseOffset))
+            {
+                offset = null;
+                return false;
+            }
+
+            if (baseOffset == 0)
+            {
+                offset = attributeOffset;
+            }
+            else
+            {
+                offset = Local();
+                node.List.AddBefore(node, new Operation(Instruction.Add, offset, new[] { attributeOffset, Const(baseOffset) }));
+            }
+
+            return true;
+        }
+
+        private static string FormatSources(Operation operation)
+        {
+            string result = operation.SourcesCount.ToString();
+
+            for (int index = 0; index < operation.SourcesCount; index++)
+            {
+                Operand source = operation.GetSource(index);
+                result += $" [{index}:{source.Type}:{source.Value}]";
+            }
+
+            return result;
         }
     }
 }

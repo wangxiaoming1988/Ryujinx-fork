@@ -99,18 +99,40 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed.ComputeDraw
 
             if (geometryAsCompute != null)
             {
-                int totalPrimitivesCount = VtgAsComputeContext.GetPrimitivesCount(topology, count * instanceCount);
-                int maxCompleteStrips = GetMaxCompleteStrips(geometryAsCompute.Info.GeometryVerticesPerPrimitive, geometryAsCompute.Info.GeometryMaxOutputVertices);
-                int totalVerticesCount = totalPrimitivesCount * geometryAsCompute.Info.GeometryMaxOutputVertices * geometryAsCompute.Info.ThreadsPerInputPrimitive;
-                int geometryVbDataSize = totalVerticesCount * geometryAsCompute.Reservations.OutputSizeInBytesPerInvocation;
-                int geometryIbDataCount = totalVerticesCount + totalPrimitivesCount * maxCompleteStrips;
-                int geometryIbDataSize = geometryIbDataCount * sizeof(uint);
+                (int geometryVbDataSize, int geometryIbDataSize, int geometryIbDataCount) = CalculateGeometryBufferSizes(
+                    topology,
+                    count,
+                    instanceCount,
+                    geometryAsCompute.Info.GeometryVerticesPerPrimitive,
+                    geometryAsCompute.Info.GeometryMaxOutputVertices,
+                    geometryAsCompute.Info.ThreadsPerInputPrimitive,
+                    geometryAsCompute.Reservations.OutputSizeInBytesPerInvocation);
 
                 (_geometryVertexDataOffset, _geometryVertexDataSize) = vacContext.GetGeometryVertexDataBuffer(geometryVbDataSize);
                 (_geometryIndexDataOffset, _geometryIndexDataSize) = vacContext.GetGeometryIndexDataBuffer(geometryIbDataSize);
 
                 _geometryIndexDataCount = geometryIbDataCount;
             }
+        }
+
+        internal static (int VertexDataSize, int IndexDataSize, int IndexDataCount) CalculateGeometryBufferSizes(
+            PrimitiveTopology topology,
+            int count,
+            int instanceCount,
+            int verticesPerPrimitive,
+            int maxOutputVertices,
+            int threadsPerInputPrimitive,
+            int outputSizeInBytesPerInvocation)
+        {
+            int primitivesPerInstance = VtgAsComputeContext.GetPrimitivesCount(topology, count);
+            int totalPrimitivesCount = primitivesPerInstance * instanceCount;
+            int maxCompleteStrips = GetMaxCompleteStrips(verticesPerPrimitive, maxOutputVertices);
+            int totalVerticesCount = totalPrimitivesCount * maxOutputVertices * threadsPerInputPrimitive;
+            int vertexDataSize = totalVerticesCount * outputSizeInBytesPerInvocation;
+            int indexDataCount = totalVerticesCount + totalPrimitivesCount * maxCompleteStrips * threadsPerInputPrimitive;
+            int indexDataSize = indexDataCount * sizeof(uint);
+
+            return (vertexDataSize, indexDataSize, indexDataCount);
         }
 
         /// <summary>

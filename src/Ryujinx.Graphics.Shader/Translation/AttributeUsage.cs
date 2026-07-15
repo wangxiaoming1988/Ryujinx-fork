@@ -58,7 +58,11 @@ namespace Ryujinx.Graphics.Shader.Translation
             NextInputAttributesComponents = nextStage.ThisInputAttributesComponents;
             NextUsedInputAttributesPerPatch = nextStage.UsedInputAttributesPerPatch;
             NextUsesFixedFuncAttributes = nextUsesFixedFunctionAttributes;
-            MergeOutputUserAttributes(gpPassthrough, nextStage.UsedInputAttributes, nextStage.UsedInputAttributesPerPatch);
+
+            // Geometry passthrough attributes are consumed by the stage after geometry,
+            // but they still need to be produced by the preceding vertex stage.
+            int nextUsedInputAttributes = nextStage.UsedInputAttributes | nextStage.PassthroughAttributes;
+            MergeOutputUserAttributes(gpPassthrough, nextUsedInputAttributes, nextStage.UsedInputAttributesPerPatch);
 
             if (UsedOutputAttributesPerPatch.Count != 0)
             {

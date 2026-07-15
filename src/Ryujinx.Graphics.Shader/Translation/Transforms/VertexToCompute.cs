@@ -109,30 +109,32 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                         // Those are valid or expected for vertex shaders.
                         break;
                     default:
-                        context.GpuAccessor.Log($"Invalid input \"{(IoVariable)operation.GetSource(0).Value}\".");
+                        context.GpuAccessor.Log($"Invalid input \"{(IoVariable)operation.GetSource(0).Value}\" during vertex compute conversion " +
+                            $"(sources={FormatSources(operation)}, iaIndexing={context.Definitions.IaIndexing}).");
                         operation.TurnIntoCopy(Const(0));
                         break;
                 }
             }
             else if (operation.Inst == Instruction.Load && operation.StorageKind == StorageKind.Output)
             {
-                if (TryGetOutputOffset(context.ResourceManager, operation, out int outputOffset))
+                if (TryGetOutputOffset(context, node, operation, out Operand outputOffset))
                 {
                     newNode = node.List.AddBefore(node, new Operation(
                         Instruction.Load,
                         StorageKind.LocalMemory,
                         operation.Dest,
-                        new[] { Const(context.ResourceManager.LocalVertexDataMemoryId), Const(outputOffset) }));
+                        new[] { Const(context.ResourceManager.LocalVertexDataMemoryId), outputOffset }));
                 }
                 else
                 {
-                    context.GpuAccessor.Log($"Invalid output \"{(IoVariable)operation.GetSource(0).Value}\".");
+                    context.GpuAccessor.Log($"Invalid output load \"{(IoVariable)operation.GetSource(0).Value}\" during vertex compute conversion " +
+                        $"(sources={FormatSources(operation)}, oaIndexing={context.Definitions.OaIndexing}).");
                     operation.TurnIntoCopy(Const(0));
                 }
             }
             else if (operation.Inst == Instruction.Store && operation.StorageKind == StorageKind.Output)
             {
-                if (TryGetOutputOffset(context.ResourceManager, operation, out int outputOffset))
+                if (TryGetOutputOffset(context, node, operation, out Operand outputOffset))
                 {
                     Operand value = operation.GetSource(operation.SourcesCount - 1);
 
@@ -140,11 +142,12 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                         Instruction.Store,
                         StorageKind.LocalMemory,
                         (Operand)null,
-                        new[] { Const(context.ResourceManager.LocalVertexDataMemoryId), Const(outputOffset), value }));
+                        new[] { Const(context.ResourceManager.LocalVertexDataMemoryId), outputOffset, value }));
                 }
                 else
                 {
-                    context.GpuAccessor.Log($"Invalid output \"{(IoVariable)operation.GetSource(0).Value}\".");
+                    context.GpuAccessor.Log($"Invalid output store \"{(IoVariable)operation.GetSource(0).Value}\" during vertex compute conversion " +
+                        $"(sources={FormatSources(operation)}, oaIndexing={context.Definitions.OaIndexing}).");
                     operation.Detach();
                     node.Value = new CommentNode("Dropped unmapped vertex output during compute conversion.");
                 }
@@ -336,38 +339,107 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
             return node.List.AddBefore(node, new Operation(Instruction.Load, StorageKind.Input, dest, sources));
         }
 
-        private static bool TryGetOutputOffset(ResourceManager resourceManager, Operation operation, out int outputOffset)
+        private static bool TryGetOutputOffset(
+            TransformContext context,
+            LinkedListNode<INode> node,
+            Operation operation,
+            out Operand outputOffset)
         {
             bool isStore = operation.Inst == Instruction.Store;
 
             IoVariable ioVariable = (IoVariable)operation.GetSource(0).Value;
 
-            bool isValidOutput;
-
             if (ioVariable == IoVariable.UserDefined)
             {
-                int lastIndex = operation.SourcesCount - (isStore ? 2 : 1);
+                int componentIndex = operation.SourcesCount - (isStore ? 2 : 1);
+                Operand location = operation.GetSource(1);
+                Operand component = operation.GetSource(componentIndex);
+                ResourceReservations reservations = context.ResourceManager.Reservations;
+                bool isIndexed = context.Definitions.OaIndexing;
 
-                int location = operation.GetSource(1).Value;
-                int component = operation.GetSource(lastIndex).Value;
+                if (!isIndexed)
+                {
+                    if (location.Type == OperandType.Constant &&
+                        component.Type == OperandType.Constant &&
+                        reservations.TryGetOffset(StorageKind.Output, location.Value, component.Value, out int fixedOffset))
+                    {
+                        outputOffset = Const(fixedOffset);
+                        return true;
+                    }
 
-                isValidOutput = resourceManager.Reservations.TryGetOffset(StorageKind.Output, location, component, out outputOffset);
+                    outputOffset = null;
+                    return false;
+                }
+
+                if ((isStore && operation.SourcesCount == 3) ||
+                    (!isStore && operation.SourcesCount == 2))
+                {
+                    return TryGetUserDefinedLinearOutputOffset(context, node, location, out outputOffset);
+                }
+
+                Operand locationOffset = Local();
+                node.List.AddBefore(node, new Operation(Instruction.Multiply, locationOffset, new[] { location, Const(4) }));
+
+                Operand attributeOffset = Local();
+                node.List.AddBefore(node, new Operation(Instruction.Add, attributeOffset, new[] { locationOffset, component }));
+
+                return TryGetUserDefinedLinearOutputOffset(context, node, attributeOffset, out outputOffset);
+            }
+
+            bool isValidOutput;
+            int offset;
+
+            if (ResourceReservations.IsVectorOrArrayVariable(ioVariable))
+            {
+                int component = operation.GetSource(operation.SourcesCount - (isStore ? 2 : 1)).Value;
+
+                isValidOutput = context.ResourceManager.Reservations.TryGetOffset(StorageKind.Output, ioVariable, component, out offset);
             }
             else
             {
-                if (ResourceReservations.IsVectorOrArrayVariable(ioVariable))
-                {
-                    int component = operation.GetSource(operation.SourcesCount - (isStore ? 2 : 1)).Value;
-
-                    isValidOutput = resourceManager.Reservations.TryGetOffset(StorageKind.Output, ioVariable, component, out outputOffset);
-                }
-                else
-                {
-                    isValidOutput = resourceManager.Reservations.TryGetOffset(StorageKind.Output, ioVariable, out outputOffset);
-                }
+                isValidOutput = context.ResourceManager.Reservations.TryGetOffset(StorageKind.Output, ioVariable, out offset);
             }
 
+            outputOffset = isValidOutput ? Const(offset) : null;
             return isValidOutput;
+        }
+
+        private static bool TryGetUserDefinedLinearOutputOffset(
+            TransformContext context,
+            LinkedListNode<INode> node,
+            Operand attributeOffset,
+            out Operand outputOffset)
+        {
+            if (!context.ResourceManager.Reservations.TryGetOffset(StorageKind.Output, 0, 0, out int baseOffset))
+            {
+                outputOffset = null;
+                return false;
+            }
+
+            if (baseOffset == 0)
+            {
+                outputOffset = attributeOffset;
+            }
+            else
+            {
+                outputOffset = Local();
+                node.List.AddBefore(node, new Operation(Instruction.Add, outputOffset, new[] { attributeOffset, Const(baseOffset) }));
+            }
+
+            return true;
+        }
+
+        private static string FormatSources(Operation operation)
+        {
+            string result = operation.SourcesCount.ToString();
+
+            for (int index = 0; index < operation.SourcesCount; index++)
+            {
+                Operand source = operation.GetSource(index);
+                result += $" [{index}:{source.Type}:{source.Value}]";
+            }
+
+            return result;
         }
     }
 }
