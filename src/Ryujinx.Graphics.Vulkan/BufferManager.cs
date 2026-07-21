@@ -73,7 +73,9 @@ namespace Ryujinx.Graphics.Vulkan
 
         private const BufferUsageFlags HostImportedBufferUsageFlags =
             BufferUsageFlags.TransferSrcBit |
-            BufferUsageFlags.TransferDstBit;
+            BufferUsageFlags.TransferDstBit |
+            BufferUsageFlags.UniformTexelBufferBit |
+            BufferUsageFlags.StorageTexelBufferBit;
 
         private readonly Device _device;
 
@@ -84,6 +86,22 @@ namespace Ryujinx.Graphics.Vulkan
         public StagingBuffer StagingBuffer { get; }
 
         public MemoryRequirements HostImportedBufferMemoryRequirements { get; }
+
+        internal static BufferUsageFlags GetHostImportedBufferUsage(bool supportsIndirectParameters)
+        {
+            BufferUsageFlags usage = HostImportedBufferUsageFlags;
+
+            if (supportsIndirectParameters)
+            {
+                usage |= BufferUsageFlags.IndirectBufferBit;
+            }
+
+            return usage;
+        }
+
+        internal static bool HostImportedBufferSupportsTexelViews =>
+            (HostImportedBufferUsageFlags & (BufferUsageFlags.UniformTexelBufferBit | BufferUsageFlags.StorageTexelBufferBit)) ==
+            (BufferUsageFlags.UniformTexelBufferBit | BufferUsageFlags.StorageTexelBufferBit);
 
         public BufferManager(VulkanRenderer gd, Device device)
         {
@@ -96,12 +114,7 @@ namespace Ryujinx.Graphics.Vulkan
 
         public unsafe BufferHandle CreateHostImported(VulkanRenderer gd, nint pointer, int size)
         {
-            BufferUsageFlags usage = HostImportedBufferUsageFlags;
-
-            if (gd.Capabilities.SupportsIndirectParameters)
-            {
-                usage |= BufferUsageFlags.IndirectBufferBit;
-            }
+            BufferUsageFlags usage = GetHostImportedBufferUsage(gd.Capabilities.SupportsIndirectParameters);
 
             ExternalMemoryBufferCreateInfo externalMemoryBuffer = new()
             {
@@ -288,12 +301,7 @@ namespace Ryujinx.Graphics.Vulkan
 
         public unsafe MemoryRequirements GetHostImportedUsageRequirements(VulkanRenderer gd)
         {
-            BufferUsageFlags usage = HostImportedBufferUsageFlags;
-
-            if (gd.Capabilities.SupportsIndirectParameters)
-            {
-                usage |= BufferUsageFlags.IndirectBufferBit;
-            }
+            BufferUsageFlags usage = GetHostImportedBufferUsage(gd.Capabilities.SupportsIndirectParameters);
 
             BufferCreateInfo bufferCreateInfo = new()
             {

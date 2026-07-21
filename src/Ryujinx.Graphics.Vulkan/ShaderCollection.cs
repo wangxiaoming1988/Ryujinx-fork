@@ -153,8 +153,11 @@ namespace Ryujinx.Graphics.Vulkan
         {
             _state = state;
 
-            _compileTask = BackgroundCompilation();
-            _firstBackgroundUse = !fromCache;
+            // MoltenVK may execute Metal pipeline work on a callback thread after the
+            // managed background task has lost the matching Vulkan state. Compile the
+            // actual pipeline on the render thread on macOS instead.
+            _compileTask = gd.IsMoltenVk ? Task.CompletedTask : BackgroundCompilation();
+            _firstBackgroundUse = !fromCache && !gd.IsMoltenVk;
         }
 
         private static bool HasPushDescriptorsBug(VulkanRenderer gd)

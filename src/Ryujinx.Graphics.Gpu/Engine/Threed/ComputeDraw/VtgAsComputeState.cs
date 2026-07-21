@@ -8,6 +8,7 @@ using Ryujinx.Graphics.Gpu.Shader;
 using Ryujinx.Graphics.Shader;
 using Ryujinx.Graphics.Shader.Translation;
 using System;
+using System.Threading;
 
 namespace Ryujinx.Graphics.Gpu.Engine.Threed.ComputeDraw
 {
@@ -17,6 +18,10 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed.ComputeDraw
     struct VtgAsComputeState
     {
         private const int ComputeLocalSize = 32;
+
+        private static readonly bool VtgDiagnosticsEnabled =
+            string.Equals(Environment.GetEnvironmentVariable("RYUJINX_VTG_DIAGNOSTICS"), "1", StringComparison.Ordinal);
+        private static int _diagnosticSequence;
 
         private readonly GpuContext _context;
         private readonly GpuChannel _channel;
@@ -107,6 +112,21 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed.ComputeDraw
                     geometryAsCompute.Info.GeometryMaxOutputVertices,
                     geometryAsCompute.Info.ThreadsPerInputPrimitive,
                     geometryAsCompute.Reservations.OutputSizeInBytesPerInvocation);
+
+                if (VtgDiagnosticsEnabled)
+                {
+                    int sequence = Interlocked.Increment(ref _diagnosticSequence);
+                    int primitivesPerInstance = VtgAsComputeContext.GetPrimitivesCount(topology, count);
+
+                    Logger.Warning?.Print(
+                        LogClass.Gpu,
+                        $"VTG#{sequence}: topology={topology}, count={count}, instances={instanceCount}, " +
+                        $"primitivesPerInstance={primitivesPerInstance}, verticesPerPrimitive={geometryAsCompute.Info.GeometryVerticesPerPrimitive}, " +
+                        $"maxOutputVertices={geometryAsCompute.Info.GeometryMaxOutputVertices}, threadsPerPrimitive={geometryAsCompute.Info.ThreadsPerInputPrimitive}, " +
+                        $"outputStrideBytes={geometryAsCompute.Reservations.OutputSizeInBytesPerInvocation}, " +
+                        $"vertexBytes={geometryVbDataSize}, indexBytes={geometryIbDataSize}, indexCount={geometryIbDataCount}, " +
+                        $"dispatch={BitUtils.DivRoundUp(primitivesPerInstance, ComputeLocalSize)}x{BitUtils.DivRoundUp(instanceCount, ComputeLocalSize)}x{geometryAsCompute.Info.ThreadsPerInputPrimitive}.");
+                }
 
                 (_geometryVertexDataOffset, _geometryVertexDataSize) = vacContext.GetGeometryVertexDataBuffer(geometryVbDataSize);
                 (_geometryIndexDataOffset, _geometryIndexDataSize) = vacContext.GetGeometryIndexDataBuffer(geometryIbDataSize);

@@ -16,6 +16,11 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
         {
             if (node.Value is TextureOperation texOp)
             {
+                if ((texOp.Flags & TextureFlags.PagedTexture2D) != 0)
+                {
+                    return LowerPagedTexture2D(context, node);
+                }
+
                 if ((texOp.Flags & TextureFlags.BufferTexture2D) != 0)
                 {
                     return LowerBufferTexture2D(context, node);
@@ -38,6 +43,165 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
             }
 
             return node;
+        }
+
+        private static LinkedListNode<INode> LowerPagedTexture2D(
+            TransformContext context,
+            LinkedListNode<INode> node)
+        {
+            TextureOperation texOp = (TextureOperation)node.Value;
+
+            if (!context.ResourceManager.TryGetCbufSlotAndHandleForTexture(texOp.Binding, out int cbufSlot, out int handle))
+            {
+                return node;
+            }
+
+            context.ResourceManager.SetUsageFlagsForTextureQuery(texOp.Binding, SamplerType.Texture2D);
+
+            if (texOp.Inst == Instruction.TextureQuerySize)
+            {
+                Operand size = texOp.Index switch
+                {
+                    0 => InsertPagedTextureSizeQuery(node, texOp, 0),
+                    1 => InsertPagedTextureGuestHeight(node, texOp),
+                    _ => Const(1),
+                };
+
+                Operand dest = texOp.Dest;
+                texOp.Detach();
+                node.Value = new Operation(Instruction.Copy, dest, size);
+
+                return node;
+            }
+
+            if (texOp.Inst == Instruction.TextureQuerySamples)
+            {
+                Operand dest = texOp.Dest;
+
+                texOp.Detach();
+                node.Value = new Operation(Instruction.Copy, dest, Const(1));
+
+                return node;
+            }
+
+            if (texOp.Inst == Instruction.Lod)
+            {
+                Operand dest = texOp.Dest;
+
+                texOp.Detach();
+                node.Value = new Operation(Instruction.Copy, dest, ConstF(0f));
+
+                return node;
+            }
+
+            if (texOp.Inst != Instruction.TextureSample || texOp.SourcesCount < 2)
+            {
+                return node;
+            }
+
+            Operand pageWidth = InsertPagedTextureSizeQuery(node, texOp, 0);
+            Operand pageHeight = InsertPagedTextureSizeQuery(node, texOp, 1);
+            Operand pageCount = InsertPagedTextureSizeQuery(node, texOp, 2);
+
+            bool intCoords = (texOp.Flags & TextureFlags.IntCoords) != 0;
+            bool normalized = !intCoords && context.GpuAccessor.QueryTextureCoordNormalized(handle, cbufSlot);
+            Operand texelX = Local();
+            Operand pageY = Local();
+            Operand pageIndex = Local();
+            int functionId = context.Hfm.GetOrCreateFunctionId(
+                intCoords
+                    ? HelperFunctionName.PagedTexture2DNearestCoordsInt
+                    : HelperFunctionName.PagedTexture2DNearestCoords);
+
+            Operand[] callArgs = intCoords
+                ?
+                [
+                    Const(functionId),
+                    texOp.GetSource(0),
+                    texOp.GetSource(1),
+                    pageWidth,
+                    pageHeight,
+                    pageCount,
+                    pageY,
+                    pageIndex,
+                ]
+                :
+                [
+                    Const(functionId),
+                    texOp.GetSource(0),
+                    texOp.GetSource(1),
+                    pageWidth,
+                    pageHeight,
+                    pageCount,
+                    Const(normalized ? 1 : 0),
+                    pageY,
+                    pageIndex,
+                ];
+
+            node.List.AddBefore(node, new Operation(Instruction.Call, 0, texelX, callArgs));
+
+            Operand[] dests = new Operand[texOp.DestsCount];
+
+            for (int index = 0; index < dests.Length; index++)
+            {
+                dests[index] = texOp.GetDest(index);
+            }
+
+            TextureOperation pagedSample = new(
+                Instruction.TextureSample,
+                SamplerType.Texture2D | SamplerType.Array,
+                texOp.Format,
+                TextureFlags.IntCoords,
+                texOp.Set,
+                texOp.Binding,
+                texOp.Index,
+                dests,
+                [texelX, pageY, pageIndex]);
+
+            if (texOp.SamplerBinding >= 0)
+            {
+                pagedSample.SetSamplerBinding(new SetBindingPair(texOp.SamplerSet, texOp.SamplerBinding));
+            }
+
+            texOp.Detach();
+            node.Value = pagedSample;
+
+            return node;
+        }
+
+        private static Operand InsertPagedTextureGuestHeight(
+            LinkedListNode<INode> node,
+            TextureOperation source)
+        {
+            Operand pageHeight = InsertPagedTextureSizeQuery(node, source, 1);
+            Operand pageCount = InsertPagedTextureSizeQuery(node, source, 2);
+            Operand guestHeight = Local();
+
+            node.List.AddBefore(node, new Operation(Instruction.Multiply, guestHeight, pageHeight, pageCount));
+
+            return guestHeight;
+        }
+
+        private static Operand InsertPagedTextureSizeQuery(
+            LinkedListNode<INode> node,
+            TextureOperation source,
+            int component)
+        {
+            Operand size = Local();
+            TextureOperation query = new(
+                Instruction.TextureQuerySize,
+                SamplerType.Texture2D | SamplerType.Array,
+                TextureFormat.Unknown,
+                TextureFlags.None,
+                source.Set,
+                source.Binding,
+                component,
+                [size],
+                [Const(0)]);
+
+            node.List.AddBefore(node, query);
+
+            return size;
         }
 
         private static LinkedListNode<INode> InsertTexelFetchScale(
@@ -202,8 +366,6 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
             bool intCoords = (texOp.Flags & TextureFlags.IntCoords) != 0;
             bool normalized = !intCoords && context.GpuAccessor.QueryTextureCoordNormalized(handle, cbufSlot);
             Operand[] linearIndices;
-            Operand weightX = null;
-            Operand weightY = null;
 
             if (intCoords)
             {
@@ -221,25 +383,18 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
             }
             else
             {
-                int functionIdIndices = context.Hfm.GetOrCreateFunctionId(HelperFunctionName.BufferTexture2DBilinearIndices);
-                linearIndices = [Local(), Local(), Local(), Local()];
-                weightX = Local();
-                weightY = Local();
+                int functionIdIndex = context.Hfm.GetOrCreateFunctionId(HelperFunctionName.BufferTexture2DNearestIndex);
+                linearIndices = [Local()];
 
                 node.List.AddBefore(node, new Operation(
                     Instruction.Call,
                     0,
                     linearIndices[0],
-                    Const(functionIdIndices),
+                    Const(functionIdIndex),
                     texOp.GetSource(0),
                     texOp.GetSource(1),
                     Const(samplerIndex),
-                    Const(normalized ? 1 : 0),
-                    linearIndices[1],
-                    linearIndices[2],
-                    linearIndices[3],
-                    weightX,
-                    weightY));
+                    Const(normalized ? 1 : 0)));
             }
 
             Operand[] dests = new Operand[texOp.DestsCount];
@@ -274,26 +429,7 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                     CreateBufferTextureSample(set, binding, samples[index], linearIndices[index]));
             }
 
-            if (intCoords)
-            {
-                rawValue = samples[0];
-            }
-            else
-            {
-                Operand deltaTop = Local();
-                Operand top = Local();
-                Operand deltaBottom = Local();
-                Operand bottom = Local();
-                Operand deltaRows = Local();
-                rawValue = Local();
-
-                insertionPoint = node.List.AddAfter(insertionPoint, new Operation(Instruction.FP32 | Instruction.Subtract, deltaTop, samples[1], samples[0]));
-                insertionPoint = node.List.AddAfter(insertionPoint, new Operation(Instruction.FP32 | Instruction.FusedMultiplyAdd, top, deltaTop, weightX, samples[0]));
-                insertionPoint = node.List.AddAfter(insertionPoint, new Operation(Instruction.FP32 | Instruction.Subtract, deltaBottom, samples[3], samples[2]));
-                insertionPoint = node.List.AddAfter(insertionPoint, new Operation(Instruction.FP32 | Instruction.FusedMultiplyAdd, bottom, deltaBottom, weightX, samples[2]));
-                insertionPoint = node.List.AddAfter(insertionPoint, new Operation(Instruction.FP32 | Instruction.Subtract, deltaRows, bottom, top));
-                insertionPoint = node.List.AddAfter(insertionPoint, new Operation(Instruction.FP32 | Instruction.FusedMultiplyAdd, rawValue, deltaRows, weightY, top));
-            }
+            rawValue = samples[0];
 
             int destIndex = 0;
 

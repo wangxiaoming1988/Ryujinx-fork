@@ -39,16 +39,19 @@ namespace Ryujinx.Ava.Systems
                 _ = taskDialog.ShowAsync(true);
                 await Task.Delay(500);
 
-                // Find the process name.
-                string ryuName = Path.GetFileName(Environment.ProcessPath) ?? string.Empty;
+                // Use the absolute executable path. A relative process name can resolve to
+                // another Ryujinx installation or fail to preserve the app bundle on macOS.
+                string executablePath = Environment.ProcessPath;
 
-                // Fallback if the executable could not be found.
-                if (ryuName.Length == 0 || !Path.Exists(Path.Combine(executableDirectory, ryuName)))
+                if (string.IsNullOrEmpty(executablePath) || !File.Exists(executablePath))
                 {
-                    ryuName = OperatingSystem.IsWindows() ? "Ryujinx.exe" : "Ryujinx";
+                    string executableName = Path.GetFileName(executablePath);
+                    executablePath = !string.IsNullOrEmpty(executableName)
+                        ? Path.Combine(executableDirectory, executableName)
+                        : Path.Combine(executableDirectory, OperatingSystem.IsWindows() ? "Ryujinx.exe" : "Ryujinx");
                 }
 
-                ProcessStartInfo processStart = new(ryuName)
+                ProcessStartInfo processStart = new(executablePath)
                 {
                     UseShellExecute = true,
                     WorkingDirectory = executableDirectory,

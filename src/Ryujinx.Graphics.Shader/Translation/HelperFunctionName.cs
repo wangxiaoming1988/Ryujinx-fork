@@ -17,7 +17,10 @@ namespace Ryujinx.Graphics.Shader.Translation
         TexelFetchScale,
         TextureSizeUnscale,
         BufferTexture2DNearestIndexInt,
+        BufferTexture2DNearestIndex,
         BufferTexture2DBilinearIndices,
         BufferTexture2DSize,
+        PagedTexture2DNearestCoordsInt,
+        PagedTexture2DNearestCoords,
     }
 }

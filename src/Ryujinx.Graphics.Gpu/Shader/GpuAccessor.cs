@@ -156,11 +156,24 @@ namespace Ryujinx.Graphics.Gpu.Shader
         public int QueryHostBufferTexture2D(int handle, int cbufSlot)
         {
             TextureDescriptor descriptor = GetTextureDescriptor(handle, cbufSlot);
-            int state = TextureHostLayout.GetBufferBackedLinear2DState(descriptor, _isVulkan);
+            int state = TextureHostLayout.GetPagedLinear2DState(descriptor, _isVulkan);
+
+            if (state == 0)
+            {
+                state = TextureHostLayout.GetBufferBackedLinear2DState(descriptor, _isVulkan);
+            }
 
             _state.SpecializationState?.RecordTextureBuffer2D(_stageIndex, handle, cbufSlot, state);
 
             return state;
+        }
+
+        public bool QueryHostTexture2DIsPaged(int handle, int cbufSlot)
+        {
+            TextureDescriptor descriptor = GetTextureDescriptor(handle, cbufSlot);
+
+            return TextureHostLayout.IsPagedLinear2DState(
+                TextureHostLayout.GetPagedLinear2DState(descriptor, _isVulkan));
         }
 
         /// <inheritdoc/>

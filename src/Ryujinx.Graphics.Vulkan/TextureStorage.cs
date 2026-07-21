@@ -75,6 +75,8 @@ namespace Ryujinx.Graphics.Vulkan
             TextureCreateInfo info,
             Auto<MemoryAllocation> foreignAllocation = null)
         {
+            info = VulkanRenderer.ValidateTextureCreateInfo(info, gd.IsMoltenVk);
+
             _gd = gd;
             _device = device;
             _info = info;

@@ -123,6 +123,7 @@ namespace Ryujinx.Ava.Systems
 
         private bool _dialogShown;
         private readonly bool _isFirmwareTitle;
+        private bool _gpuFaulted;
 
         private readonly Lock _lockObject = new();
 
@@ -704,7 +705,16 @@ namespace Ryujinx.Ava.Systems
                     Device.Gpu.WaitUntilGpuReady();
                 }
                 
-                Device.DisposeGpu();
+                try
+                {
+                    Device.DisposeGpu();
+                }
+                catch (VulkanException exception) when (_gpuFaulted && OperatingSystem.IsMacOS())
+                {
+                    Logger.Warning?.Print(
+                        LogClass.Gpu,
+                        $"Ignoring Vulkan cleanup error after a macOS device loss. {exception.Message}");
+                }
             }
         }
 
@@ -1164,6 +1174,29 @@ namespace Ryujinx.Ava.Systems
                             UpdateStatus();
                         }
                     }
+                }
+                catch (MacOSGpuSafetyException exception) when (OperatingSystem.IsMacOS())
+                {
+                    Logger.Error?.Print(
+                        LogClass.Gpu,
+                        $"macOS GPU safety protection stopped emulation before unsafe work was submitted. {exception.Message}");
+
+                    Dispatcher.UIThread.Post(() => NotificationHelper.ShowError(
+                        "macOS GPU safety protection",
+                        "Emulation was stopped before a known unsafe oversized texture could reach Metal. " +
+                        "This safety mode protects WindowServer and the computer from a GPU restart."));
+
+                    Stop();
+                }
+                catch (VulkanException exception) when (OperatingSystem.IsMacOS())
+                {
+                    _gpuFaulted = true;
+
+                    Logger.Error?.Print(
+                        LogClass.Gpu,
+                        $"Vulkan device failed on macOS; stopping emulation before more GPU work is submitted. {exception.Message}");
+
+                    Stop();
                 }
                 finally
                 {

@@ -44,6 +44,41 @@ namespace Ryujinx.Ava
         public static string BackendThreadingArg { get; private set; }
         public static bool CoreDumpArg { get; private set; }
 
+        internal static void EnsureSupportedGraphicsBackend()
+        {
+            if (!OperatingSystem.IsMacOS())
+            {
+                return;
+            }
+
+            if (ConfigurationState.Instance.Graphics.GraphicsBackend.Value == GraphicsBackend.OpenGl)
+            {
+                Logger.Warning?.Print(
+                    LogClass.Application,
+                    "OpenGL GUI backend is not supported on macOS; falling back to Vulkan.");
+
+                ConfigurationState.Instance.Graphics.GraphicsBackend.Value = GraphicsBackend.Vulkan;
+            }
+
+            if (ConfigurationState.Instance.Graphics.BackendThreading.Value != BackendThreading.Off)
+            {
+                Logger.Warning?.Print(
+                    LogClass.Application,
+                    "Backend threading is disabled by the macOS Metal safety policy.");
+
+                ConfigurationState.Instance.Graphics.BackendThreading.Value = BackendThreading.Off;
+            }
+
+            if (ConfigurationState.Instance.System.MemoryManagerMode.Value == MemoryManagerMode.HostMappedUnsafe)
+            {
+                Logger.Warning?.Print(
+                    LogClass.Application,
+                    "HostMappedUnsafe memory manager is disabled by the macOS Metal safety policy; using HostMapped.");
+
+                ConfigurationState.Instance.System.MemoryManagerMode.Value = MemoryManagerMode.HostMapped;
+            }
+        }
+
         private const uint MbIconwarning = 0x30;
 
         [STAThread]
@@ -383,6 +418,9 @@ namespace Ryujinx.Ava
                     _ => ConfigurationState.Instance.Graphics.BackendThreading
                 };
 
+            // Apply the macOS safety policy after every global command-line override.
+            EnsureSupportedGraphicsBackend();
+
             if (CommandLineState.OverrideBackendThreadingAfterReboot is not null)
             {
                 BackendThreadingArg = CommandLineState.OverrideBackendThreadingAfterReboot;
@@ -408,6 +446,9 @@ namespace Ryujinx.Ava
                 {
                     ConfigurationState.Instance.System.MemoryManagerMode.Value = result;
                 }
+
+            // Apply the macOS safety policy after the memory-manager override as well.
+            EnsureSupportedGraphicsBackend();
 
             // Check if PPTC was overridden.
             if (CommandLineState.OverridePPTC is not null)

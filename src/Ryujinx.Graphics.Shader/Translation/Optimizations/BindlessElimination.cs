@@ -480,14 +480,35 @@ namespace Ryujinx.Graphics.Shader.Translation.Optimizations
                 }
             }
 
-            bool bufferTexture2D = !isImage &&
+            const TextureFlags unsupportedPagedFlags =
+                TextureFlags.Gather |
+                TextureFlags.Derivatives |
+                TextureFlags.LodBias |
+                TextureFlags.LodLevel |
+                TextureFlags.Offset |
+                TextureFlags.Offsets;
+
+            int texture2DLayout = !isImage &&
                 resourceManager.SupportsRenderScale &&
                 (texOp.Type & (SamplerType.Mask | SamplerType.Multisample | SamplerType.Shadow)) == SamplerType.Texture2D &&
-                gpuAccessor.QueryHostBufferTexture2D(cbufOffset, cbufSlot) != 0;
+                (texOp.Flags & unsupportedPagedFlags) == 0
+                    ? gpuAccessor.QueryHostBufferTexture2D(cbufOffset, cbufSlot)
+                    : 0;
 
-            SamplerType resourceType = bufferTexture2D ? SamplerType.TextureBuffer : texOp.Type;
+            bool pagedTexture2D = texture2DLayout != 0 && gpuAccessor.QueryHostTexture2DIsPaged(cbufOffset, cbufSlot);
+            bool bufferTexture2D = texture2DLayout != 0 && !pagedTexture2D;
 
-            if (bufferTexture2D)
+            SamplerType resourceType = pagedTexture2D
+                ? SamplerType.Texture2D | SamplerType.Array
+                : bufferTexture2D
+                    ? SamplerType.TextureBuffer
+                    : texOp.Type;
+
+            if (pagedTexture2D)
+            {
+                texOp.SetPagedTexture2DFlag();
+            }
+            else if (bufferTexture2D)
             {
                 texOp.SetBufferTexture2DFlag();
             }

@@ -20,7 +20,7 @@ namespace Ryujinx.Graphics.Vulkan
         }
     }
 
-    class VulkanException : Exception
+    public class VulkanException : Exception
     {
         public VulkanException()
         {

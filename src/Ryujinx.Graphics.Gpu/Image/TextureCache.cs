@@ -1282,6 +1282,15 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <returns>The texture creation information</returns>
         public static TextureCreateInfo GetCreateInfo(TextureInfo info, Capabilities caps, float scale)
         {
+            return GetCreateInfo(info, caps, scale, MacOSGpuSafetyPolicy.ShouldBlockUnsafePagedTextures());
+        }
+
+        internal static TextureCreateInfo GetCreateInfo(
+            TextureInfo info,
+            Capabilities caps,
+            float scale,
+            bool blockUnsafeMacOSPagedTextures)
+        {
             FormatInfo formatInfo = TextureCompatibility.ToHostCompatibleFormat(info, caps);
 
             if (info.Target == Target.TextureBuffer && !caps.SupportsSnormBufferTextureFormat)
@@ -1311,10 +1320,62 @@ namespace Ryujinx.Graphics.Gpu.Image
                 }
             }
 
-            int width = info.Width / info.SamplesInX;
-            int height = info.Height / info.SamplesInY;
+            int samplesInX = Math.Max(1, info.SamplesInX);
+            int samplesInY = Math.Max(1, info.SamplesInY);
+            int width = Math.Max(1, info.Width / samplesInX);
+            int height = Math.Max(1, info.Height / samplesInY);
+            int depth = Math.Max(1, info.GetDepth() * info.GetLayers());
+            int levels = Math.Max(1, info.Levels);
+            int samples = Math.Max(1, info.Samples);
 
-            int depth = info.GetDepth() * info.GetLayers();
+            if (info.Width < 1 || info.Height < 1 || info.DepthOrLayers < 1 || info.Levels < 1 ||
+                info.SamplesInX < 1 || info.SamplesInY < 1)
+            {
+                Logger.Warning?.Print(
+                    LogClass.Gpu,
+                    $"Normalizing invalid texture dimensions for host API: guest={info.Width}x{info.Height}, " +
+                    $"depthOrLayers={info.DepthOrLayers}, levels={info.Levels}, samples={info.SamplesInX}x{info.SamplesInY}, " +
+                    $"target={info.Target}, format={formatInfo.Format}, gpuVa=0x{info.GpuAddress:X}.");
+            }
+
+            if (TextureHostLayout.TryGetPagedLinear2D(info, caps, formatInfo, scale, out TextureHostLayout pagedLayout))
+            {
+                if (blockUnsafeMacOSPagedTextures)
+                {
+                    string message =
+                        $"Blocked unsafe oversized linear Metal texture before GPU submission: " +
+                        $"guest={pagedLayout.Width}x{pagedLayout.Height}, page={pagedLayout.Width}x{pagedLayout.PageHeight}, " +
+                        $"pages={pagedLayout.PageCount}, format={formatInfo.Format}, gpuVa=0x{info.GpuAddress:X}. " +
+                        $"Set {MacOSGpuSafetyPolicy.AllowUnsafePagedTexturesEnvironmentVariable}=1 only for isolated developer testing.";
+
+                    Logger.Error?.Print(LogClass.Gpu, message);
+
+                    throw new MacOSGpuSafetyException(message);
+                }
+
+                Logger.Warning?.Print(
+                    LogClass.Gpu,
+                    $"Using paged 2D texture for oversized linear Metal texture: guest={pagedLayout.Width}x{pagedLayout.Height}, " +
+                    $"page={pagedLayout.Width}x{pagedLayout.PageHeight}, pages={pagedLayout.PageCount}, " +
+                    $"format={formatInfo.Format}, gpuVa=0x{info.GpuAddress:X}.");
+
+                return new TextureCreateInfo(
+                    pagedLayout.Width,
+                    pagedLayout.PageHeight,
+                    pagedLayout.PageCount,
+                    1,
+                    1,
+                    formatInfo.BlockWidth,
+                    formatInfo.BlockHeight,
+                    formatInfo.BytesPerPixel,
+                    formatInfo.Format,
+                    info.DepthStencilMode,
+                    Target.Texture2DArray,
+                    info.SwizzleR,
+                    info.SwizzleG,
+                    info.SwizzleB,
+                    info.SwizzleA);
+            }
 
             if (TextureHostLayout.TryGetBufferBackedLinear2D(info, caps, formatInfo, scale, out TextureHostLayout bufferLayout))
             {
@@ -1344,32 +1405,16 @@ namespace Ryujinx.Graphics.Gpu.Image
 
             if (scale != 1f)
             {
-                width = (int)MathF.Ceiling(width * scale);
-                height = (int)MathF.Ceiling(height * scale);
-            }
-
-            if (OperatingSystem.IsMacOS() &&
-                caps.Api == TargetApi.Vulkan &&
-                info.IsLinear &&
-                info.Target == Target.Texture2D &&
-                (width > TextureHostLayout.MetalMaxTexture2DDimension || height > TextureHostLayout.MetalMaxTexture2DDimension))
-            {
-                Logger.Warning?.Print(
-                    LogClass.Gpu,
-                    $"Clamping oversized linear 2D texture for Metal: guest={width}x{height}, " +
-                    $"host={Math.Min(width, TextureHostLayout.MetalMaxTexture2DDimension)}x{Math.Min(height, TextureHostLayout.MetalMaxTexture2DDimension)}, " +
-                    $"format={formatInfo.Format}, gpuVa=0x{info.GpuAddress:X}.");
-
-                width = Math.Min(width, TextureHostLayout.MetalMaxTexture2DDimension);
-                height = Math.Min(height, TextureHostLayout.MetalMaxTexture2DDimension);
+                width = Math.Max(1, (int)MathF.Ceiling(width * scale));
+                height = Math.Max(1, (int)MathF.Ceiling(height * scale));
             }
 
             return new TextureCreateInfo(
                 width,
                 height,
                 depth,
-                info.Levels,
-                info.Samples,
+                levels,
+                samples,
                 formatInfo.BlockWidth,
                 formatInfo.BlockHeight,
                 formatInfo.BytesPerPixel,

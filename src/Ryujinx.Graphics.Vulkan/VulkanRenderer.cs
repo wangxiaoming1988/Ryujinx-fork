@@ -23,6 +23,11 @@ namespace Ryujinx.Graphics.Vulkan
 {
     public sealed class VulkanRenderer : IRenderer
     {
+        private const int MetalMaxTexture1DDimension = 16384;
+        private const int MetalMaxTexture2DDimension = 16384;
+        private const int MetalMaxTexture3DDimension = 2048;
+        private const int MetalMaxTextureArrayLayers = 2048;
+
         private VulkanInstance _instance;
         private SurfaceKHR _surface;
         private VulkanPhysicalDevice _physicalDevice;
@@ -107,7 +112,11 @@ namespace Ryujinx.Graphics.Vulkan
         public string GpuRenderer { get; private set; }
         public string GpuVersion { get; private set; }
 
-        public bool PreferThreading => true;
+        // MoltenVK on macOS can dispatch Metal command-buffer completion callbacks
+        // after a threaded backend has already rotated Vulkan resources. Keep the
+        // automatic mode single-threaded on macOS; explicit "On" remains available
+        // for diagnostics on systems where the driver is known to be safe.
+        public bool PreferThreading => !OperatingSystem.IsMacOS();
 
         public event EventHandler<ScreenCaptureImageInfo> ScreenCaptured;
 
@@ -586,6 +595,8 @@ namespace Ryujinx.Graphics.Vulkan
 
         public ITexture CreateTexture(TextureCreateInfo info)
         {
+            info = ValidateTextureCreateInfo(info, IsMoltenVk);
+
             if (info.Target == Target.TextureBuffer)
             {
                 return new TextureBuffer(this, info);
@@ -601,9 +612,66 @@ namespace Ryujinx.Graphics.Vulkan
 
         internal TextureView CreateTextureView(TextureCreateInfo info)
         {
+            info = ValidateTextureCreateInfo(info, IsMoltenVk);
+
             // This should be disposed when all views are destroyed.
             TextureStorage storage = CreateTextureStorage(info);
             return storage.CreateView(info, 0, 0);
+        }
+
+        internal static TextureCreateInfo ValidateTextureCreateInfo(TextureCreateInfo info, bool isMoltenVk)
+        {
+            if (!isMoltenVk)
+            {
+                return info;
+            }
+
+            string reason = null;
+
+            if (info.BlockWidth < 1 || info.BlockHeight < 1 || info.BytesPerPixel < 1)
+            {
+                reason = "invalid block geometry";
+            }
+            else
+            {
+                reason = info.Target switch
+                {
+                    Target.Texture1D or Target.Texture1DArray
+                        when info.Width > MetalMaxTexture1DDimension =>
+                        $"width exceeds Metal's {MetalMaxTexture1DDimension} texel 1D limit",
+                    Target.Texture2D or
+                    Target.Texture2DArray or
+                    Target.Texture2DMultisample or
+                    Target.Texture2DMultisampleArray or
+                    Target.Cubemap or
+                    Target.CubemapArray
+                        when info.Width > MetalMaxTexture2DDimension || info.Height > MetalMaxTexture2DDimension =>
+                        $"dimensions exceed Metal's {MetalMaxTexture2DDimension}x{MetalMaxTexture2DDimension} 2D limit",
+                    Target.Texture3D
+                        when info.Width > MetalMaxTexture3DDimension ||
+                             info.Height > MetalMaxTexture3DDimension ||
+                             info.Depth > MetalMaxTexture3DDimension =>
+                        $"dimensions exceed Metal's {MetalMaxTexture3DDimension} texel 3D limit",
+                    Target.Texture2DArray or Target.Texture2DMultisampleArray or Target.CubemapArray
+                        when info.GetLayers() > MetalMaxTextureArrayLayers =>
+                        $"layer count exceeds Metal's {MetalMaxTextureArrayLayers} layer limit",
+                    _ => null,
+                };
+            }
+
+            if (reason == null)
+            {
+                return info;
+            }
+
+            string message =
+                $"Unsafe MoltenVK texture descriptor rejected before vkCreateImage ({reason}): " +
+                $"{info.Width}x{info.Height}x{info.Depth}, levels={info.Levels}, samples={info.Samples}, " +
+                $"target={info.Target}, format={info.Format}.";
+
+            Logger.Error?.Print(LogClass.Gpu, message);
+
+            throw new InvalidOperationException(message);
         }
 
         internal TextureStorage CreateTextureStorage(TextureCreateInfo info)

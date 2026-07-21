@@ -836,8 +836,15 @@ namespace Ryujinx.Graphics.Gpu.Shader
                     return false;
                 }
 
+                int currentTexture2DLayout = TextureHostLayout.GetPagedLinear2DState(descriptor, isVulkan: true);
+
+                if (currentTexture2DLayout == 0)
+                {
+                    currentTexture2DLayout = TextureHostLayout.GetBufferBackedLinear2DState(descriptor, isVulkan: true);
+                }
+
                 if ((specializationState.Value.QueriedFlags & QueriedTextureStateFlags.BufferTexture2D) == QueriedTextureStateFlags.BufferTexture2D &&
-                    specializationState.Value.BufferTexture2D != TextureHostLayout.GetBufferBackedLinear2DState(descriptor, isVulkan: true))
+                    specializationState.Value.BufferTexture2D != currentTexture2DLayout)
                 {
                     return false;
                 }

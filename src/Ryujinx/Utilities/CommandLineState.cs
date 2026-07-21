@@ -117,6 +117,8 @@ namespace Ryujinx.Ava.Utilities
                         }
 
                         OverrideGraphicsBackend = args[++i];
+                        arguments.Add(arg);
+                        arguments.Add(args[i]);
                         break;
                     case "--backend-threading":
                         if (i + 1 >= args.Length)
@@ -127,6 +129,8 @@ namespace Ryujinx.Ava.Utilities
                         }
 
                         OverrideBackendThreading = args[++i];
+                        arguments.Add(arg);
+                        arguments.Add(args[i]);
                         break;
                     case "--bt":
                         if (i + 1 >= args.Length)

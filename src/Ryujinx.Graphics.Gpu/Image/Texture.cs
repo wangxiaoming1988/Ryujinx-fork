@@ -120,6 +120,7 @@ namespace Ryujinx.Graphics.Gpu.Image
 
         private ITexture _arrayViewTexture;
         private Target _arrayViewTarget;
+        private ITexture[] _pagedHostViews;
 
         private ITexture _flushHostTexture;
         private ITexture _setHostTexture;
@@ -280,6 +281,126 @@ namespace Ryujinx.Graphics.Gpu.Image
 
         public bool IsBufferBacked => TryGetBufferBackedLayout(out _);
 
+        public bool TryGetPagedLayout(out TextureHostLayout layout)
+        {
+            FormatInfo hostFormatInfo = TextureCompatibility.ToHostCompatibleFormat(Info, _context.Capabilities);
+
+            return TextureHostLayout.TryGetPagedLinear2D(Info, _context.Capabilities, hostFormatInfo, ScaleFactor, out layout);
+        }
+
+        public bool IsPaged => TryGetPagedLayout(out _);
+
+        private ITexture GetPagedHostView(TextureHostLayout layout, int page)
+        {
+            if ((uint)page >= (uint)layout.PageCount)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(page),
+                    $"Paged host texture layer {page} is outside page count {layout.PageCount}.");
+            }
+
+            _pagedHostViews ??= new ITexture[layout.PageCount];
+
+            ITexture view = _pagedHostViews[page];
+
+            if (view == null)
+            {
+                FormatInfo formatInfo = TextureCompatibility.ToHostCompatibleFormat(Info, _context.Capabilities);
+                TextureCreateInfo createInfo = new(
+                    layout.Width,
+                    layout.PageHeight,
+                    1,
+                    1,
+                    1,
+                    formatInfo.BlockWidth,
+                    formatInfo.BlockHeight,
+                    formatInfo.BytesPerPixel,
+                    formatInfo.Format,
+                    Info.DepthStencilMode,
+                    Target.Texture2D,
+                    Info.SwizzleR,
+                    Info.SwizzleG,
+                    Info.SwizzleB,
+                    Info.SwizzleA);
+
+                view = HostTexture.CreateView(createInfo, page, 0);
+                _pagedHostViews[page] = view;
+            }
+
+            return view;
+        }
+
+        public void CopyTo(Texture destination, int srcLayer, int dstLayer, int srcLevel, int dstLevel)
+        {
+            bool sourcePaged = TryGetPagedLayout(out TextureHostLayout sourceLayout);
+            bool destinationPaged = destination.TryGetPagedLayout(out TextureHostLayout destinationLayout);
+
+            if (!sourcePaged && !destinationPaged)
+            {
+                HostTexture.CopyTo(destination.HostTexture, srcLayer, dstLayer, srcLevel, dstLevel);
+                return;
+            }
+
+            if (!sourcePaged ||
+                !destinationPaged ||
+                srcLayer != 0 ||
+                dstLayer != 0 ||
+                srcLevel != 0 ||
+                dstLevel != 0 ||
+                sourceLayout.Width != destinationLayout.Width ||
+                sourceLayout.Height != destinationLayout.Height ||
+                sourceLayout.PageHeight != destinationLayout.PageHeight ||
+                sourceLayout.PageCount != destinationLayout.PageCount)
+            {
+                throw new InvalidOperationException(
+                    "Unsupported paged texture subresource copy rejected before GPU submission.");
+            }
+
+            for (int page = 0; page < sourceLayout.PageCount; page++)
+            {
+                GetPagedHostView(sourceLayout, page).CopyTo(
+                    destination.GetPagedHostView(destinationLayout, page),
+                    0,
+                    0,
+                    0,
+                    0);
+            }
+        }
+
+        public void CopyTo(Texture destination, Extents2D srcRegion, Extents2D dstRegion, bool linearFilter)
+        {
+            bool sourcePaged = TryGetPagedLayout(out TextureHostLayout sourceLayout);
+            bool destinationPaged = destination.TryGetPagedLayout(out TextureHostLayout destinationLayout);
+
+            if (!sourcePaged && !destinationPaged)
+            {
+                HostTexture.CopyTo(destination.HostTexture, srcRegion, dstRegion, linearFilter);
+                return;
+            }
+
+            PagedTextureCopyRegion[] regions = TextureHostLayout.GetPagedCopyRegions(
+                sourcePaged ? sourceLayout : null,
+                destinationPaged ? destinationLayout : null,
+                srcRegion,
+                dstRegion);
+
+            foreach (PagedTextureCopyRegion region in regions)
+            {
+                ITexture sourceHost = sourcePaged
+                    ? GetPagedHostView(sourceLayout, region.SourceLayer)
+                    : HostTexture;
+                ITexture destinationHost = destinationPaged
+                    ? destination.GetPagedHostView(destinationLayout, region.DestinationLayer)
+                    : destination.HostTexture;
+
+                sourceHost.CopyTo(
+                    destinationHost,
+                    region.SourceRegion,
+                    region.DestinationRegion,
+                    linearFilter);
+            }
+        }
+
         private bool CanUseBufferBackedLayout()
         {
             FormatInfo hostFormatInfo = TextureCompatibility.ToHostCompatibleFormat(Info, _context.Capabilities);
@@ -287,9 +408,16 @@ namespace Ryujinx.Graphics.Gpu.Image
             return TextureHostLayout.TryGetBufferBackedLinear2D(Info, _context.Capabilities, hostFormatInfo, 1f, out _);
         }
 
+        private bool CanUsePagedLayout()
+        {
+            FormatInfo hostFormatInfo = TextureCompatibility.ToHostCompatibleFormat(Info, _context.Capabilities);
+
+            return TextureHostLayout.TryGetPagedLinear2D(Info, _context.Capabilities, hostFormatInfo, 1f, out _);
+        }
+
         private void DisableScalingIfBufferBacked()
         {
-            if (CanUseBufferBackedLayout())
+            if (CanUseBufferBackedLayout() || CanUsePagedLayout())
             {
                 ScaleFactor = 1f;
                 ScaleMode = TextureScaleMode.Blacklisted;
@@ -313,7 +441,7 @@ namespace Ryujinx.Graphics.Gpu.Image
                 TextureCreateInfo createInfo = TextureCache.GetCreateInfo(Info, _context.Capabilities, ScaleFactor);
                 HostTexture = _context.Renderer.CreateTexture(createInfo);
 
-                SynchronizeMemory(); // Load the data.
+                SynchronizeMemory();
                 if (ScaleMode == TextureScaleMode.Scaled)
                 {
                     SetScale(GraphicsConfig.ResScale); // Scale the data up.
@@ -544,7 +672,7 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <param name="scale">The new scale factor for this texture</param>
         public void SetScale(float scale)
         {
-            if (scale != 1f && CanUseBufferBackedLayout())
+            if (scale != 1f && (CanUseBufferBackedLayout() || CanUsePagedLayout()))
             {
                 scale = 1f;
                 ScaleMode = TextureScaleMode.Blacklisted;
@@ -745,7 +873,14 @@ namespace Ryujinx.Graphics.Gpu.Image
         {
             BlacklistScale();
 
-            HostTexture.SetData(data, layer, level);
+            if (TryGetPagedLayout(out TextureHostLayout layout))
+            {
+                SetPagedData(data, layout, layer, level, new Rectangle<int>(0, 0, layout.Width, layout.Height), fullPages: true);
+            }
+            else
+            {
+                HostTexture.SetData(data, layer, level);
+            }
 
             _currentData = null;
 
@@ -763,11 +898,69 @@ namespace Ryujinx.Graphics.Gpu.Image
         {
             BlacklistScale();
 
-            HostTexture.SetData(data, layer, level, region);
+            if (TryGetPagedLayout(out TextureHostLayout layout))
+            {
+                SetPagedData(data, layout, layer, level, region, fullPages: false);
+            }
+            else
+            {
+                HostTexture.SetData(data, layer, level, region);
+            }
 
             _currentData = null;
 
             _hasData = true;
+        }
+
+        private void SetPagedData(
+            MemoryOwner<byte> data,
+            TextureHostLayout layout,
+            int layer,
+            int level,
+            Rectangle<int> region,
+            bool fullPages)
+        {
+            if (layer != 0 || level != 0)
+            {
+                data.Dispose();
+                throw new InvalidOperationException(
+                    $"Paged guest texture only supports layer 0, level 0 updates (layer={layer}, level={level}).");
+            }
+
+            try
+            {
+                PagedTextureRegion[] regions = layout.GetPagedRegions(
+                    region,
+                    data.Span.Length,
+                    Info.FormatInfo.BytesPerPixel);
+
+                foreach (PagedTextureRegion pagedRegion in regions)
+                {
+                    MemoryOwner<byte> pageData = MemoryOwner<byte>.RentCopy(
+                        data.Span.Slice(pagedRegion.SourceOffset, pagedRegion.SourceLength));
+
+                    try
+                    {
+                        if (fullPages)
+                        {
+                            HostTexture.SetData(pageData, pagedRegion.Layer, 0);
+                        }
+                        else
+                        {
+                            HostTexture.SetData(pageData, pagedRegion.Layer, 0, pagedRegion.Region);
+                        }
+                    }
+                    catch
+                    {
+                        pageData.Dispose();
+                        throw;
+                    }
+                }
+            }
+            finally
+            {
+                data.Dispose();
+            }
         }
 
         /// <summary>
@@ -1345,14 +1538,9 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <returns>A view of this texture with the requested target, or null if the target is invalid for this texture</returns>
         public ITexture GetTargetTexture(Target target)
         {
-            if (IsBufferBacked)
+            if (TryGetDirectTargetTexture(Target, IsBufferBacked, IsPaged, target, HostTexture, out ITexture directTexture))
             {
-                return target == Target.TextureBuffer ? HostTexture : null;
-            }
-
-            if (target == Target)
-            {
-                return HostTexture;
+                return directTexture;
             }
 
             if (_arrayViewTexture == null && IsSameDimensionsTarget(target))
@@ -1389,6 +1577,51 @@ namespace Ryujinx.Graphics.Gpu.Image
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Resolves target requests that can be answered without creating a host view.
+        /// Buffer-backed textures are represented by a host <see cref="Target.TextureBuffer"/>
+        /// and must never fall through to the original guest image target.
+        /// </summary>
+        /// <param name="textureTarget">The guest texture target</param>
+        /// <param name="isBufferBacked">Whether the host storage is a buffer texture</param>
+        /// <param name="requestedTarget">The target requested by the shader binding</param>
+        /// <param name="hostTexture">The host texture object</param>
+        /// <param name="directTexture">The direct host texture, if the request is valid</param>
+        /// <returns>True when the request was handled directly, including an invalid buffer-backed target</returns>
+        internal static bool TryGetDirectTargetTexture(
+            Target textureTarget,
+            bool isBufferBacked,
+            bool isPaged,
+            Target requestedTarget,
+            ITexture hostTexture,
+            out ITexture directTexture)
+        {
+            if (isBufferBacked)
+            {
+                directTexture = requestedTarget == Target.TextureBuffer ? hostTexture : null;
+
+                return true;
+            }
+
+            if (isPaged)
+            {
+                directTexture = requestedTarget == Target.Texture2DArray ? hostTexture : null;
+
+                return true;
+            }
+
+            if (requestedTarget == textureTarget)
+            {
+                directTexture = hostTexture;
+
+                return true;
+            }
+
+            directTexture = null;
+
+            return false;
         }
 
         /// <summary>
@@ -1781,6 +2014,16 @@ namespace Ryujinx.Graphics.Gpu.Image
 
             _arrayViewTexture?.Release();
             _arrayViewTexture = null;
+
+            if (_pagedHostViews != null)
+            {
+                foreach (ITexture view in _pagedHostViews)
+                {
+                    view?.Release();
+                }
+
+                _pagedHostViews = null;
+            }
 
             _flushHostTexture?.Release();
             _flushHostTexture = null;

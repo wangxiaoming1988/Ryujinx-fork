@@ -1,5 +1,41 @@
 # macOS Runtime Package
 
+## Ryujinx 1.3.366 macos-gpu-submit-guard
+
+- File: `Ryujinx-1.3.366-macos-gpu-submit-guard-macos-arm64.zip`
+- Platform: macOS arm64 (Apple Silicon)
+- Bundle version: `1.3.366`
+- Source branch: `codex/vtg-compute-fix-1.3.337`
+- SHA-256: `62e8d24dd1b63377d0addcb67069678fddff0b149c5c57f0c7b43c32a0e8c2df`
+
+This safety build blocks oversized paged linear Metal textures before host texture creation. On macOS, the known `1024x32768 R8Unorm` path stops emulation on the CPU side and returns to the game list instead of waiting for an AGX/MoltenVK device loss. The experimental path can only be enabled explicitly with `RYUJINX_ALLOW_UNSAFE_MACOS_PAGED_TEXTURES=1` for isolated developer testing.
+
+Graphics tests: `57/57` passed. Release build completed with zero warnings and zero errors. The application bundle passed `codesign --verify --deep --strict`, and the ZIP archive passed a full integrity test. A direct Nintendo Switch Sports 1.5.0 XCI run hit the CPU-side guard before NvDec initialization and produced no Vulkan device-loss error, no MoltenVK out-of-device-memory error, and no new macOS Ryujinx crash report.
+
+## Ryujinx 1.3.365 graceful-device-loss
+
+- File: `Ryujinx-1.3.365-graceful-device-loss-macos-arm64.zip`
+- Platform: macOS arm64 (Apple Silicon)
+- Bundle version: `1.3.365`
+- Source branch: `codex/vtg-compute-fix-1.3.337`
+- SHA-256: `44fe2d99d3ecf83df41f6a5abd2ac926e103a7b50f2572445f0912b3a7425ed9`
+
+This package splits paged texture uploads and 2D copies at the Metal 16384-row boundary before Vulkan command submission. It maps each segment to a cached 2D view of the correct array layer, rejects unsupported page copies on the CPU, validates Vulkan upload regions, keeps the unsafe texel-buffer path disabled, and forces backend threading off on macOS after all configuration overrides. On macOS it also forces `HostMappedUnsafe` to `HostMapped`, disables MoltenVK device resumption after an AGX command-buffer fault, and stops emulation on Vulkan device loss before more GPU work is submitted.
+
+Graphics tests: `52/52` passed. Release and osx-arm64 self-contained builds completed with zero warnings and zero errors. The application bundle passed `codesign --verify --deep --strict`, the runtime executable carries the macOS Hypervisor entitlement, and the ZIP archive passed a full integrity test. Interactive testing reproduced the animation GPU fault and verified that the fail-closed build stops instead of resuming the lost device; full 1.3.365 animation re-test was not completed after the desktop locked.
+
+## Ryujinx 1.3.359 paged-r8-descriptor-guard
+
+- File: `Ryujinx-1.3.359-paged-r8-descriptor-guard-macos-arm64.zip`
+- Platform: macOS arm64 (Apple Silicon)
+- Bundle version: `1.3.359`
+- Source branch: `codex/vtg-compute-fix-1.3.337`
+- SHA-256: `754dff6174cb2328f584df949daf352e987e724e113d946261f3d77f9d379cb8`
+
+This package uses a two-page `Texture2DArray` for the observed `1024x32768 R8Unorm` linear texture, lowers sampling coordinates in the shader, keeps the old texel-buffer path disabled by default, and clamps any remaining oversized MoltenVK 2D host descriptor before `vkCreateImage`.
+
+CPU Graphics tests: `40/40` passed. The bundle is ad-hoc signed and verified with `codesign --verify --deep --strict`.
+
 ## Ryujinx 1.3.339 vtg-oom-fix
 
 - File: `Ryujinx-1.3.339-vtg-oom-fix-macos-arm64.zip`

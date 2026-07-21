@@ -325,7 +325,7 @@ namespace Ryujinx.Graphics.Gpu.Engine.Dma
                             target.PropagateScale(source);
                         }
 
-                        source.HostTexture.CopyTo(target.HostTexture, 0, 0);
+                        source.CopyTo(target, 0, 0, 0, 0);
                         target.SignalModified();
                         return;
                     }

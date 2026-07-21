@@ -21,6 +21,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="NUnit" />
     <PackageReference Include="NUnit3TestAdapter" />
+    <PackageReference Include="Silk.NET.Vulkan" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +32,7 @@
     <ProjectReference Include="..\Ryujinx.Memory\Ryujinx.Memory.csproj" />
     <ProjectReference Include="..\Ryujinx.Graphics.Gpu\Ryujinx.Graphics.Gpu.csproj" />
     <ProjectReference Include="..\Ryujinx.Graphics.Shader\Ryujinx.Graphics.Shader.csproj" />
+    <ProjectReference Include="..\Ryujinx.Graphics.Vulkan\Ryujinx.Graphics.Vulkan.csproj" />
     <ProjectReference Include="..\Ryujinx.Tests.Unicorn\Ryujinx.Tests.Unicorn.csproj" />
     <ProjectReference Include="..\ARMeilleure\ARMeilleure.csproj" />
   </ItemGroup>

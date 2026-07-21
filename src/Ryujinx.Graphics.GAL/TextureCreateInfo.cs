@@ -44,11 +44,34 @@ namespace Ryujinx.Graphics.GAL
             SwizzleComponent swizzleB,
             SwizzleComponent swizzleA)
         {
-            Width = width;
-            Height = height;
-            Depth = depth;
-            Levels = levels;
-            Samples = samples;
+            // Vulkan and Metal reject zero-sized image descriptors. Keep the GAL contract
+            // valid even when a transient guest or post-processing descriptor is empty.
+            Width = Math.Max(1, width);
+            Height = Math.Max(1, height);
+            Depth = Math.Max(1, depth);
+            int maxMipDimension = Width;
+
+            if (target != Target.Texture1D &&
+                target != Target.Texture1DArray)
+            {
+                maxMipDimension = Math.Max(maxMipDimension, Height);
+            }
+
+            if (target == Target.Texture3D)
+            {
+                maxMipDimension = Math.Max(maxMipDimension, Depth);
+            }
+
+            int maxLevels = 1;
+
+            while (samples <= 1 && !target.IsMultisample && maxMipDimension > 1)
+            {
+                maxMipDimension >>= 1;
+                maxLevels++;
+            }
+
+            Levels = Math.Min(Math.Max(1, levels), maxLevels);
+            Samples = Math.Max(1, samples);
             BlockWidth = blockWidth;
             BlockHeight = blockHeight;
             BytesPerPixel = bytesPerPixel;

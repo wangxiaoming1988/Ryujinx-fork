@@ -56,5 +56,15 @@ namespace Ryujinx.Graphics.Gpu.Memory
             BindingInfo = bindingInfo;
             IsImage = isImage;
         }
+
+        /// <summary>
+        /// Checks whether this binding targets the same pipeline destination as another binding.
+        /// </summary>
+        internal bool MatchesDestination(BufferTextureBinding other)
+        {
+            return Stage == other.Stage &&
+                   BindingInfo.Binding == other.BindingInfo.Binding &&
+                   IsImage == other.IsImage;
+        }
     }
 }

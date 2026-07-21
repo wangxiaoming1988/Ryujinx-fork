@@ -28,7 +28,9 @@ namespace Ryujinx.Graphics.Vulkan.MoltenVK
             config.SemaphoreSupportStyle = MVKVkSemaphoreSupportStyle.MVK_CONFIG_VK_SEMAPHORE_SUPPORT_STYLE_SINGLE_QUEUE;
             config.SynchronousQueueSubmits = false;
 
-            config.ResumeLostDevice = true;
+            // Repeatedly resuming after an AGX command-buffer fault can destabilize WindowServer.
+            // Fail the Vulkan device instead so the emulator stops submitting work after the first fault.
+            config.ResumeLostDevice = false;
 
             vkSetMoltenVKConfigurationMVK(nint.Zero, config, configSize);
         }

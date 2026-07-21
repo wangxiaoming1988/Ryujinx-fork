@@ -132,7 +132,7 @@ namespace Ryujinx.Tests.Unicorn
         {
             if (!_isDisposed)
             {
-                Uc.Close();
+                Uc?.Close();
                 _isDisposed = true;
             }
         }

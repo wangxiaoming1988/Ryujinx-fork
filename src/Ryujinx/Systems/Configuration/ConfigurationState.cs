@@ -217,7 +217,9 @@ namespace Ryujinx.Ava.Systems.Configuration
             System.FsGlobalAccessLogMode.Value = 0;
             System.AudioBackend.Value = AudioBackend.SDL3;
             System.AudioVolume.Value = 1;
-            System.MemoryManagerMode.Value = MemoryManagerMode.HostMappedUnsafe;
+            System.MemoryManagerMode.Value = OperatingSystem.IsMacOS()
+                ? MemoryManagerMode.HostMapped
+                : MemoryManagerMode.HostMappedUnsafe;
             System.DramSize.Value = MemoryConfiguration.MemoryConfiguration4GiB;
             System.IgnoreMissingServices.Value = false;
             System.IgnoreControllerApplet.Value = false;

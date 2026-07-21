@@ -26,9 +26,7 @@ namespace Ryujinx.Graphics.Gpu.Memory
         private IndexBuffer _indexBuffer;
         private readonly VertexBuffer[] _vertexBuffers;
         private readonly BufferBounds[] _transformFeedbackBuffers;
-        private readonly List<BufferTextureBinding> _bufferTextures;
-        private readonly List<BufferTextureArrayBinding<ITextureArray>> _bufferTextureArrays;
-        private readonly List<BufferTextureArrayBinding<IImageArray>> _bufferImageArrays;
+        private readonly BufferTextureBindingQueue _bufferTextureBindings;
         private readonly BufferAssignment[] _ranges;
 
         /// <summary>
@@ -141,9 +139,7 @@ namespace Ryujinx.Graphics.Gpu.Memory
                 _gpUniformBuffers[index] = new BuffersPerStage(Constants.TotalGpUniformBuffers);
             }
 
-            _bufferTextures = [];
-            _bufferTextureArrays = [];
-            _bufferImageArrays = [];
+            _bufferTextureBindings = new BufferTextureBindingQueue();
 
             _ranges = new BufferAssignment[Constants.TotalGpUniformBuffers * Constants.ShaderStages];
         }
@@ -497,9 +493,9 @@ namespace Ryujinx.Graphics.Gpu.Memory
         /// <param name="bufferCache">Buffer cache</param>
         private void CommitBufferTextureBindings(BufferCache bufferCache)
         {
-            if (_bufferTextures.Count > 0)
+            if (_bufferTextureBindings.TextureCount > 0)
             {
-                foreach (BufferTextureBinding binding in _bufferTextures)
+                foreach (BufferTextureBinding binding in _bufferTextureBindings.Textures)
                 {
                     bool isStore = binding.BindingInfo.Flags.HasFlag(TextureUsageFlags.ImageStore);
                     BufferRange range = bufferCache.GetBufferRange(binding.Range, BufferStageUtils.TextureBuffer(binding.Stage, binding.BindingInfo.Flags), isStore);
@@ -517,14 +513,13 @@ namespace Ryujinx.Graphics.Gpu.Memory
                     }
                 }
 
-                _bufferTextures.Clear();
             }
 
-            if (_bufferTextureArrays.Count > 0 || _bufferImageArrays.Count > 0)
+            if (_bufferTextureBindings.TextureArrayCount > 0 || _bufferTextureBindings.ImageArrayCount > 0)
             {
                 ITexture[] textureArray = new ITexture[1];
 
-                foreach (BufferTextureArrayBinding<ITextureArray> binding in _bufferTextureArrays)
+                foreach (BufferTextureArrayBinding<ITextureArray> binding in _bufferTextureBindings.TextureArrays)
                 {
                     BufferRange range = bufferCache.GetBufferRange(
                         binding.Range,
@@ -535,7 +530,7 @@ namespace Ryujinx.Graphics.Gpu.Memory
                     binding.Array.SetTextures(binding.Index, textureArray);
                 }
 
-                foreach (BufferTextureArrayBinding<IImageArray> binding in _bufferImageArrays)
+                foreach (BufferTextureArrayBinding<IImageArray> binding in _bufferTextureBindings.ImageArrays)
                 {
                     bool isStore = binding.BindingInfo.Flags.HasFlag(TextureUsageFlags.ImageStore);
                     BufferRange range = bufferCache.GetBufferRange(
@@ -548,9 +543,9 @@ namespace Ryujinx.Graphics.Gpu.Memory
                     binding.Array.SetImages(binding.Index, textureArray);
                 }
 
-                _bufferTextureArrays.Clear();
-                _bufferImageArrays.Clear();
             }
+
+            _bufferTextureBindings.Clear();
         }
 
         /// <summary>
@@ -880,7 +875,7 @@ namespace Ryujinx.Graphics.Gpu.Memory
         {
             _channel.MemoryManager.Physical.BufferCache.CreateBuffer(range, BufferStageUtils.TextureBuffer(stage, bindingInfo.Flags));
 
-            _bufferTextures.Add(new BufferTextureBinding(stage, texture, range, bindingInfo, isImage));
+            _bufferTextureBindings.Enqueue(new BufferTextureBinding(stage, texture, range, bindingInfo, isImage));
         }
 
         /// <summary>
@@ -902,7 +897,7 @@ namespace Ryujinx.Graphics.Gpu.Memory
         {
             _channel.MemoryManager.Physical.BufferCache.CreateBuffer(range, BufferStageUtils.TextureBuffer(stage, bindingInfo.Flags));
 
-            _bufferTextureArrays.Add(new BufferTextureArrayBinding<ITextureArray>(stage, array, texture, range, bindingInfo, index));
+            _bufferTextureBindings.Enqueue(new BufferTextureArrayBinding<ITextureArray>(stage, array, texture, range, bindingInfo, index));
         }
 
         /// <summary>
@@ -924,7 +919,7 @@ namespace Ryujinx.Graphics.Gpu.Memory
         {
             _channel.MemoryManager.Physical.BufferCache.CreateBuffer(range, BufferStageUtils.TextureBuffer(stage, bindingInfo.Flags));
 
-            _bufferImageArrays.Add(new BufferTextureArrayBinding<IImageArray>(stage, array, texture, range, bindingInfo, index));
+            _bufferTextureBindings.Enqueue(new BufferTextureArrayBinding<IImageArray>(stage, array, texture, range, bindingInfo, index));
         }
 
         /// <summary>

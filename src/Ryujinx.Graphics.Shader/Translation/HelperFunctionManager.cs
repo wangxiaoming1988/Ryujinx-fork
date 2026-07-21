@@ -79,8 +79,11 @@ namespace Ryujinx.Graphics.Shader.Translation
                 HelperFunctionName.TexelFetchScale => GenerateTexelFetchScaleFunction(),
                 HelperFunctionName.TextureSizeUnscale => GenerateTextureSizeUnscaleFunction(),
                 HelperFunctionName.BufferTexture2DNearestIndexInt => GenerateBufferTexture2DNearestIndexIntFunction(),
+                HelperFunctionName.BufferTexture2DNearestIndex => GenerateBufferTexture2DNearestIndexFunction(),
                 HelperFunctionName.BufferTexture2DBilinearIndices => GenerateBufferTexture2DBilinearIndicesFunction(),
                 HelperFunctionName.BufferTexture2DSize => GenerateBufferTexture2DSizeFunction(),
+                HelperFunctionName.PagedTexture2DNearestCoordsInt => GeneratePagedTexture2DNearestCoordsIntFunction(),
+                HelperFunctionName.PagedTexture2DNearestCoords => GeneratePagedTexture2DNearestCoordsFunction(),
                 _ => throw new ArgumentException($"Invalid function name {functionName}"),
             };
         }
@@ -459,6 +462,36 @@ namespace Ryujinx.Graphics.Shader.Translation
             return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "BufferTexture2DNearestIndexInt", true, 3, 0);
         }
 
+        private Function GenerateBufferTexture2DNearestIndexFunction()
+        {
+            EmitterContext context = new();
+
+            Operand coordX = Argument(0);
+            Operand coordY = Argument(1);
+            Operand samplerIndex = Argument(2);
+            Operand normalized = Argument(3);
+            Operand index = GetScaleIndex(context, samplerIndex);
+            Operand width = LoadRenderScaleComponent(context, index, 1);
+            Operand height = LoadRenderScaleComponent(context, index, 2);
+            Operand stride = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 3));
+            Operand isNormalized = context.ICompareNotEqual(normalized, Const(0));
+
+            Operand texelX = context.ConditionalSelect(isNormalized, context.FPMultiply(coordX, width), coordX);
+            Operand texelY = context.ConditionalSelect(isNormalized, context.FPMultiply(coordY, height), coordY);
+
+            Operand x = context.FP32ConvertToS32(context.FPFloor(texelX));
+            Operand y = context.FP32ConvertToS32(context.FPFloor(texelY));
+            Operand maxX = context.ISubtract(context.FP32ConvertToS32(width), Const(1));
+            Operand maxY = context.ISubtract(context.FP32ConvertToS32(height), Const(1));
+
+            x = context.IMinimumS32(context.IMaximumS32(x, Const(0)), maxX);
+            y = context.IMinimumS32(context.IMaximumS32(y, Const(0)), maxY);
+
+            context.Return(context.IAdd(context.IMultiply(y, stride), x));
+
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "BufferTexture2DNearestIndex", true, 4, 0);
+        }
+
         private Function GenerateBufferTexture2DBilinearIndicesFunction()
         {
             EmitterContext context = new();
@@ -522,6 +555,72 @@ namespace Ryujinx.Graphics.Shader.Translation
             context.Return(context.ConditionalSelect(context.ICompareEqual(component, Const(0)), width, height));
 
             return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "BufferTexture2DSize", true, 2, 0);
+        }
+
+        private static Function GeneratePagedTexture2DNearestCoordsIntFunction()
+        {
+            EmitterContext context = new();
+
+            Operand x = Argument(0);
+            Operand y = Argument(1);
+            Operand width = Argument(2);
+            Operand pageHeight = Argument(3);
+            Operand pageCount = Argument(4);
+            Operand guestHeight = context.IMultiply(pageHeight, pageCount);
+
+            x = context.IMinimumS32(context.IMaximumS32(x, Const(0)), context.ISubtract(width, Const(1)));
+            y = context.IMinimumS32(context.IMaximumS32(y, Const(0)), context.ISubtract(guestHeight, Const(1)));
+
+            Operand pageIndex = context.FP32ConvertToS32(context.FPFloor(context.FPDivide(
+                context.IConvertS32ToFP32(y),
+                context.IConvertS32ToFP32(pageHeight))));
+            Operand pageY = context.ISubtract(y, context.IMultiply(pageIndex, pageHeight));
+
+            context.Copy(Argument(5), pageY);
+            context.Copy(Argument(6), pageIndex);
+            context.Return(x);
+
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "PagedTexture2DNearestCoordsInt", true, 5, 2);
+        }
+
+        private static Function GeneratePagedTexture2DNearestCoordsFunction()
+        {
+            EmitterContext context = new();
+
+            Operand coordX = Argument(0);
+            Operand coordY = Argument(1);
+            Operand width = Argument(2);
+            Operand pageHeight = Argument(3);
+            Operand pageCount = Argument(4);
+            Operand normalized = Argument(5);
+            Operand guestHeight = context.IMultiply(pageHeight, pageCount);
+            Operand isNormalized = context.ICompareNotEqual(normalized, Const(0));
+
+            coordX = context.ConditionalSelect(
+                isNormalized,
+                context.FPMultiply(coordX, context.IConvertS32ToFP32(width)),
+                coordX);
+            coordY = context.ConditionalSelect(
+                isNormalized,
+                context.FPMultiply(coordY, context.IConvertS32ToFP32(guestHeight)),
+                coordY);
+
+            Operand x = context.FP32ConvertToS32(context.FPFloor(coordX));
+            Operand y = context.FP32ConvertToS32(context.FPFloor(coordY));
+
+            x = context.IMinimumS32(context.IMaximumS32(x, Const(0)), context.ISubtract(width, Const(1)));
+            y = context.IMinimumS32(context.IMaximumS32(y, Const(0)), context.ISubtract(guestHeight, Const(1)));
+
+            Operand pageIndex = context.FP32ConvertToS32(context.FPFloor(context.FPDivide(
+                context.IConvertS32ToFP32(y),
+                context.IConvertS32ToFP32(pageHeight))));
+            Operand pageY = context.ISubtract(y, context.IMultiply(pageIndex, pageHeight));
+
+            context.Copy(Argument(6), pageY);
+            context.Copy(Argument(7), pageIndex);
+            context.Return(x);
+
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "PagedTexture2DNearestCoords", true, 6, 2);
         }
 
         private Operand GetScaleIndex(EmitterContext context, Operand index)

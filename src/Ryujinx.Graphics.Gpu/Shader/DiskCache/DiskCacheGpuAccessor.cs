@@ -142,6 +142,11 @@ namespace Ryujinx.Graphics.Gpu.Shader.DiskCache
             return state;
         }
 
+        public bool QueryHostTexture2DIsPaged(int handle, int cbufSlot)
+        {
+            return TextureHostLayout.IsPagedLinear2DState(_oldSpecState.GetTextureBuffer2D(_stageIndex, handle, cbufSlot));
+        }
+
         /// <inheritdoc/>
         /// <exception cref="DiskCacheLoadException">Constant buffer derived length is not available on the cache</exception>
         public int QueryTextureArrayLengthFromBuffer(int slot)

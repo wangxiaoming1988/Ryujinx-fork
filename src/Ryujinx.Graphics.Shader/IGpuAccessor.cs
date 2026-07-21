@@ -433,6 +433,17 @@ namespace Ryujinx.Graphics.Shader
         }
 
         /// <summary>
+        /// Queries whether the oversized 2D texture layout uses host texture pages.
+        /// </summary>
+        /// <param name="handle">Texture handle</param>
+        /// <param name="cbufSlot">Texture constant buffer slot</param>
+        /// <returns>True when the texture is represented by a 2D array of pages</returns>
+        bool QueryHostTexture2DIsPaged(int handle, int cbufSlot = -1)
+        {
+            return false;
+        }
+
+        /// <summary>
         /// Gets the size in bytes of a bound constant buffer for the current shader stage.
         /// </summary>
         /// <param name="slot">The number of the constant buffer to get the size from</param>

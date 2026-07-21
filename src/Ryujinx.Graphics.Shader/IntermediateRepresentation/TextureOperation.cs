@@ -61,6 +61,12 @@ namespace Ryujinx.Graphics.Shader.IntermediateRepresentation
             Binding = setAndBinding.Binding;
         }
 
+        public void SetSamplerBinding(SetBindingPair setAndBinding)
+        {
+            SamplerSet = setAndBinding.SetIndex;
+            SamplerBinding = setAndBinding.Binding;
+        }
+
         public void SetLodLevelFlag()
         {
             Flags |= TextureFlags.LodLevel;
@@ -69,6 +75,11 @@ namespace Ryujinx.Graphics.Shader.IntermediateRepresentation
         public void SetBufferTexture2DFlag()
         {
             Flags |= TextureFlags.BufferTexture2D;
+        }
+
+        public void SetPagedTexture2DFlag()
+        {
+            Flags |= TextureFlags.PagedTexture2D;
         }
     }
 }

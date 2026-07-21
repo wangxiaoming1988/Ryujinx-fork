@@ -1843,7 +1843,8 @@ namespace Ryujinx.Ava.UI.ViewModels
         public static bool InitializeUserConfig(ApplicationData application)
         {
             // Code where conditions will be met before loading the user configuration (Global Config)
-            string backendThreadingInit = Program.BackendThreadingArg ??
+            string backendThreadingInit = CommandLineState.OverrideBackendThreading ??
+                                          Program.BackendThreadingArg ??
                                           ConfigurationState.Instance.Graphics.BackendThreading.Value.ToString();
 
             // If a configuration is found in the "/games/xxxxxxxxxxxxxx" folder, the program will load the user setting. 
@@ -1855,6 +1856,34 @@ namespace Ryujinx.Ava.UI.ViewModels
                 ConfigurationState.Instance.Load(configurationFileFormat, Program.GetDirGameUserConfig(idGame, true),
                     idGame);
 
+                // Per-game settings are loaded after the global command-line overrides.
+                // Reapply the explicit backend choices so diagnostic A/B runs and normal
+                // launches cannot silently fall back to the user profile's renderer.
+                if (CommandLineState.OverrideGraphicsBackend is not null)
+                {
+                    ConfigurationState.Instance.Graphics.GraphicsBackend.Value =
+                        CommandLineState.OverrideGraphicsBackend.ToLower() switch
+                        {
+                            "opengl" => GraphicsBackend.OpenGl,
+                            "vulkan" => GraphicsBackend.Vulkan,
+                            _ => ConfigurationState.Instance.Graphics.GraphicsBackend.Value
+                        };
+                }
+
+                if (CommandLineState.OverrideBackendThreading is not null)
+                {
+                    ConfigurationState.Instance.Graphics.BackendThreading.Value =
+                        CommandLineState.OverrideBackendThreading.ToLower() switch
+                        {
+                            "auto" => BackendThreading.Auto,
+                            "off" => BackendThreading.Off,
+                            "on" => BackendThreading.On,
+                            _ => ConfigurationState.Instance.Graphics.BackendThreading.Value
+                        };
+                }
+
+                Program.EnsureSupportedGraphicsBackend();
+
                 if (ConfigurationFileFormat.TryLoad(Program.GlobalConfigurationPath,
                         out ConfigurationFileFormat configurationFileFormatExtra))
                 {
@@ -1865,16 +1894,15 @@ namespace Ryujinx.Ava.UI.ViewModels
                 }
             }
 
-            // Code where conditions will be executed after loading user configuration
+            // Backend threading is applied when AppHost creates the renderer below, so changing
+            // it here does not require restarting the process. Restarting from inside an app
+            // bundle on macOS can lose the launch context and leave no process to load the game.
             if (ConfigurationState.Instance.Graphics.BackendThreading.Value.ToString() != backendThreadingInit)
             {
-                Rebooter.RebootAppWithGame(application.Path,
-                [
-                    "--bt",
-                    ConfigurationState.Instance.Graphics.BackendThreading.Value.ToString()
-                ]);
-
-                return true;
+                Logger.Info?.Print(
+                    LogClass.Application,
+                    $"Applying per-game backend threading without restart: " +
+                    $"{backendThreadingInit} -> {ConfigurationState.Instance.Graphics.BackendThreading.Value}.");
             }
 
             return false;

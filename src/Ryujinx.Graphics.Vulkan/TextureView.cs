@@ -50,6 +50,8 @@ namespace Ryujinx.Graphics.Vulkan
             int firstLayer,
             int firstLevel)
         {
+            info = NormalizeViewInfo(info, storage, ref firstLayer, ref firstLevel);
+
             _gd = gd;
             _device = device;
             _info = info;
@@ -170,6 +172,51 @@ namespace Ryujinx.Graphics.Vulkan
             _isValid = 1;
         }
 
+        private static TextureCreateInfo NormalizeViewInfo(
+            TextureCreateInfo info,
+            TextureStorage storage,
+            ref int firstLayer,
+            ref int firstLevel)
+        {
+            int storageLevels = storage.Info.Levels;
+            int storageLayers = storage.Info.GetDepthOrLayers();
+
+            firstLevel = Math.Clamp(firstLevel, 0, storageLevels - 1);
+            firstLayer = Math.Clamp(firstLayer, 0, storageLayers - 1);
+
+            int levels = Math.Min(info.Levels, storageLevels - firstLevel);
+            int layers = Math.Min(info.GetDepthOrLayers(), storageLayers - firstLayer);
+            int depth = info.Depth;
+
+            if (info.Target == Target.Texture3D ||
+                info.Target is Target.Texture2DArray or Target.Texture2DMultisampleArray or Target.CubemapArray)
+            {
+                depth = Math.Max(1, layers);
+            }
+
+            if (levels == info.Levels && layers == info.GetDepthOrLayers())
+            {
+                return info;
+            }
+
+            return new TextureCreateInfo(
+                info.Width,
+                info.Height,
+                depth,
+                levels,
+                info.Samples,
+                info.BlockWidth,
+                info.BlockHeight,
+                info.BytesPerPixel,
+                info.Format,
+                info.DepthStencilMode,
+                info.Target,
+                info.SwizzleR,
+                info.SwizzleG,
+                info.SwizzleB,
+                info.SwizzleA);
+        }
+
         /// <summary>
         /// Create a texture view for an existing swapchain image view.
         /// Does not set storage, so only appropriate for swapchain use.
@@ -214,6 +261,14 @@ namespace Ryujinx.Graphics.Vulkan
         {
             TextureView src = this;
             TextureView dst = (TextureView)destination;
+
+            ValidateSubresourceRange(
+                dst.Info,
+                firstLayer,
+                firstLevel,
+                Math.Min(GetSubresourceLayerCount(src.Info), GetSubresourceLayerCount(dst.Info) - firstLayer),
+                Math.Min(src.Info.Levels, dst.Info.Levels - firstLevel),
+                "destination copy");
 
             if (!Valid || !dst.Valid)
             {
@@ -277,6 +332,9 @@ namespace Ryujinx.Graphics.Vulkan
             TextureView src = this;
             TextureView dst = (TextureView)destination;
 
+            ValidateSubresource(src.Info, srcLayer, srcLevel, "source");
+            ValidateSubresource(dst.Info, dstLayer, dstLevel, "destination");
+
             if (!Valid || !dst.Valid)
             {
                 return;
@@ -332,6 +390,9 @@ namespace Ryujinx.Graphics.Vulkan
         public void CopyTo(ITexture destination, Extents2D srcRegion, Extents2D dstRegion, bool linearFilter)
         {
             TextureView dst = (TextureView)destination;
+
+            ValidateRegion(Info, srcRegion, "source");
+            ValidateRegion(dst.Info, dstRegion, "destination");
 
             if (_gd.CommandBufferPool.OwnedByCurrentThread)
             {
@@ -783,6 +844,17 @@ namespace Ryujinx.Graphics.Vulkan
 
         private void SetData(ReadOnlySpan<byte> data, int layer, int level, int layers, int levels, bool singleSlice, Rectangle<int>? region = null)
         {
+            ValidateSubresourceRange(Info, layer, level, layers, levels, "upload");
+
+            if (region.HasValue)
+            {
+                Rectangle<int> value = region.Value;
+                ValidateRegion(
+                    Info,
+                    new Extents2D(value.X, value.Y, value.X + value.Width, value.Y + value.Height),
+                    "upload");
+            }
+
             int bufferDataLength = GetBufferDataLength(data.Length);
 
             using BufferHolder bufferHolder = _gd.BufferManager.Create(_gd, bufferDataLength);
@@ -916,6 +988,8 @@ namespace Ryujinx.Graphics.Vulkan
             int offset = 0,
             int stride = 0)
         {
+            ValidateSubresourceRange(Info, dstLayer, dstLevel, dstLayers, dstLevels, to ? "readback" : "upload");
+
             bool is3D = Info.Target == Target.Texture3D;
             int width = Math.Max(1, Info.Width >> dstLevel);
             int height = Math.Max(1, Info.Height >> dstLevel);
@@ -998,6 +1072,12 @@ namespace Ryujinx.Graphics.Vulkan
             int width,
             int height)
         {
+            ValidateSubresource(Info, dstLayer, dstLevel, to ? "readback" : "upload");
+            ValidateRegion(
+                Info,
+                new Extents2D(x, y, x + width, y + height),
+                to ? "readback" : "upload");
+
             ImageAspectFlags aspectFlags = Info.Format.ConvertAspectFlags();
 
             if (aspectFlags == (ImageAspectFlags.DepthBit | ImageAspectFlags.StencilBit))
@@ -1044,6 +1124,58 @@ namespace Ryujinx.Graphics.Vulkan
             }
 
             return size + (alignment - remainder);
+        }
+
+        private static void ValidateSubresource(TextureCreateInfo info, int layer, int level, string operation)
+        {
+            ValidateSubresourceRange(info, layer, level, 1, 1, operation);
+        }
+
+        private static void ValidateSubresourceRange(
+            TextureCreateInfo info,
+            int layer,
+            int level,
+            int layers,
+            int levels,
+            string operation)
+        {
+            int availableLayers = GetSubresourceLayerCount(info);
+
+            if (layer < 0 ||
+                level < 0 ||
+                layers <= 0 ||
+                levels <= 0 ||
+                layer + layers > availableLayers ||
+                level + levels > info.Levels)
+            {
+                throw new InvalidOperationException(
+                    $"Unsafe Vulkan texture {operation} subresource rejected before command submission: " +
+                    $"layer={layer}, layers={layers}, level={level}, levels={levels}, " +
+                    $"availableLayers={availableLayers}, availableLevels={info.Levels}, target={info.Target}.");
+            }
+        }
+
+        private static int GetSubresourceLayerCount(TextureCreateInfo info)
+        {
+            return info.Target is Target.Texture3D or Target.Texture1DArray
+                ? info.Depth
+                : info.GetLayers();
+        }
+
+        private static void ValidateRegion(TextureCreateInfo info, Extents2D region, string operation)
+        {
+            if (region.X1 < 0 ||
+                region.Y1 < 0 ||
+                region.X2 <= region.X1 ||
+                region.Y2 <= region.Y1 ||
+                region.X2 > info.Width ||
+                region.Y2 > info.Height)
+            {
+                throw new InvalidOperationException(
+                    $"Unsafe Vulkan texture {operation} region rejected before command submission: " +
+                    $"({region.X1},{region.Y1})-({region.X2},{region.Y2}) outside {info.Width}x{info.Height}, " +
+                    $"target={info.Target}, format={info.Format}.");
+            }
         }
 
         public void SetStorage(BufferRange buffer)

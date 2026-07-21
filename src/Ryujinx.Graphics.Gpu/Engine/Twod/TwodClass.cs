@@ -379,7 +379,7 @@ namespace Ryujinx.Graphics.Gpu.Engine.Twod
 
             bool linearFilter = _state.State.SetPixelsFromMemorySampleModeFilter == SetPixelsFromMemorySampleModeFilter.Bilinear;
 
-            srcTexture.HostTexture.CopyTo(dstTexture.HostTexture, srcRegion, dstRegion, linearFilter);
+            srcTexture.CopyTo(dstTexture, srcRegion, dstRegion, linearFilter);
 
             dstTexture.SignalModified();
         }

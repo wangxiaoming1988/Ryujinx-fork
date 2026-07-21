@@ -64,5 +64,15 @@ namespace Ryujinx.Graphics.Gpu.Memory
             BindingInfo = bindingInfo;
             Index = index;
         }
+
+        /// <summary>
+        /// Checks whether this binding targets the same array element as another binding.
+        /// </summary>
+        internal bool MatchesDestination(BufferTextureArrayBinding<T> other)
+        {
+            return Stage == other.Stage &&
+                   Index == other.Index &&
+                   ReferenceEquals(Array, other.Array);
+        }
     }
 }

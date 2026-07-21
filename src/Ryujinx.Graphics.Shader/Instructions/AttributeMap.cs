@@ -277,6 +277,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
             if (ioVariable != IoVariable.ViewportMask ||
                 isPerPatch ||
                 stage != ShaderStage.Geometry ||
+                !gpuAccessor.QueryHostSupportsViewportIndexVertexTessellation() ||
                 !IsSupportedByHost(gpuAccessor, stage, IoVariable.ViewportIndex))
             {
                 return false;

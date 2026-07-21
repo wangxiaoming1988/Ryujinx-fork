@@ -886,13 +886,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
                 return Register(dest++, RegisterType.Gpr);
             }
 
-            int bufferTexture2D = QueryBufferTexture2D(context, type, flags, imm);
-            SamplerType resourceType = bufferTexture2D != 0 ? SamplerType.TextureBuffer : type;
-
-            if (bufferTexture2D != 0)
-            {
-                flags |= TextureFlags.BufferTexture2D;
-            }
+            SamplerType resourceType = GetHostTextureResourceType(context, type, ref flags, imm);
 
             SetBindingPair setAndBinding = isBindless ? default : context.ResourceManager.GetTextureOrImageBinding(
                 Instruction.Lod,
@@ -1129,13 +1123,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
             TextureFlags flags = isBindless ? TextureFlags.Bindless : TextureFlags.None;
             SetBindingPair setAndBinding;
 
-            int bufferTexture2D = QueryBufferTexture2D(context, type, flags, imm);
-            SamplerType resourceType = bufferTexture2D != 0 ? SamplerType.TextureBuffer : type;
-
-            if (bufferTexture2D != 0)
-            {
-                flags |= TextureFlags.BufferTexture2D;
-            }
+            SamplerType resourceType = GetHostTextureResourceType(context, type, ref flags, imm);
 
             switch (query)
             {
@@ -1212,13 +1200,7 @@ namespace Ryujinx.Graphics.Shader.Instructions
             Operand[] dests,
             Operand[] sources)
         {
-            int bufferTexture2D = QueryBufferTexture2D(context, type, flags, handle);
-            SamplerType resourceType = bufferTexture2D != 0 ? SamplerType.TextureBuffer : type;
-
-            if (bufferTexture2D != 0)
-            {
-                flags |= TextureFlags.BufferTexture2D;
-            }
+            SamplerType resourceType = GetHostTextureResourceType(context, type, ref flags, handle);
 
             SetBindingPair setAndBinding = flags.HasFlag(TextureFlags.Bindless) ? default : context.ResourceManager.GetTextureOrImageBinding(
                 Instruction.TextureSample,
@@ -1233,7 +1215,16 @@ namespace Ryujinx.Graphics.Shader.Instructions
 
         private static int QueryBufferTexture2D(EmitterContext context, SamplerType type, TextureFlags flags, int handle)
         {
+            const TextureFlags unsupportedFlags =
+                TextureFlags.Gather |
+                TextureFlags.Derivatives |
+                TextureFlags.LodBias |
+                TextureFlags.LodLevel |
+                TextureFlags.Offset |
+                TextureFlags.Offsets;
+
             if ((flags & TextureFlags.Bindless) != 0 ||
+                (flags & unsupportedFlags) != 0 ||
                 !context.TranslatorContext.Stage.SupportsRenderScale ||
                 (type & (SamplerType.Mask | SamplerType.Multisample | SamplerType.Shadow)) != SamplerType.Texture2D)
             {
@@ -1241,6 +1232,31 @@ namespace Ryujinx.Graphics.Shader.Instructions
             }
 
             return context.TranslatorContext.GpuAccessor.QueryHostBufferTexture2D(handle);
+        }
+
+        private static SamplerType GetHostTextureResourceType(
+            EmitterContext context,
+            SamplerType type,
+            ref TextureFlags flags,
+            int handle)
+        {
+            int texture2DLayout = QueryBufferTexture2D(context, type, flags, handle);
+
+            if (texture2DLayout == 0)
+            {
+                return type;
+            }
+
+            if (context.TranslatorContext.GpuAccessor.QueryHostTexture2DIsPaged(handle))
+            {
+                flags |= TextureFlags.PagedTexture2D;
+
+                return SamplerType.Texture2D | SamplerType.Array;
+            }
+
+            flags |= TextureFlags.BufferTexture2D;
+
+            return SamplerType.TextureBuffer;
         }
 
         private static SamplerType ConvertSamplerType(TexDim dimensions)

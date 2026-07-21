@@ -606,8 +606,8 @@ namespace Ryujinx.Graphics.Gpu.Image
                     to.PropagateScale(from);
                 }
 
-                from.HostTexture.CopyTo(
-                    to.HostTexture,
+                from.CopyTo(
+                    to,
                     fromHandle._firstLayer,
                     _firstLayer,
                     fromHandle._firstLevel,
