@@ -26,6 +26,9 @@ namespace Ryujinx.Graphics.Shader.Translation
 
         private readonly Dictionary<int, int> _sbSlots;
         private readonly Dictionary<int, int> _sbSlotsReverse;
+        private readonly List<BufferDescriptor> _indirectStorageBufferDescriptors;
+        private IndirectStorageTarget[] _indirectStorageTargets;
+        private int _indirectStorageSourceBinding;
 
         private readonly HashSet<int> _usedConstantBufferBindings;
 
@@ -59,6 +62,18 @@ namespace Ryujinx.Graphics.Shader.Translation
 
         public bool SupportsRenderScale => _stage.SupportsRenderScale;
 
+        public readonly struct IndirectStorageTarget
+        {
+            public int Binding { get; }
+            public int MetadataIndex { get; }
+
+            public IndirectStorageTarget(int binding, int metadataIndex)
+            {
+                Binding = binding;
+                MetadataIndex = metadataIndex;
+            }
+        }
+
         public ResourceManager(ShaderStage stage, IGpuAccessor gpuAccessor, ResourceReservations reservations = null)
         {
             _gpuAccessor = gpuAccessor;
@@ -74,6 +89,8 @@ namespace Ryujinx.Graphics.Shader.Translation
 
             _sbSlots = new();
             _sbSlotsReverse = new();
+            _indirectStorageBufferDescriptors = [];
+            _indirectStorageSourceBinding = -1;
 
             _usedConstantBufferBindings = new();
 
@@ -188,6 +205,73 @@ namespace Ryujinx.Graphics.Shader.Translation
             return true;
         }
 
+        public bool TryGetOrCreateIndirectStorageTargets(int sourceBinding, out IndirectStorageTarget[] targets)
+        {
+            if (_stage == ShaderStage.Compute ||
+                !TryGetStorageBufferSource(sourceBinding, out int sourceCbSlot, out int sourceCbOffset))
+            {
+                targets = null;
+                return false;
+            }
+
+            if (_indirectStorageTargets != null)
+            {
+                targets = _indirectStorageSourceBinding == sourceBinding ? _indirectStorageTargets : null;
+                return targets != null;
+            }
+
+            int availableSlots = _sbSlotToBindingMap.Length - _sbSlots.Count;
+            int targetCount = Math.Min(SupportBuffer.IndirectStorageTargetsPerStage, availableSlots);
+
+            if (targetCount == 0)
+            {
+                targets = null;
+                return false;
+            }
+
+            targets = new IndirectStorageTarget[targetCount];
+
+            for (int index = 0; index < targetCount; index++)
+            {
+                int slot = _sbSlotToBindingMap.Length - 1 - index;
+                SetBindingPair setAndBinding = _gpuAccessor.CreateStorageBufferBinding(slot);
+
+                _sbSlotToBindingMap[slot] = setAndBinding;
+                AddNewStorageBuffer(setAndBinding.SetIndex, setAndBinding.Binding, $"{_stagePrefix}_indirect_s{index}");
+
+                _indirectStorageBufferDescriptors.Add(new BufferDescriptor(
+                    setAndBinding.SetIndex,
+                    setAndBinding.Binding,
+                    slot,
+                    sourceCbSlot,
+                    sourceCbOffset,
+                    BufferUsageFlags.Write | BufferUsageFlags.Indirect,
+                    index));
+
+                targets[index] = new IndirectStorageTarget(setAndBinding.Binding, index);
+            }
+
+            _indirectStorageSourceBinding = sourceBinding;
+            _indirectStorageTargets = targets;
+            return true;
+        }
+
+        private bool TryGetStorageBufferSource(int binding, out int sbCbSlot, out int sbCbOffset)
+        {
+            for (int slot = 0; slot < _sbSlotToBindingMap.Length; slot++)
+            {
+                if (_sbSlotToBindingMap[slot].Binding == binding && _sbSlotsReverse.TryGetValue(slot, out int key))
+                {
+                    (sbCbSlot, sbCbOffset) = UnpackSbCbInfo(key);
+                    return true;
+                }
+            }
+
+            sbCbSlot = 0;
+            sbCbOffset = 0;
+            return false;
+        }
+
         private bool TryGetSbSlot(byte sbCbSlot, ushort sbCbOffset, out int slot)
         {
             int key = PackSbCbInfo(sbCbSlot, sbCbOffset);
@@ -196,7 +280,7 @@ namespace Ryujinx.Graphics.Shader.Translation
             {
                 slot = _sbSlots.Count;
 
-                if (slot >= _sbSlotToBindingMap.Length)
+                if (slot >= _sbSlotToBindingMap.Length - _indirectStorageBufferDescriptors.Count)
                 {
                     return false;
                 }
@@ -480,7 +564,7 @@ namespace Ryujinx.Graphics.Shader.Translation
 
         public BufferDescriptor[] GetStorageBufferDescriptors()
         {
-            BufferDescriptor[] descriptors = new BufferDescriptor[_sbSlots.Count];
+            BufferDescriptor[] descriptors = new BufferDescriptor[_sbSlots.Count + _indirectStorageBufferDescriptors.Count];
 
             int descriptorIndex = 0;
 
@@ -494,6 +578,11 @@ namespace Ryujinx.Graphics.Shader.Translation
                     BufferUsageFlags flags = (_sbSlotWritten & (1u << slot)) != 0 ? BufferUsageFlags.Write : BufferUsageFlags.None;
                     descriptors[descriptorIndex++] = new BufferDescriptor(setAndBinding.SetIndex, setAndBinding.Binding, slot, sbCbSlot, sbCbOffset, flags);
                 }
+            }
+
+            foreach (BufferDescriptor descriptor in _indirectStorageBufferDescriptors)
+            {
+                descriptors[descriptorIndex++] = descriptor;
             }
 
             if (descriptors.Length != descriptorIndex)

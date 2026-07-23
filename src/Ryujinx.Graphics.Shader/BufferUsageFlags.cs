@@ -14,5 +14,10 @@ namespace Ryujinx.Graphics.Shader
         /// Buffer is written to.
         /// </summary>
         Write = 1 << 0,
+
+        /// <summary>
+        /// Buffer address and size are resolved from another storage buffer at draw time.
+        /// </summary>
+        Indirect = 1 << 1,
     }
 }

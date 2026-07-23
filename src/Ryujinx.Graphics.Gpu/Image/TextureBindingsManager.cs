@@ -5,6 +5,7 @@ using Ryujinx.Graphics.Gpu.Memory;
 using Ryujinx.Graphics.Gpu.Shader;
 using Ryujinx.Graphics.Shader;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -17,6 +18,9 @@ namespace Ryujinx.Graphics.Gpu.Image
     {
         private const int InitialTextureStateSize = 32;
         private const int InitialImageStateSize = 8;
+        private static readonly bool FoldedTextureDiagnostics =
+            string.Equals(Environment.GetEnvironmentVariable("RYUJINX_FOLDED_DIAGNOSTICS"), "1", StringComparison.Ordinal);
+        private static readonly HashSet<string> FoldedTextureDiagnosticKeys = [];
 
         private readonly GpuContext _context;
 
@@ -247,7 +251,13 @@ namespace Ryujinx.Graphics.Gpu.Image
                     }
                 }
 
-                if (texture.TryGetBufferBackedLayout(out TextureHostLayout bufferLayout))
+                if (texture.TryGetFoldedLayout(out TextureHostLayout foldedLayout))
+                {
+                    result.Y = -foldedLayout.PageCount;
+                    result.Z = foldedLayout.Width;
+                    result.W = foldedLayout.PageHeight;
+                }
+                else if (texture.TryGetBufferBackedLayout(out TextureHostLayout bufferLayout))
                 {
                     result.Y = bufferLayout.Width;
                     result.Z = bufferLayout.Height;
@@ -255,9 +265,76 @@ namespace Ryujinx.Graphics.Gpu.Image
                 }
             }
 
+            LogFoldedTextureScale(texture, usageFlags, index, stage, result);
+
             _context.SupportBufferUpdater.UpdateRenderScale(index, result);
 
             return changed;
+        }
+
+        private static void LogFoldedTextureBinding(
+            Texture texture,
+            ITexture hostTexture,
+            TextureUsageFlags usageFlags,
+            int scaleIndex,
+            ShaderStage stage,
+            in TextureBindingInfo bindingInfo,
+            string kind)
+        {
+            if (!FoldedTextureDiagnostics ||
+                texture == null ||
+                !texture.TryGetFoldedLayout(out TextureHostLayout foldedLayout))
+            {
+                return;
+            }
+
+            string key = $"direct:{kind}:{stage}:{bindingInfo.Binding}:{scaleIndex}:{bindingInfo.Target}:{hostTexture != null}:0x{texture.Info.GpuAddress:X}";
+
+            if (FoldedTextureDiagnosticKeys.Add(key))
+            {
+                string hostTextureSize = hostTexture != null ? $"{hostTexture.Width}x{hostTexture.Height}" : "null";
+
+                Logger.Warning?.Print(
+                    LogClass.Gpu,
+                    $"Folded diagnostic direct binding: kind={kind}, stage={stage}, binding={bindingInfo.Binding}, set={bindingInfo.Set}, " +
+                    $"scaleIndex={scaleIndex}, flags={usageFlags}, bindingTarget={bindingInfo.Target}, textureTarget={texture.Target}, " +
+                    $"arrayLength={bindingInfo.ArrayLength}, cbufSlot={bindingInfo.CbufSlot}, handle={bindingInfo.Handle}, " +
+                    $"hostTextureNull={hostTexture == null}, hostTextureSize={hostTextureSize}, guest={foldedLayout.Width}x{foldedLayout.Height}, " +
+                    $"host={foldedLayout.HostWidth}x{foldedLayout.HostHeight}, pages={foldedLayout.PageCount}, " +
+                    $"pageHeight={foldedLayout.PageHeight}, gpuVa=0x{texture.Info.GpuAddress:X}.");
+            }
+        }
+
+        private static void LogFoldedTextureScale(
+            Texture texture,
+            TextureUsageFlags usageFlags,
+            int scaleIndex,
+            ShaderStage stage,
+            Vector4<float> renderScale)
+        {
+            if (!FoldedTextureDiagnostics ||
+                texture == null ||
+                !texture.TryGetFoldedLayout(out TextureHostLayout foldedLayout))
+            {
+                return;
+            }
+
+            string key = $"direct-scale:{stage}:{scaleIndex}:{FormatRenderScale(renderScale)}:0x{texture.Info.GpuAddress:X}";
+
+            if (FoldedTextureDiagnosticKeys.Add(key))
+            {
+                Logger.Warning?.Print(
+                    LogClass.Gpu,
+                    $"Folded diagnostic direct render_scale: stage={stage}, scaleIndex={scaleIndex}, flags={usageFlags}, " +
+                    $"renderScale={FormatRenderScale(renderScale)}, guest={foldedLayout.Width}x{foldedLayout.Height}, " +
+                    $"host={foldedLayout.HostWidth}x{foldedLayout.HostHeight}, pages={foldedLayout.PageCount}, " +
+                    $"pageHeight={foldedLayout.PageHeight}, gpuVa=0x{texture.Info.GpuAddress:X}.");
+            }
+        }
+
+        private static string FormatRenderScale(Vector4<float> renderScale)
+        {
+            return $"({renderScale.X:R},{renderScale.Y:R},{renderScale.Z:R},{renderScale.W:R})";
         }
 
         /// <summary>
@@ -294,8 +371,11 @@ namespace Ryujinx.Graphics.Gpu.Image
 
             int fragmentIndex = (int)ShaderStage.Fragment - 1;
             int fragmentTotal = _isCompute ? 0 : (_textureBindings[fragmentIndex].Length + _imageBindings[fragmentIndex].Length);
+            bool vertexRequiresScale = VertexRequiresScale();
 
-            if (total != 0 && fragmentTotal != _lastFragmentTotal && VertexRequiresScale())
+            LogFoldedRenderScaleCommit(total, fragmentTotal, vertexRequiresScale);
+
+            if (total != 0 && fragmentTotal != _lastFragmentTotal && vertexRequiresScale)
             {
                 // Must update scales in the support buffer if:
                 // - Vertex stage has bindings that require scale.
@@ -309,6 +389,24 @@ namespace Ryujinx.Graphics.Gpu.Image
                 _lastFragmentTotal = fragmentTotal;
 
                 _context.SupportBufferUpdater.UpdateRenderScaleFragmentCount(total, fragmentTotal);
+            }
+        }
+
+        private void LogFoldedRenderScaleCommit(int firstStageTotal, int fragmentTotal, bool vertexRequiresScale)
+        {
+            if (!FoldedTextureDiagnostics)
+            {
+                return;
+            }
+
+            string key = $"commit-scale:{_isCompute}:{firstStageTotal}:{fragmentTotal}:{vertexRequiresScale}";
+
+            if (FoldedTextureDiagnosticKeys.Add(key))
+            {
+                Logger.Warning?.Print(
+                    LogClass.Gpu,
+                    $"Folded diagnostic render_scale commit: isCompute={_isCompute}, firstStageTotal={firstStageTotal}, " +
+                    $"fragmentTotal={fragmentTotal}, vertexRequiresScale={vertexRequiresScale}, lastFragmentTotal={_lastFragmentTotal}.");
             }
         }
 
@@ -454,6 +552,9 @@ namespace Ryujinx.Graphics.Gpu.Image
             }
 
             bool specStateMatches = true;
+            int fragmentScaleOffset = stage == ShaderStage.Vertex
+                ? _textureBindings[(int)ShaderStage.Fragment - 1].Length + _imageBindings[(int)ShaderStage.Fragment - 1].Length
+                : 0;
 
             int cachedTextureBufferIndex = -1;
             int cachedSamplerBufferIndex = -1;
@@ -467,7 +568,15 @@ namespace Ryujinx.Graphics.Gpu.Image
 
                 if (bindingInfo.ArrayLength > 1)
                 {
-                    _bindingsArrayCache.UpdateTextureArray(texturePool, samplerPool, stage, stageIndex, _textureBufferIndex, _samplerIndex, bindingInfo);
+                    _bindingsArrayCache.UpdateTextureArray(
+                        texturePool,
+                        samplerPool,
+                        stage,
+                        stageIndex,
+                        _textureBufferIndex,
+                        _samplerIndex,
+                        bindingInfo,
+                        index + fragmentScaleOffset);
 
                     continue;
                 }
@@ -506,6 +615,8 @@ namespace Ryujinx.Graphics.Gpu.Image
                     {
                         ITexture hostTextureRebind = state.CachedTexture.GetTargetTexture(bindingInfo.Target);
 
+                        LogFoldedTextureBinding(state.CachedTexture, hostTextureRebind, usageFlags, index, stage, bindingInfo, "texture-rebind");
+
                         state.Texture = hostTextureRebind;
 
                         _context.Renderer.Pipeline.SetTextureAndSampler(stage, bindingInfo.Binding, hostTextureRebind, state.Sampler);
@@ -525,6 +636,8 @@ namespace Ryujinx.Graphics.Gpu.Image
 
                 ITexture hostTexture = texture?.GetTargetTexture(bindingInfo.Target);
                 ISampler hostSampler = sampler?.GetHostSampler(texture);
+
+                LogFoldedTextureBinding(texture, hostTexture, usageFlags, index, stage, bindingInfo, "texture");
 
                 bool scaleChanged = (usageFlags & TextureUsageFlags.NeedsScaleValue) != 0 &&
                     UpdateScale(texture, usageFlags, index, stage);
@@ -547,6 +660,8 @@ namespace Ryujinx.Graphics.Gpu.Image
                     {
                         hostTexture = texture?.GetTargetTexture(bindingInfo.Target);
                         textureOrSamplerChanged = true;
+
+                        LogFoldedTextureBinding(texture, hostTexture, usageFlags, index, stage, bindingInfo, "texture-scale-rebind");
                     }
 
                     if (textureOrSamplerChanged)
@@ -592,6 +707,9 @@ namespace Ryujinx.Graphics.Gpu.Image
 
             // Scales for images appear after the texture ones.
             int baseScaleIndex = _textureCounts[stageIndex];
+            int fragmentScaleOffset = stage == ShaderStage.Vertex
+                ? _textureBindings[(int)ShaderStage.Fragment - 1].Length + _imageBindings[(int)ShaderStage.Fragment - 1].Length
+                : 0;
 
             int cachedTextureBufferIndex = -1;
             int cachedSamplerBufferIndex = -1;
@@ -607,7 +725,13 @@ namespace Ryujinx.Graphics.Gpu.Image
 
                 if (bindingInfo.ArrayLength > 1)
                 {
-                    _bindingsArrayCache.UpdateImageArray(pool, stage, stageIndex, _textureBufferIndex, bindingInfo);
+                    _bindingsArrayCache.UpdateImageArray(
+                        pool,
+                        stage,
+                        stageIndex,
+                        _textureBufferIndex,
+                        bindingInfo,
+                        baseScaleIndex + index + fragmentScaleOffset);
 
                     continue;
                 }
@@ -645,6 +769,8 @@ namespace Ryujinx.Graphics.Gpu.Image
                     {
                         ITexture hostTextureRebind = state.CachedTexture.GetTargetTexture(bindingInfo.Target);
 
+                        LogFoldedTextureBinding(state.CachedTexture, hostTextureRebind, usageFlags, scaleIndex, stage, bindingInfo, "image-rebind");
+
                         state.Texture = hostTextureRebind;
 
                         _context.Renderer.Pipeline.SetImage(stage, bindingInfo.Binding, hostTextureRebind);
@@ -661,6 +787,8 @@ namespace Ryujinx.Graphics.Gpu.Image
                 specStateMatches &= specState.MatchesImage(stage, index, descriptor);
 
                 ITexture hostTexture = texture?.GetTargetTexture(bindingInfo.Target);
+
+                LogFoldedTextureBinding(texture, hostTexture, usageFlags, scaleIndex, stage, bindingInfo, "image");
 
                 if (hostTexture != null && (texture.Target == Target.TextureBuffer || texture.IsBufferBacked))
                 {
@@ -684,6 +812,8 @@ namespace Ryujinx.Graphics.Gpu.Image
                         UpdateScale(texture, usageFlags, scaleIndex, stage))
                     {
                         hostTexture = texture?.GetTargetTexture(bindingInfo.Target);
+
+                        LogFoldedTextureBinding(texture, hostTexture, usageFlags, scaleIndex, stage, bindingInfo, "image-scale-rebind");
                     }
 
                     if (state.Texture != hostTexture)

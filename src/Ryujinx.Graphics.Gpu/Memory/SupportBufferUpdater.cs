@@ -1,6 +1,8 @@
+using Ryujinx.Common.Logging;
 using Ryujinx.Graphics.GAL;
 using Ryujinx.Graphics.Shader;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -11,6 +13,10 @@ namespace Ryujinx.Graphics.Gpu.Memory
     /// </summary>
     class SupportBufferUpdater : BufferUpdater
     {
+        private static readonly bool FoldedTextureDiagnostics =
+            string.Equals(Environment.GetEnvironmentVariable("RYUJINX_FOLDED_DIAGNOSTICS"), "1", StringComparison.Ordinal);
+        private static readonly HashSet<string> FoldedRenderScaleDiagnosticKeys = [];
+
         private SupportBuffer _data;
 
         /// <summary>
@@ -116,15 +122,44 @@ namespace Ryujinx.Graphics.Gpu.Memory
         public void UpdateRenderScale(int index, Vector4<float> data)
         {
             Span<Vector4<float>> renderScaleSpan = _data.RenderScale.AsSpan();
+            Vector4<float> previousData = renderScaleSpan[1 + index];
 
-            if (renderScaleSpan[1 + index].X != data.X ||
-                renderScaleSpan[1 + index].Y != data.Y ||
-                renderScaleSpan[1 + index].Z != data.Z ||
-                renderScaleSpan[1 + index].W != data.W)
+            if (previousData.X != data.X ||
+                previousData.Y != data.Y ||
+                previousData.Z != data.Z ||
+                previousData.W != data.W)
             {
+                LogFoldedRenderScaleUpdate(index, previousData, data);
+
                 renderScaleSpan[1 + index] = data;
                 DirtyRenderScale(1 + index, 1);
             }
+        }
+
+        private static void LogFoldedRenderScaleUpdate(int index, Vector4<float> previousData, Vector4<float> data)
+        {
+            if (!FoldedTextureDiagnostics ||
+                (previousData.Y == 0f && data.Y == 0f))
+            {
+                return;
+            }
+
+            string previous = FormatRenderScale(previousData);
+            string next = FormatRenderScale(data);
+            string key = $"support-render-scale:{index}:{previous}:{next}";
+
+            if (FoldedRenderScaleDiagnosticKeys.Add(key))
+            {
+                Logger.Warning?.Print(
+                    LogClass.Gpu,
+                    $"Folded diagnostic support buffer render_scale update: logicalIndex={index}, storageIndex={1 + index}, " +
+                    $"old={previous}, new={next}.");
+            }
+        }
+
+        private static string FormatRenderScale(Vector4<float> renderScale)
+        {
+            return $"({renderScale.X:R},{renderScale.Y:R},{renderScale.Z:R},{renderScale.W:R})";
         }
 
         /// <summary>
@@ -137,8 +172,28 @@ namespace Ryujinx.Graphics.Gpu.Memory
             // Only update fragment count if there are scales after it for the vertex stage.
             if (fragmentCount != totalCount && fragmentCount != _data.FragmentRenderScaleCount.X)
             {
+                LogFoldedFragmentScaleCountUpdate(totalCount, fragmentCount, _data.FragmentRenderScaleCount.X);
+
                 _data.FragmentRenderScaleCount.X = fragmentCount;
                 DirtyFragmentRenderScaleCount();
+            }
+        }
+
+        private static void LogFoldedFragmentScaleCountUpdate(int totalCount, int fragmentCount, int previousFragmentCount)
+        {
+            if (!FoldedTextureDiagnostics)
+            {
+                return;
+            }
+
+            string key = $"fragment-scale-count:{totalCount}:{fragmentCount}:{previousFragmentCount}";
+
+            if (FoldedRenderScaleDiagnosticKeys.Add(key))
+            {
+                Logger.Warning?.Print(
+                    LogClass.Gpu,
+                    $"Folded diagnostic support buffer fragment scale count update: total={totalCount}, " +
+                    $"fragment={fragmentCount}, oldFragment={previousFragmentCount}.");
             }
         }
 
@@ -227,6 +282,36 @@ namespace Ryujinx.Graphics.Gpu.Memory
             {
                 _data.TfeVertexCount.X = vertexCount;
                 MarkDirty(SupportBuffer.TfeVertexCountOffset, sizeof(int));
+            }
+        }
+
+        /// <summary>
+        /// Sets the guest base address and size for an indirect storage-buffer target.
+        /// </summary>
+        /// <param name="stage">Graphics shader stage index</param>
+        /// <param name="targetIndex">Target index within the stage</param>
+        /// <param name="address">Aligned guest GPU virtual address</param>
+        /// <param name="size">Mapped target size in bytes</param>
+        /// <param name="valid">Whether the target is valid</param>
+        public void SetIndirectStorageTarget(int stage, int targetIndex, ulong address, uint size, bool valid)
+        {
+            int index = SupportBuffer.GetIndirectStorageTargetIndex(stage, targetIndex);
+            Span<Vector4<uint>> targets = _data.IndirectStorageTargets.AsSpan();
+            Vector4<uint> value = new()
+            {
+                X = (uint)address,
+                Y = (uint)(address >> 32),
+                Z = size,
+                W = valid ? 1u : 0u,
+            };
+
+            if (targets[index].X != value.X ||
+                targets[index].Y != value.Y ||
+                targets[index].Z != value.Z ||
+                targets[index].W != value.W)
+            {
+                targets[index] = value;
+                DirtyGenericField<Vector4<uint>>(SupportBuffer.IndirectStorageTargetsOffset, index, 1);
             }
         }
 

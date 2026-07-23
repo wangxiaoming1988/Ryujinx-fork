@@ -1,4 +1,5 @@
 using Ryujinx.Graphics.Shader.IntermediateRepresentation;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using static Ryujinx.Graphics.Shader.IntermediateRepresentation.OperandHelper;
@@ -7,6 +8,10 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
 {
     class TexturePass : ITransformPass
     {
+        private static readonly bool FoldedTextureDiagnostics =
+            string.Equals(Environment.GetEnvironmentVariable("RYUJINX_FOLDED_DIAGNOSTICS"), "1", StringComparison.Ordinal);
+        private static readonly HashSet<string> FoldedTextureDiagnosticKeys = [];
+
         public static bool IsEnabled(IGpuAccessor gpuAccessor, ShaderStage stage, TargetLanguage targetLanguage, FeatureFlags usedFeatures)
         {
             return true;
@@ -28,12 +33,14 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
 
                 node = InsertTexelFetchScale(context.Hfm, node, context.ResourceManager, context.Stage);
                 node = InsertTextureSizeUnscale(context.Hfm, node, context.ResourceManager, context.Stage);
+                node = InsertFoldedImageCoordinates(context.Hfm, node, context.ResourceManager, context.GpuAccessor, context.Stage);
 
                 if (texOp.Inst == Instruction.TextureSample)
                 {
                     node = InsertCoordNormalization(context.Hfm, node, context.ResourceManager, context.GpuAccessor, context.Stage);
                     node = InsertCoordGatherBias(node, context.ResourceManager, context.GpuAccessor);
                     node = InsertConstOffsets(node, context.ResourceManager, context.GpuAccessor, context.Stage);
+                    node = InsertFoldedTextureCoordinates(context.Hfm, node, context.ResourceManager, context.GpuAccessor, context.Stage);
 
                     if (texOp.Type == SamplerType.TextureBuffer && !context.GpuAccessor.QueryHostSupportsSnormBufferTextureFormat())
                     {
@@ -278,6 +285,8 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                 int functionId = hfm.GetOrCreateFunctionId(HelperFunctionName.TextureSizeUnscale);
                 int samplerIndex = resourceManager.FindTextureDescriptorIndex(texOp.Binding);
 
+                resourceManager.SetUsageFlagsForTextureQuery(texOp.Binding, texOp.Type);
+
                 for (int index = texOp.DestsCount - 1; index >= 0; index--)
                 {
                     Operand dest = texOp.GetDest(index);
@@ -297,13 +306,187 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
                         }
                     }
 
-                    Operand[] callArgs = [Const(functionId), dest, Const(samplerIndex)];
+                    int componentIndex = texOp.DestsCount == 1 ? texOp.Index : index;
+                    Operand[] callArgs = [Const(functionId), dest, Const(samplerIndex), Const(componentIndex)];
 
                     node.List.AddAfter(node, new Operation(Instruction.Call, 0, unscaledSize, callArgs));
                 }
             }
 
             return node;
+        }
+
+        private static LinkedListNode<INode> InsertFoldedImageCoordinates(
+            HelperFunctionManager hfm,
+            LinkedListNode<INode> node,
+            ResourceManager resourceManager,
+            IGpuAccessor gpuAccessor,
+            ShaderStage stage)
+        {
+            TextureOperation texOp = (TextureOperation)node.Value;
+
+            if (!texOp.Inst.IsImage())
+            {
+                return node;
+            }
+
+            return InsertFoldedTextureCoordinates(
+                hfm,
+                node,
+                resourceManager,
+                gpuAccessor,
+                stage,
+                intCoords: true,
+                isImage: true);
+        }
+
+        private static LinkedListNode<INode> InsertFoldedTextureCoordinates(
+            HelperFunctionManager hfm,
+            LinkedListNode<INode> node,
+            ResourceManager resourceManager,
+            IGpuAccessor gpuAccessor,
+            ShaderStage stage,
+            bool? intCoords = null,
+            bool isImage = false)
+        {
+            TextureOperation texOp = (TextureOperation)node.Value;
+
+            bool isBindless = (texOp.Flags & TextureFlags.Bindless) != 0;
+            bool hasIntCoords = intCoords ?? (texOp.Flags & TextureFlags.IntCoords) != 0;
+            bool supportsRenderScale = stage.SupportsRenderScale;
+            bool typeSupportsFold = TypeSupportsFold(texOp.Type);
+
+            if (isBindless ||
+                !supportsRenderScale ||
+                !typeSupportsFold)
+            {
+                LogFoldedCoordinateSkip(
+                    gpuAccessor,
+                    resourceManager,
+                    texOp,
+                    stage,
+                    isImage,
+                    isBindless,
+                    supportsRenderScale,
+                    typeSupportsFold,
+                    hasIntCoords);
+
+                return node;
+            }
+
+            int samplerIndex = isImage
+                ? resourceManager.GetTextureDescriptors(includeArrays: false).Length + resourceManager.FindImageDescriptorIndex(texOp.Binding)
+                : resourceManager.FindTextureDescriptorIndex(texOp.Binding);
+            int functionIdX = hfm.GetOrCreateFunctionId(
+                hasIntCoords ? HelperFunctionName.FoldedTexelFetchCoordX : HelperFunctionName.FoldedTextureCoordX);
+            int functionIdY = hfm.GetOrCreateFunctionId(
+                hasIntCoords ? HelperFunctionName.FoldedTexelFetchCoordY : HelperFunctionName.FoldedTextureCoordY);
+
+            LogFoldedCoordinateLowering(
+                gpuAccessor,
+                resourceManager,
+                texOp,
+                stage,
+                samplerIndex,
+                isImage,
+                isBindless,
+                hasIntCoords,
+                functionIdX,
+                functionIdY);
+
+            Operand coordX = texOp.GetSource(0);
+            Operand coordY = texOp.GetSource(1);
+            Operand foldedCoordX = Local();
+            Operand foldedCoordY = Local();
+
+            node.List.AddBefore(node, new Operation(
+                Instruction.Call,
+                0,
+                foldedCoordX,
+                Const(functionIdX),
+                coordX,
+                coordY,
+                Const(samplerIndex)));
+
+            node.List.AddBefore(node, new Operation(
+                Instruction.Call,
+                0,
+                foldedCoordY,
+                Const(functionIdY),
+                coordY,
+                Const(samplerIndex)));
+
+            texOp.SetSource(0, foldedCoordX);
+            texOp.SetSource(1, foldedCoordY);
+
+            if (!isImage)
+            {
+                resourceManager.SetUsageFlagsForTextureQuery(texOp.Binding, texOp.Type);
+            }
+
+            return node;
+        }
+
+        private static void LogFoldedCoordinateSkip(
+            IGpuAccessor gpuAccessor,
+            ResourceManager resourceManager,
+            TextureOperation texOp,
+            ShaderStage stage,
+            bool isImage,
+            bool isBindless,
+            bool supportsRenderScale,
+            bool typeSupportsFold,
+            bool hasIntCoords)
+        {
+            if (!FoldedTextureDiagnostics ||
+                !TypeSupportsScale(texOp.Type))
+            {
+                return;
+            }
+
+            bool descriptorArray = !isBindless && resourceManager.IsArrayOfTexturesOrImages(texOp.Binding, isImage);
+            bool samplerTypeArray = (texOp.Type & SamplerType.Array) != 0;
+            string key = $"folded-skip:{stage}:{texOp.Inst}:{texOp.Binding}:{texOp.Type}:{isImage}:{isBindless}:{supportsRenderScale}:{typeSupportsFold}:{descriptorArray}";
+
+            if (FoldedTextureDiagnosticKeys.Add(key))
+            {
+                gpuAccessor.Log(
+                    $"Folded diagnostic coordinate lowering skipped: stage={stage}, binding={texOp.Binding}, set={texOp.Set}, " +
+                    $"inst={texOp.Inst}, type={texOp.Type}, flags={texOp.Flags}, isImage={isImage}, descriptorArray={descriptorArray}, " +
+                    $"samplerTypeArray={samplerTypeArray}, bindless={isBindless}, supportsRenderScale={supportsRenderScale}, " +
+                    $"typeSupportsFold={typeSupportsFold}, intCoords={hasIntCoords}.");
+            }
+        }
+
+        private static void LogFoldedCoordinateLowering(
+            IGpuAccessor gpuAccessor,
+            ResourceManager resourceManager,
+            TextureOperation texOp,
+            ShaderStage stage,
+            int scaleIndex,
+            bool isImage,
+            bool isBindless,
+            bool hasIntCoords,
+            int functionIdX,
+            int functionIdY)
+        {
+            if (!FoldedTextureDiagnostics)
+            {
+                return;
+            }
+
+            bool descriptorArray = resourceManager.IsArrayOfTexturesOrImages(texOp.Binding, isImage);
+            bool samplerTypeArray = (texOp.Type & SamplerType.Array) != 0;
+            string key = $"folded-lowering:{stage}:{texOp.Inst}:{texOp.Binding}:{texOp.Type}:{isImage}:{scaleIndex}:{hasIntCoords}:{descriptorArray}";
+
+            if (FoldedTextureDiagnosticKeys.Add(key))
+            {
+                gpuAccessor.Log(
+                    $"Folded diagnostic coordinate lowering: stage={stage}, binding={texOp.Binding}, set={texOp.Set}, " +
+                    $"inst={texOp.Inst}, type={texOp.Type}, flags={texOp.Flags}, isImage={isImage}, scaleIndex={scaleIndex}, " +
+                    $"descriptorArray={descriptorArray}, samplerTypeArray={samplerTypeArray}, bindless={isBindless}, " +
+                    $"intCoords={hasIntCoords}, functionX={functionIdX}, functionY={functionIdY}.");
+            }
         }
 
         private static LinkedListNode<INode> LowerBufferTexture2D(
@@ -1077,5 +1260,9 @@ namespace Ryujinx.Graphics.Shader.Translation.Transforms
             return (type & SamplerType.Mask) == SamplerType.Texture2D;
         }
 
+        private static bool TypeSupportsFold(SamplerType type)
+        {
+            return (type & (SamplerType.Mask | SamplerType.Multisample)) == SamplerType.Texture2D;
+        }
     }
 }

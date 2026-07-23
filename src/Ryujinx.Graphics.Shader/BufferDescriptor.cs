@@ -10,6 +10,7 @@ namespace Ryujinx.Graphics.Shader
         public readonly byte SbCbSlot;
         public readonly ushort SbCbOffset;
         public readonly BufferUsageFlags Flags;
+        public readonly byte IndirectIndex;
 
         public BufferDescriptor(int set, int binding, int slot)
         {
@@ -19,6 +20,7 @@ namespace Ryujinx.Graphics.Shader
             SbCbSlot = 0;
             SbCbOffset = 0;
             Flags = BufferUsageFlags.None;
+            IndirectIndex = 0;
         }
 
         public BufferDescriptor(int set, int binding, int slot, int sbCbSlot, int sbCbOffset, BufferUsageFlags flags)
@@ -29,6 +31,25 @@ namespace Ryujinx.Graphics.Shader
             SbCbSlot = (byte)sbCbSlot;
             SbCbOffset = (ushort)sbCbOffset;
             Flags = flags;
+            IndirectIndex = 0;
+        }
+
+        public BufferDescriptor(
+            int set,
+            int binding,
+            int slot,
+            int sbCbSlot,
+            int sbCbOffset,
+            BufferUsageFlags flags,
+            int indirectIndex)
+        {
+            Set = set;
+            Binding = binding;
+            Slot = (byte)slot;
+            SbCbSlot = (byte)sbCbSlot;
+            SbCbOffset = (ushort)sbCbOffset;
+            Flags = flags;
+            IndirectIndex = (byte)indirectIndex;
         }
     }
 }

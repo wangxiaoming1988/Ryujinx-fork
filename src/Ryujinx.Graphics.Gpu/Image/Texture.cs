@@ -1,3 +1,4 @@
+using Ryujinx.Common;
 using Ryujinx.Common.Logging;
 using Ryujinx.Common.Memory;
 using Ryujinx.Graphics.GAL;
@@ -31,6 +32,10 @@ namespace Ryujinx.Graphics.Gpu.Image
         private const int ScaledSetThreshold = 30;
 
         private const int MinLevelsForForceAnisotropy = 5;
+        private static readonly bool FoldedTextureDiagnostics =
+            string.Equals(Environment.GetEnvironmentVariable("RYUJINX_FOLDED_DIAGNOSTICS"), "1", StringComparison.Ordinal);
+        private static readonly HashSet<string> FoldedTargetTextureDiagnosticKeys = [];
+        private static readonly HashSet<string> FoldedDataUploadDiagnosticKeys = [];
 
         private struct TexturePoolOwner
         {
@@ -208,7 +213,7 @@ namespace Ryujinx.Graphics.Gpu.Image
 
             ScaleFactor = scaleFactor;
             ScaleMode = scaleMode;
-            DisableScalingIfBufferBacked();
+            DisableScalingForSpecialHostLayout();
 
             InitializeData(true);
         }
@@ -234,7 +239,7 @@ namespace Ryujinx.Graphics.Gpu.Image
             ScaleMode = scaleMode;
 
             InitializeTexture(context, physicalMemory, info, sizeInfo, range);
-            DisableScalingIfBufferBacked();
+            DisableScalingForSpecialHostLayout();
         }
 
         /// <summary>
@@ -281,8 +286,23 @@ namespace Ryujinx.Graphics.Gpu.Image
 
         public bool IsBufferBacked => TryGetBufferBackedLayout(out _);
 
+        public bool TryGetFoldedLayout(out TextureHostLayout layout)
+        {
+            FormatInfo hostFormatInfo = TextureCompatibility.ToHostCompatibleFormat(Info, _context.Capabilities);
+
+            return TextureHostLayout.TryGetFoldedLinear2D(Info, _context.Capabilities, hostFormatInfo, ScaleFactor, out layout);
+        }
+
+        public bool IsFolded => TryGetFoldedLayout(out _);
+
         public bool TryGetPagedLayout(out TextureHostLayout layout)
         {
+            if (TryGetFoldedLayout(out _))
+            {
+                layout = default;
+                return false;
+            }
+
             FormatInfo hostFormatInfo = TextureCompatibility.ToHostCompatibleFormat(Info, _context.Capabilities);
 
             return TextureHostLayout.TryGetPagedLinear2D(Info, _context.Capabilities, hostFormatInfo, ScaleFactor, out layout);
@@ -332,6 +352,28 @@ namespace Ryujinx.Graphics.Gpu.Image
 
         public void CopyTo(Texture destination, int srcLayer, int dstLayer, int srcLevel, int dstLevel)
         {
+            bool sourceFolded = TryGetFoldedLayout(out TextureHostLayout sourceFoldedLayout);
+            bool destinationFolded = destination.TryGetFoldedLayout(out TextureHostLayout destinationFoldedLayout);
+
+            if (sourceFolded || destinationFolded)
+            {
+                if (!sourceFolded ||
+                    !destinationFolded ||
+                    srcLayer != 0 ||
+                    dstLayer != 0 ||
+                    srcLevel != 0 ||
+                    dstLevel != 0 ||
+                    sourceFoldedLayout.HostWidth != destinationFoldedLayout.HostWidth ||
+                    sourceFoldedLayout.HostHeight != destinationFoldedLayout.HostHeight)
+                {
+                    throw new MacOSGpuSafetyException(
+                        "Unsupported folded Metal texture subresource copy rejected before GPU submission.");
+                }
+
+                HostTexture.CopyTo(destination.HostTexture, 0, 0, 0, 0);
+                return;
+            }
+
             bool sourcePaged = TryGetPagedLayout(out TextureHostLayout sourceLayout);
             bool destinationPaged = destination.TryGetPagedLayout(out TextureHostLayout destinationLayout);
 
@@ -369,6 +411,39 @@ namespace Ryujinx.Graphics.Gpu.Image
 
         public void CopyTo(Texture destination, Extents2D srcRegion, Extents2D dstRegion, bool linearFilter)
         {
+            bool sourceFolded = TryGetFoldedLayout(out TextureHostLayout sourceFoldedLayout);
+            bool destinationFolded = destination.TryGetFoldedLayout(out TextureHostLayout destinationFoldedLayout);
+
+            if (sourceFolded || destinationFolded)
+            {
+                bool fullSource = sourceFolded &&
+                    srcRegion.X1 == 0 &&
+                    srcRegion.Y1 == 0 &&
+                    srcRegion.X2 == sourceFoldedLayout.Width &&
+                    srcRegion.Y2 == sourceFoldedLayout.Height;
+                bool fullDestination = destinationFolded &&
+                    dstRegion.X1 == 0 &&
+                    dstRegion.Y1 == 0 &&
+                    dstRegion.X2 == destinationFoldedLayout.Width &&
+                    dstRegion.Y2 == destinationFoldedLayout.Height;
+
+                if (!fullSource ||
+                    !fullDestination ||
+                    sourceFoldedLayout.HostWidth != destinationFoldedLayout.HostWidth ||
+                    sourceFoldedLayout.HostHeight != destinationFoldedLayout.HostHeight)
+                {
+                    throw new MacOSGpuSafetyException(
+                        "Partial folded Metal texture copy rejected before GPU submission.");
+                }
+
+                HostTexture.CopyTo(
+                    destination.HostTexture,
+                    new Extents2D(0, 0, sourceFoldedLayout.HostWidth, sourceFoldedLayout.HostHeight),
+                    new Extents2D(0, 0, destinationFoldedLayout.HostWidth, destinationFoldedLayout.HostHeight),
+                    linearFilter);
+                return;
+            }
+
             bool sourcePaged = TryGetPagedLayout(out TextureHostLayout sourceLayout);
             bool destinationPaged = destination.TryGetPagedLayout(out TextureHostLayout destinationLayout);
 
@@ -408,6 +483,13 @@ namespace Ryujinx.Graphics.Gpu.Image
             return TextureHostLayout.TryGetBufferBackedLinear2D(Info, _context.Capabilities, hostFormatInfo, 1f, out _);
         }
 
+        private bool CanUseFoldedLayout()
+        {
+            FormatInfo hostFormatInfo = TextureCompatibility.ToHostCompatibleFormat(Info, _context.Capabilities);
+
+            return TextureHostLayout.TryGetFoldedLinear2D(Info, _context.Capabilities, hostFormatInfo, 1f, out _);
+        }
+
         private bool CanUsePagedLayout()
         {
             FormatInfo hostFormatInfo = TextureCompatibility.ToHostCompatibleFormat(Info, _context.Capabilities);
@@ -415,9 +497,9 @@ namespace Ryujinx.Graphics.Gpu.Image
             return TextureHostLayout.TryGetPagedLinear2D(Info, _context.Capabilities, hostFormatInfo, 1f, out _);
         }
 
-        private void DisableScalingIfBufferBacked()
+        private void DisableScalingForSpecialHostLayout()
         {
-            if (CanUseBufferBackedLayout() || CanUsePagedLayout())
+            if (CanUseBufferBackedLayout() || CanUseFoldedLayout() || CanUsePagedLayout())
             {
                 ScaleFactor = 1f;
                 ScaleMode = TextureScaleMode.Blacklisted;
@@ -672,7 +754,7 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <param name="scale">The new scale factor for this texture</param>
         public void SetScale(float scale)
         {
-            if (scale != 1f && (CanUseBufferBackedLayout() || CanUsePagedLayout()))
+            if (scale != 1f && (CanUseBufferBackedLayout() || CanUseFoldedLayout() || CanUsePagedLayout()))
             {
                 scale = 1f;
                 ScaleMode = TextureScaleMode.Blacklisted;
@@ -840,7 +922,25 @@ namespace Ryujinx.Graphics.Gpu.Image
             }
             else
             {
-                HostTexture.SetData(result);
+                if (TryGetFoldedLayout(out TextureHostLayout foldedLayout))
+                {
+                    LogFoldedDataUpload(
+                        "UpdateData",
+                        foldedLayout,
+                        result.Span,
+                        0,
+                        0,
+                        0,
+                        0,
+                        foldedLayout.Width,
+                        foldedLayout.Height);
+
+                    HostTexture.SetData(FoldLinearTexture(result, foldedLayout, Info.FormatInfo.BytesPerPixel));
+                }
+                else
+                {
+                    HostTexture.SetData(result);
+                }
             }
 
             _hasData = true;
@@ -858,7 +958,25 @@ namespace Ryujinx.Graphics.Gpu.Image
 
             AlwaysFlushOnOverlap = true;
 
-            HostTexture.SetData(data);
+            if (TryGetFoldedLayout(out TextureHostLayout foldedLayout))
+            {
+                LogFoldedDataUpload(
+                    "SetData",
+                    foldedLayout,
+                    data.Span,
+                    0,
+                    0,
+                    0,
+                    0,
+                    foldedLayout.Width,
+                    foldedLayout.Height);
+
+                HostTexture.SetData(FoldLinearTexture(data, foldedLayout, Info.FormatInfo.BytesPerPixel));
+            }
+            else
+            {
+                HostTexture.SetData(data);
+            }
 
             _hasData = true;
         }
@@ -873,7 +991,29 @@ namespace Ryujinx.Graphics.Gpu.Image
         {
             BlacklistScale();
 
-            if (TryGetPagedLayout(out TextureHostLayout layout))
+            if (TryGetFoldedLayout(out TextureHostLayout foldedLayout))
+            {
+                LogFoldedDataUpload(
+                    "SetDataLayerLevel",
+                    foldedLayout,
+                    data.Span,
+                    layer,
+                    level,
+                    0,
+                    0,
+                    foldedLayout.Width,
+                    foldedLayout.Height);
+
+                if (layer != 0 || level != 0)
+                {
+                    data.Dispose();
+                    throw new MacOSGpuSafetyException(
+                        $"Folded Metal texture only supports layer 0, level 0 uploads (layer={layer}, level={level}).");
+                }
+
+                HostTexture.SetData(FoldLinearTexture(data, foldedLayout, Info.FormatInfo.BytesPerPixel), 0, 0);
+            }
+            else if (TryGetPagedLayout(out TextureHostLayout layout))
             {
                 SetPagedData(data, layout, layer, level, new Rectangle<int>(0, 0, layout.Width, layout.Height), fullPages: true);
             }
@@ -898,7 +1038,38 @@ namespace Ryujinx.Graphics.Gpu.Image
         {
             BlacklistScale();
 
-            if (TryGetPagedLayout(out TextureHostLayout layout))
+            if (TryGetFoldedLayout(out TextureHostLayout foldedLayout))
+            {
+                LogFoldedDataUpload(
+                    "SetDataRegion",
+                    foldedLayout,
+                    data.Span,
+                    layer,
+                    level,
+                    region.X,
+                    region.Y,
+                    region.Width,
+                    region.Height);
+
+                if (layer == 0 &&
+                    level == 0 &&
+                    region.X == 0 &&
+                    region.Y == 0 &&
+                    region.Width == foldedLayout.Width &&
+                    region.Height == foldedLayout.Height)
+                {
+                    HostTexture.SetData(FoldLinearTexture(data, foldedLayout, Info.FormatInfo.BytesPerPixel), 0, 0);
+                }
+                else
+                {
+                    data.Dispose();
+                    throw new MacOSGpuSafetyException(
+                        $"Partial folded Metal texture upload rejected before GPU submission: " +
+                        $"layer={layer}, level={level}, region={region.X},{region.Y} {region.Width}x{region.Height}, " +
+                        $"guest={foldedLayout.Width}x{foldedLayout.Height}.");
+                }
+            }
+            else if (TryGetPagedLayout(out TextureHostLayout layout))
             {
                 SetPagedData(data, layout, layer, level, region, fullPages: false);
             }
@@ -961,6 +1132,244 @@ namespace Ryujinx.Graphics.Gpu.Image
             {
                 data.Dispose();
             }
+        }
+
+        private void LogFoldedDataUpload(
+            string source,
+            TextureHostLayout layout,
+            ReadOnlySpan<byte> data,
+            int layer,
+            int level,
+            int regionX,
+            int regionY,
+            int regionWidth,
+            int regionHeight)
+        {
+            if (!FoldedTextureDiagnostics)
+            {
+                return;
+            }
+
+            int bytesPerPixel = Info.FormatInfo.BytesPerPixel;
+            int lineBytes = checked(layout.Width * bytesPerPixel);
+            int logicalStride = BitUtils.AlignUp(lineBytes, LayoutConverter.HostStrideAlignment);
+            int hostStride = BitUtils.AlignUp(layout.HostWidth * bytesPerPixel, LayoutConverter.HostStrideAlignment);
+            int logicalSize = checked(logicalStride * layout.Height);
+            int hostSize = checked(hostStride * layout.HostHeight);
+            ulong sampleHash = ComputeSampleHash(data, out int sampledBytes, out int nonZeroSamples);
+            string key = $"upload:{source}:0x{Info.GpuAddress:X}:{data.Length}:{sampleHash:X16}:{layer}:{level}:{regionX}:{regionY}:{regionWidth}:{regionHeight}";
+
+            if (FoldedDataUploadDiagnosticKeys.Add(key))
+            {
+                Logger.Warning?.Print(
+                    LogClass.Gpu,
+                    $"Folded diagnostic data upload: source={source}, dataLength={data.Length}, sampledBytes={sampledBytes}, " +
+                    $"nonZeroSamples={nonZeroSamples}, sampleHash=0x{sampleHash:X16}, layer={layer}, level={level}, " +
+                    $"region={regionX},{regionY} {regionWidth}x{regionHeight}, bytesPerPixel={bytesPerPixel}, " +
+                    $"logicalStride={logicalStride}, hostStride={hostStride}, logicalSize={logicalSize}, hostSize={hostSize}, " +
+                    $"guest={layout.Width}x{layout.Height}, host={layout.HostWidth}x{layout.HostHeight}, pages={layout.PageCount}, " +
+                    $"pageHeight={layout.PageHeight}, gutter={layout.GutterX}x{layout.GutterY}, gpuVa=0x{Info.GpuAddress:X}.");
+            }
+        }
+
+        private static ulong ComputeSampleHash(ReadOnlySpan<byte> data, out int sampledBytes, out int nonZeroSamples)
+        {
+            const int MaxSamples = 4096;
+            const ulong OffsetBasis = 14695981039346656037UL;
+            const ulong Prime = 1099511628211UL;
+
+            sampledBytes = Math.Min(data.Length, MaxSamples);
+            nonZeroSamples = 0;
+
+            if (sampledBytes == 0)
+            {
+                return OffsetBasis;
+            }
+
+            ulong hash = OffsetBasis;
+
+            for (int index = 0; index < sampledBytes; index++)
+            {
+                int dataIndex = sampledBytes == data.Length
+                    ? index
+                    : (int)((long)index * (data.Length - 1) / (sampledBytes - 1));
+                byte value = data[dataIndex];
+
+                if (value != 0)
+                {
+                    nonZeroSamples++;
+                }
+
+                hash ^= value;
+                hash *= Prime;
+            }
+
+            return hash;
+        }
+
+        internal static MemoryOwner<byte> FoldLinearTexture(
+            MemoryOwner<byte> data,
+            TextureHostLayout layout,
+            int bytesPerPixel)
+        {
+            if (!layout.IsFolded)
+            {
+                data.Dispose();
+                throw new ArgumentException("Texture layout is not folded.", nameof(layout));
+            }
+
+            int lineBytes = checked(layout.Width * bytesPerPixel);
+            int logicalStride = BitUtils.AlignUp(lineBytes, LayoutConverter.HostStrideAlignment);
+            int hostStride = BitUtils.AlignUp(layout.HostWidth * bytesPerPixel, LayoutConverter.HostStrideAlignment);
+            int logicalSize = checked(logicalStride * layout.Height);
+            int hostSize = checked(hostStride * layout.HostHeight);
+            int dataLength = data.Span.Length;
+
+            if (dataLength < logicalSize)
+            {
+                data.Dispose();
+                throw new ArgumentException(
+                    $"Folded texture source is {dataLength} bytes, expected at least {logicalSize} bytes.",
+                    nameof(data));
+            }
+
+            MemoryOwner<byte> folded = MemoryOwner<byte>.Rent(hostSize);
+            Span<byte> destination = folded.Span[..hostSize];
+            destination.Clear();
+
+            ReadOnlySpan<byte> source = data.Span[..logicalSize];
+
+            for (int page = 0; page < layout.PageCount; page++)
+            {
+                int pageStart = page * layout.PageHeight;
+                int pageEnd = pageStart + layout.PageHeight;
+
+                for (int gutterY = 0; gutterY < layout.GutterY; gutterY++)
+                {
+                    int sourceY = Math.Clamp(pageStart - layout.GutterY + gutterY, 0, layout.Height - 1);
+
+                    CopyFoldedLinearRow(
+                        source,
+                        destination,
+                        sourceY,
+                        gutterY,
+                        page,
+                        layout,
+                        logicalStride,
+                        hostStride,
+                        bytesPerPixel,
+                        lineBytes);
+                }
+
+                for (int pageY = 0; pageY < layout.PageHeight; pageY++)
+                {
+                    CopyFoldedLinearRow(
+                        source,
+                        destination,
+                        pageStart + pageY,
+                        layout.GutterY + pageY,
+                        page,
+                        layout,
+                        logicalStride,
+                        hostStride,
+                        bytesPerPixel,
+                        lineBytes);
+                }
+
+                for (int gutterY = 0; gutterY < layout.GutterY; gutterY++)
+                {
+                    int sourceY = Math.Clamp(pageEnd + gutterY, 0, layout.Height - 1);
+
+                    CopyFoldedLinearRow(
+                        source,
+                        destination,
+                        sourceY,
+                        layout.GutterY + layout.PageHeight + gutterY,
+                        page,
+                        layout,
+                        logicalStride,
+                        hostStride,
+                        bytesPerPixel,
+                        lineBytes);
+                }
+            }
+
+            data.Dispose();
+
+            return folded;
+        }
+
+        private static void CopyFoldedLinearRow(
+            ReadOnlySpan<byte> source,
+            Span<byte> destination,
+            int sourceY,
+            int destinationY,
+            int page,
+            TextureHostLayout layout,
+            int logicalStride,
+            int hostStride,
+            int bytesPerPixel,
+            int lineBytes)
+        {
+            ReadOnlySpan<byte> sourceRow = source.Slice(sourceY * logicalStride, lineBytes);
+            int pageX = page * layout.PageStrideWidth;
+            int destinationRowOffset = destinationY * hostStride;
+            int interiorOffset = destinationRowOffset + (pageX + layout.GutterX) * bytesPerPixel;
+
+            sourceRow.CopyTo(destination.Slice(interiorOffset, lineBytes));
+
+            ReadOnlySpan<byte> firstPixel = sourceRow[..bytesPerPixel];
+            ReadOnlySpan<byte> lastPixel = sourceRow.Slice(lineBytes - bytesPerPixel, bytesPerPixel);
+
+            for (int gutterX = 0; gutterX < layout.GutterX; gutterX++)
+            {
+                firstPixel.CopyTo(destination.Slice(
+                    destinationRowOffset + (pageX + gutterX) * bytesPerPixel,
+                    bytesPerPixel));
+                lastPixel.CopyTo(destination.Slice(
+                    destinationRowOffset + (pageX + layout.GutterX + layout.Width + gutterX) * bytesPerPixel,
+                    bytesPerPixel));
+            }
+        }
+
+        internal static MemoryOwner<byte> UnfoldLinearTexture(
+            ReadOnlySpan<byte> data,
+            TextureHostLayout layout,
+            int bytesPerPixel)
+        {
+            if (!layout.IsFolded)
+            {
+                throw new ArgumentException("Texture layout is not folded.", nameof(layout));
+            }
+
+            int lineBytes = checked(layout.Width * bytesPerPixel);
+            int logicalStride = BitUtils.AlignUp(lineBytes, LayoutConverter.HostStrideAlignment);
+            int hostStride = BitUtils.AlignUp(layout.HostWidth * bytesPerPixel, LayoutConverter.HostStrideAlignment);
+            int hostSize = checked(hostStride * layout.HostHeight);
+            int logicalSize = checked(logicalStride * layout.Height);
+
+            if (data.Length < hostSize)
+            {
+                throw new ArgumentException(
+                    $"Folded texture source is {data.Length} bytes, expected at least {hostSize} bytes.",
+                    nameof(data));
+            }
+
+            MemoryOwner<byte> unfolded = MemoryOwner<byte>.Rent(logicalSize);
+            Span<byte> destination = unfolded.Span[..logicalSize];
+            destination.Clear();
+
+            for (int y = 0; y < layout.Height; y++)
+            {
+                int page = y / layout.PageHeight;
+                int pageY = y - page * layout.PageHeight;
+                int sourceOffset = (layout.GutterY + pageY) * hostStride +
+                    (page * layout.PageStrideWidth + layout.GutterX) * bytesPerPixel;
+
+                data.Slice(sourceOffset, lineBytes).CopyTo(destination.Slice(y * logicalStride, lineBytes));
+            }
+
+            return unfolded;
         }
 
         /// <summary>
@@ -1213,6 +1622,24 @@ namespace Ryujinx.Graphics.Gpu.Image
 
                 if (Info.IsLinear)
                 {
+                    if (TryGetFoldedLayout(out TextureHostLayout foldedLayout))
+                    {
+                        using MemoryOwner<byte> unfolded = UnfoldLinearTexture(
+                            data,
+                            foldedLayout,
+                            Info.FormatInfo.BytesPerPixel);
+
+                        return LayoutConverter.ConvertLinearToLinearStrided(
+                            output,
+                            Info.Width,
+                            Info.Height,
+                            Info.FormatInfo.BlockWidth,
+                            Info.FormatInfo.BlockHeight,
+                            Info.Stride,
+                            Info.FormatInfo.BytesPerPixel,
+                            unfolded.Span);
+                    }
+
                     data = LayoutConverter.ConvertLinearToLinearStrided(
                         output,
                         Info.Width,
@@ -1538,6 +1965,15 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <returns>A view of this texture with the requested target, or null if the target is invalid for this texture</returns>
         public ITexture GetTargetTexture(Target target)
         {
+            if (TryGetFoldedLayout(out TextureHostLayout foldedLayout))
+            {
+                ITexture targetTexture = GetFoldedTargetTexture(target, foldedLayout);
+
+                LogFoldedTargetTextureRequest(target, targetTexture, foldedLayout);
+
+                return targetTexture;
+            }
+
             if (TryGetDirectTargetTexture(Target, IsBufferBacked, IsPaged, target, HostTexture, out ITexture directTexture))
             {
                 return directTexture;
@@ -1577,6 +2013,73 @@ namespace Ryujinx.Graphics.Gpu.Image
             }
 
             return null;
+        }
+
+        private ITexture GetFoldedTargetTexture(Target target, TextureHostLayout foldedLayout)
+        {
+            if (target == Target.Texture2D)
+            {
+                return HostTexture;
+            }
+
+            if (_arrayViewTexture == null && IsSameDimensionsTarget(target))
+            {
+                FormatInfo formatInfo = TextureCompatibility.ToHostCompatibleFormat(Info, _context.Capabilities);
+
+                TextureCreateInfo createInfo = new(
+                    foldedLayout.HostWidth,
+                    foldedLayout.HostHeight,
+                    target == Target.CubemapArray ? 6 : 1,
+                    1,
+                    1,
+                    formatInfo.BlockWidth,
+                    formatInfo.BlockHeight,
+                    formatInfo.BytesPerPixel,
+                    formatInfo.Format,
+                    Info.DepthStencilMode,
+                    target,
+                    Info.SwizzleR,
+                    Info.SwizzleG,
+                    Info.SwizzleB,
+                    Info.SwizzleA);
+
+                ITexture viewTexture = HostTexture.CreateView(createInfo, 0, 0);
+
+                _arrayViewTexture = viewTexture;
+                _arrayViewTarget = target;
+
+                return viewTexture;
+            }
+            else if (_arrayViewTarget == target)
+            {
+                return _arrayViewTexture;
+            }
+
+            return null;
+        }
+
+        private void LogFoldedTargetTextureRequest(Target requestedTarget, ITexture targetTexture, TextureHostLayout foldedLayout)
+        {
+            if (!FoldedTextureDiagnostics)
+            {
+                return;
+            }
+
+            string key = $"target:{requestedTarget}:{targetTexture != null}:0x{Info.GpuAddress:X}";
+
+            if (FoldedTargetTextureDiagnosticKeys.Add(key))
+            {
+                string hostTextureSize = HostTexture != null ? $"{HostTexture.Width}x{HostTexture.Height}" : "null";
+                string targetTextureSize = targetTexture != null ? $"{targetTexture.Width}x{targetTexture.Height}" : "null";
+
+                Logger.Warning?.Print(
+                    LogClass.Gpu,
+                    $"Folded diagnostic target texture: requestedTarget={requestedTarget}, nativeTarget={Target}, " +
+                    $"resultNull={targetTexture == null}, hostTextureNull={HostTexture == null}, hostTextureSize={hostTextureSize}, " +
+                    $"targetTextureSize={targetTextureSize}, " +
+                    $"guest={foldedLayout.Width}x{foldedLayout.Height}, host={foldedLayout.HostWidth}x{foldedLayout.HostHeight}, " +
+                    $"pages={foldedLayout.PageCount}, pageHeight={foldedLayout.PageHeight}, gpuVa=0x{Info.GpuAddress:X}.");
+            }
         }
 
         /// <summary>

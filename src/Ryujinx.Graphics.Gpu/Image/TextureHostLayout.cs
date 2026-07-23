@@ -1,3 +1,4 @@
+using Ryujinx.Common;
 using Ryujinx.Graphics.GAL;
 using Ryujinx.Graphics.Shader.Translation;
 using System;
@@ -56,6 +57,8 @@ namespace Ryujinx.Graphics.Gpu.Image
         }
 
         public const int MetalMaxTexture2DDimension = 16384;
+        public const int FoldedLinearTextureGutterX = 1;
+        public const int FoldedLinearTextureGutterY = 1;
         private const int BufferBackedLinear2DVersion = 1 << 13;
         private const int PagedLinear2DVersion = 1 << 14;
 
@@ -69,8 +72,23 @@ namespace Ryujinx.Graphics.Gpu.Image
         public int TexelCount { get; }
         public int PageHeight { get; }
         public int PageCount { get; }
+        public int HostWidth { get; }
+        public int HostHeight { get; }
+        public int GutterX { get; }
+        public int GutterY { get; }
+        public int PageStrideWidth => Width + GutterX * 2;
 
-        private TextureHostLayout(int width, int height, int stride, int texelCount, int pageHeight = 0, int pageCount = 0)
+        private TextureHostLayout(
+            int width,
+            int height,
+            int stride,
+            int texelCount,
+            int pageHeight = 0,
+            int pageCount = 0,
+            int hostWidth = 0,
+            int hostHeight = 0,
+            int gutterX = 0,
+            int gutterY = 0)
         {
             Width = width;
             Height = height;
@@ -78,9 +96,89 @@ namespace Ryujinx.Graphics.Gpu.Image
             TexelCount = texelCount;
             PageHeight = pageHeight;
             PageCount = pageCount;
+            HostWidth = hostWidth;
+            HostHeight = hostHeight;
+            GutterX = gutterX;
+            GutterY = gutterY;
         }
 
         public bool IsPaged => PageCount > 1;
+        public bool IsFolded => HostWidth > 0 && HostHeight > 0;
+
+        public static bool TryGetFoldedLinear2D(
+            TextureInfo info,
+            Capabilities caps,
+            FormatInfo hostFormatInfo,
+            float scale,
+            out TextureHostLayout layout)
+        {
+            layout = default;
+
+            if (!OperatingSystem.IsMacOS() ||
+                caps.Api != TargetApi.Vulkan ||
+                scale != 1f ||
+                !info.IsLinear ||
+                info.Target != Target.Texture2D ||
+                info.Levels != 1 ||
+                info.GetLayers() != 1 ||
+                info.GetDepth() != 1 ||
+                info.Samples != 1 ||
+                info.FormatInfo.IsCompressed ||
+                info.FormatInfo.Format != Format.R8Unorm ||
+                !IsSameHostFormat(info.FormatInfo, hostFormatInfo) ||
+                info.Width <= 0 ||
+                info.Width > MetalMaxTexture2DDimension ||
+                info.Height <= MetalMaxTexture2DDimension ||
+                info.Stride < info.Width)
+            {
+                return false;
+            }
+
+            int pageStrideWidth = info.Width + FoldedLinearTextureGutterX * 2;
+            int maxPageHeight = MetalMaxTexture2DDimension - FoldedLinearTextureGutterY * 2;
+            int minPages = Math.Max(2, BitUtils.DivRoundUp(info.Height, maxPageHeight));
+            int maxPages = MetalMaxTexture2DDimension / pageStrideWidth;
+
+            for (int pageCount = minPages; pageCount <= maxPages; pageCount++)
+            {
+                if (info.Height % pageCount != 0)
+                {
+                    continue;
+                }
+
+                int pageHeight = info.Height / pageCount;
+                int hostWidth = pageStrideWidth * pageCount;
+                int hostHeight = pageHeight + FoldedLinearTextureGutterY * 2;
+
+                if (hostWidth > MetalMaxTexture2DDimension || hostHeight > MetalMaxTexture2DDimension)
+                {
+                    continue;
+                }
+
+                long texelCount = (long)info.Stride * info.Height;
+
+                if (texelCount > int.MaxValue)
+                {
+                    return false;
+                }
+
+                layout = new TextureHostLayout(
+                    info.Width,
+                    info.Height,
+                    info.Stride,
+                    (int)texelCount,
+                    pageHeight,
+                    pageCount,
+                    hostWidth,
+                    hostHeight,
+                    FoldedLinearTextureGutterX,
+                    FoldedLinearTextureGutterY);
+
+                return true;
+            }
+
+            return false;
+        }
 
         internal PagedTextureRegion[] GetPagedRegions(
             Rectangle<int> region,
@@ -418,6 +516,11 @@ namespace Ryujinx.Graphics.Gpu.Image
                 return false;
             }
 
+            if (TryGetFoldedLinear2D(info, caps, hostFormatInfo, scale, out _))
+            {
+                return false;
+            }
+
             layout = new TextureHostLayout(info.Width, info.Height, info.Stride, (int)texelCount);
 
             return true;
@@ -434,6 +537,7 @@ namespace Ryujinx.Graphics.Gpu.Image
 
             if (!OperatingSystem.IsMacOS() ||
                 !isVulkan ||
+                IsFoldedLinear2DDescriptor(descriptor) ||
                 descriptor.UnpackTextureDescriptorType() != TextureDescriptorType.Linear ||
                 target is not (TextureTarget.Texture2D or TextureTarget.Texture2DRect) ||
                 descriptor.UnpackLevels() != 1 ||
@@ -459,6 +563,40 @@ namespace Ryujinx.Graphics.Gpu.Image
             return PagedLinear2DVersion | (swizzle << 1) | 1;
         }
 
+        internal static bool IsFoldedLinear2DDescriptor(in TextureDescriptor descriptor)
+        {
+            TextureTarget target = descriptor.UnpackTextureTarget();
+
+            if (descriptor.UnpackTextureDescriptorType() != TextureDescriptorType.Linear ||
+                target is not (TextureTarget.Texture2D or TextureTarget.Texture2DRect) ||
+                descriptor.UnpackLevels() != 1 ||
+                descriptor.UnpackWidth() <= 0 ||
+                descriptor.UnpackWidth() > MetalMaxTexture2DDimension ||
+                descriptor.UnpackHeight() <= MetalMaxTexture2DDimension ||
+                descriptor.UnpackStride() < descriptor.UnpackWidth() ||
+                descriptor.UnpackSrgb() ||
+                !FormatTable.TryGetTextureFormat(descriptor.UnpackFormat(), false, out FormatInfo formatInfo) ||
+                formatInfo.Format != Format.R8Unorm)
+            {
+                return false;
+            }
+
+            int pageStrideWidth = descriptor.UnpackWidth() + FoldedLinearTextureGutterX * 2;
+            int maxPageHeight = MetalMaxTexture2DDimension - FoldedLinearTextureGutterY * 2;
+            int minPages = Math.Max(2, BitUtils.DivRoundUp(descriptor.UnpackHeight(), maxPageHeight));
+            int maxPages = MetalMaxTexture2DDimension / pageStrideWidth;
+
+            for (int pageCount = minPages; pageCount <= maxPages; pageCount++)
+            {
+                if (descriptor.UnpackHeight() % pageCount == 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public static bool IsPagedLinear2DState(int state)
         {
             return (state & PagedLinear2DVersion) != 0;
@@ -474,6 +612,7 @@ namespace Ryujinx.Graphics.Gpu.Image
             if (!bufferBackedEnabled ||
                 !OperatingSystem.IsMacOS() ||
                 !isVulkan ||
+                IsFoldedLinear2DDescriptor(descriptor) ||
                 descriptor.UnpackTextureDescriptorType() != TextureDescriptorType.Linear ||
                 target is not (TextureTarget.Texture2D or TextureTarget.Texture2DRect) ||
                 descriptor.UnpackLevels() != 1 ||

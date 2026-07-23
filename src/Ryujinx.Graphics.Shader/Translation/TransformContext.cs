@@ -12,6 +12,9 @@ namespace Ryujinx.Graphics.Shader.Translation
         public readonly TargetApi TargetApi;
         public readonly TargetLanguage TargetLanguage;
         public readonly ShaderStage Stage;
+        public readonly ulong ShaderAddress;
+        public readonly int ShaderSize;
+        public readonly int FunctionId;
         public readonly ref FeatureFlags UsedFeatures;
 
         public TransformContext(
@@ -23,6 +26,9 @@ namespace Ryujinx.Graphics.Shader.Translation
             TargetApi targetApi,
             TargetLanguage targetLanguage,
             ShaderStage stage,
+            ulong shaderAddress,
+            int shaderSize,
+            int functionId,
             ref FeatureFlags usedFeatures)
         {
             Hfm = hfm;
@@ -33,6 +39,9 @@ namespace Ryujinx.Graphics.Shader.Translation
             TargetApi = targetApi;
             TargetLanguage = targetLanguage;
             Stage = stage;
+            ShaderAddress = shaderAddress;
+            ShaderSize = shaderSize;
+            FunctionId = functionId;
             UsedFeatures = ref usedFeatures;
         }
     }

@@ -7,6 +7,9 @@ namespace Ryujinx.Graphics.Shader.Translation
 {
     class HelperFunctionManager
     {
+        private const int FoldedLinearTextureGutterX = 1;
+        private const int FoldedLinearTextureGutterY = 1;
+
         private readonly List<Function> _functionList;
         private readonly Dictionary<int, int> _functionIds;
         private readonly ShaderStage _stage;
@@ -78,6 +81,10 @@ namespace Ryujinx.Graphics.Shader.Translation
                 HelperFunctionName.ConvertFloatToDouble => GenerateConvertFloatToDoubleFunction(),
                 HelperFunctionName.TexelFetchScale => GenerateTexelFetchScaleFunction(),
                 HelperFunctionName.TextureSizeUnscale => GenerateTextureSizeUnscaleFunction(),
+                HelperFunctionName.FoldedTextureCoordX => GenerateFoldedTextureCoordXFunction(),
+                HelperFunctionName.FoldedTextureCoordY => GenerateFoldedTextureCoordYFunction(),
+                HelperFunctionName.FoldedTexelFetchCoordX => GenerateFoldedTexelFetchCoordXFunction(),
+                HelperFunctionName.FoldedTexelFetchCoordY => GenerateFoldedTexelFetchCoordYFunction(),
                 HelperFunctionName.BufferTexture2DNearestIndexInt => GenerateBufferTexture2DNearestIndexIntFunction(),
                 HelperFunctionName.BufferTexture2DNearestIndex => GenerateBufferTexture2DNearestIndexFunction(),
                 HelperFunctionName.BufferTexture2DBilinearIndices => GenerateBufferTexture2DBilinearIndicesFunction(),
@@ -425,6 +432,25 @@ namespace Ryujinx.Graphics.Shader.Translation
             Operand input = Argument(0);
             Operand samplerIndex = Argument(1);
             Operand index = GetScaleIndex(context, samplerIndex);
+            Operand layoutMarker = LoadRenderScaleComponent(context, index, 1);
+            Operand component = Argument(2);
+
+            Operand foldedLayout = context.FPCompareLess(layoutMarker, ConstF(-1.5f));
+            Operand lblOrdinaryLayout = Label();
+
+            context.BranchIfFalse(lblOrdinaryLayout, foldedLayout);
+
+            Operand pageCount = context.FPAbsolute(layoutMarker);
+            Operand pagesInt = context.FP32ConvertToS32(pageCount);
+            Operand logicalWidth = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 2));
+            Operand pageHeight = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 3));
+            Operand logicalHeight = context.IMultiply(pageHeight, pagesInt);
+
+            context.Return(context.ConditionalSelect(
+                context.ICompareEqual(component, Const(0)),
+                logicalWidth,
+                context.ConditionalSelect(context.ICompareEqual(component, Const(1)), logicalHeight, input)));
+            context.MarkLabel(lblOrdinaryLayout);
 
             Operand scale = context.FPAbsolute(LoadRenderScaleComponent(context, index, 0));
 
@@ -439,7 +465,133 @@ namespace Ryujinx.Graphics.Shader.Translation
 
             context.Return(context.FP32ConvertToS32(inputUnscaled));
 
-            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "TextureSizeUnscale", true, 2, 0);
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "TextureSizeUnscale", true, 3, 0);
+        }
+
+        private Function GenerateFoldedTextureCoordXFunction()
+        {
+            EmitterContext context = new();
+
+            Operand inputX = Argument(0);
+            Operand inputY = Argument(1);
+            Operand samplerIndex = Argument(2);
+            Operand index = GetScaleIndex(context, samplerIndex);
+            Operand layoutMarker = LoadRenderScaleComponent(context, index, 1);
+            Operand foldedLayout = context.FPCompareLess(layoutMarker, ConstF(-1.5f));
+            Operand lblFolded = Label();
+
+            context.BranchIfTrue(lblFolded, foldedLayout);
+            context.Return(inputX);
+            context.MarkLabel(lblFolded);
+
+            Operand logicalWidth = LoadRenderScaleComponent(context, index, 2);
+            Operand pageHeight = LoadRenderScaleComponent(context, index, 3);
+            Operand pageCount = context.FPAbsolute(layoutMarker);
+            Operand logicalHeight = context.FPMultiply(pageHeight, pageCount);
+            Operand yScaled = context.FPMultiply(inputY, logicalHeight);
+            Operand page = context.FPMinimum(
+                context.FPMaximum(context.FPFloor(context.FPDivide(yScaled, pageHeight)), ConstF(0f)),
+                context.FPSubtract(pageCount, ConstF(1f)));
+            Operand pageStrideWidth = context.FPAdd(logicalWidth, ConstF(FoldedLinearTextureGutterX * 2f));
+            Operand hostWidth = context.FPMultiply(pageStrideWidth, pageCount);
+            Operand hostX = context.FPAdd(
+                context.FPAdd(context.FPMultiply(page, pageStrideWidth), ConstF(FoldedLinearTextureGutterX)),
+                context.FPMultiply(inputX, logicalWidth));
+
+            context.Return(context.FPDivide(hostX, hostWidth));
+
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "FoldedTextureCoordX", true, 3, 0);
+        }
+
+        private Function GenerateFoldedTextureCoordYFunction()
+        {
+            EmitterContext context = new();
+
+            Operand inputY = Argument(0);
+            Operand samplerIndex = Argument(1);
+            Operand index = GetScaleIndex(context, samplerIndex);
+            Operand layoutMarker = LoadRenderScaleComponent(context, index, 1);
+            Operand foldedLayout = context.FPCompareLess(layoutMarker, ConstF(-1.5f));
+            Operand lblFolded = Label();
+
+            context.BranchIfTrue(lblFolded, foldedLayout);
+            context.Return(inputY);
+            context.MarkLabel(lblFolded);
+
+            Operand pageHeight = LoadRenderScaleComponent(context, index, 3);
+            Operand pageCount = context.FPAbsolute(layoutMarker);
+            Operand logicalHeight = context.FPMultiply(pageHeight, pageCount);
+            Operand yScaled = context.FPMultiply(inputY, logicalHeight);
+            Operand page = context.FPMinimum(
+                context.FPMaximum(context.FPFloor(context.FPDivide(yScaled, pageHeight)), ConstF(0f)),
+                context.FPSubtract(pageCount, ConstF(1f)));
+            Operand localY = context.FPSubtract(yScaled, context.FPMultiply(page, pageHeight));
+            Operand hostHeight = context.FPAdd(pageHeight, ConstF(FoldedLinearTextureGutterY * 2f));
+
+            context.Return(context.FPDivide(
+                context.FPAdd(localY, ConstF(FoldedLinearTextureGutterY)),
+                hostHeight));
+
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "FoldedTextureCoordY", true, 2, 0);
+        }
+
+        private Function GenerateFoldedTexelFetchCoordXFunction()
+        {
+            EmitterContext context = new();
+
+            Operand inputX = Argument(0);
+            Operand inputY = Argument(1);
+            Operand samplerIndex = Argument(2);
+            Operand index = GetScaleIndex(context, samplerIndex);
+            Operand layoutMarker = LoadRenderScaleComponent(context, index, 1);
+            Operand foldedLayout = context.FPCompareLess(layoutMarker, ConstF(-1.5f));
+            Operand lblFolded = Label();
+
+            context.BranchIfTrue(lblFolded, foldedLayout);
+            context.Return(inputX);
+            context.MarkLabel(lblFolded);
+
+            Operand width = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 2));
+            Operand pageHeight = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 3));
+            Operand pagesInt = context.FP32ConvertToS32(context.FPAbsolute(layoutMarker));
+            Operand guestHeight = context.IMultiply(pageHeight, pagesInt);
+            Operand x = context.IMinimumS32(context.IMaximumS32(inputX, Const(0)), context.ISubtract(width, Const(1)));
+            Operand y = context.IMinimumS32(context.IMaximumS32(inputY, Const(0)), context.ISubtract(guestHeight, Const(1)));
+            Operand page = context.Add(Instruction.Divide, Local(), y, pageHeight);
+            Operand pageStrideWidth = context.IAdd(width, Const(FoldedLinearTextureGutterX * 2));
+
+            context.Return(context.IAdd(
+                context.IAdd(x, context.IMultiply(page, pageStrideWidth)),
+                Const(FoldedLinearTextureGutterX)));
+
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "FoldedTexelFetchCoordX", true, 3, 0);
+        }
+
+        private Function GenerateFoldedTexelFetchCoordYFunction()
+        {
+            EmitterContext context = new();
+
+            Operand inputY = Argument(0);
+            Operand samplerIndex = Argument(1);
+            Operand index = GetScaleIndex(context, samplerIndex);
+            Operand layoutMarker = LoadRenderScaleComponent(context, index, 1);
+            Operand foldedLayout = context.FPCompareLess(layoutMarker, ConstF(-1.5f));
+            Operand lblFolded = Label();
+
+            context.BranchIfTrue(lblFolded, foldedLayout);
+            context.Return(inputY);
+            context.MarkLabel(lblFolded);
+
+            Operand pageHeight = context.FP32ConvertToS32(LoadRenderScaleComponent(context, index, 3));
+            Operand pagesInt = context.FP32ConvertToS32(context.FPAbsolute(layoutMarker));
+            Operand guestHeight = context.IMultiply(pageHeight, pagesInt);
+            Operand y = context.IMinimumS32(context.IMaximumS32(inputY, Const(0)), context.ISubtract(guestHeight, Const(1)));
+            Operand page = context.Add(Instruction.Divide, Local(), y, pageHeight);
+            Operand localY = context.ISubtract(y, context.IMultiply(page, pageHeight));
+
+            context.Return(context.IAdd(localY, Const(FoldedLinearTextureGutterY)));
+
+            return new Function(ControlFlowGraph.Create(context.GetOperations()).Blocks, "FoldedTexelFetchCoordY", true, 2, 0);
         }
 
         private Function GenerateBufferTexture2DNearestIndexIntFunction()

@@ -24,17 +24,46 @@ int main(int argc, char **argv)
         return 127;
     }
 
+    char launcher_directory[PATH_MAX];
+    int length = snprintf(launcher_directory, sizeof(launcher_directory), "%s", resolved_path);
+
+    if (length < 0 || (size_t)length >= sizeof(launcher_directory))
+    {
+        fputs("Ryujinx launcher directory is too long.\n", stderr);
+        return 127;
+    }
+
+    char *launcher_directory_path = dirname(launcher_directory);
     char runtime_path[PATH_MAX];
-    int length = snprintf(
+    length = snprintf(
         runtime_path,
         sizeof(runtime_path),
         "%s/../Resources/runtime/Ryujinx",
-        dirname(resolved_path));
+        launcher_directory_path);
 
     if (length < 0 || (size_t)length >= sizeof(runtime_path))
     {
         fputs("Ryujinx runtime path is too long.\n", stderr);
         return 127;
+    }
+
+    char dotnet_root[PATH_MAX];
+    length = snprintf(
+        dotnet_root,
+        sizeof(dotnet_root),
+        "%s/../Resources/dotnet",
+        launcher_directory_path);
+
+    if (length < 0 || (size_t)length >= sizeof(dotnet_root))
+    {
+        fputs("Bundled .NET runtime path is too long.\n", stderr);
+        return 127;
+    }
+
+    if (access(dotnet_root, F_OK) == 0)
+    {
+        setenv("DOTNET_ROOT", dotnet_root, 1);
+        setenv("DOTNET_ROOT_ARM64", dotnet_root, 1);
     }
 
     char **runtime_argv = calloc((size_t)argc + 1, sizeof(char *));

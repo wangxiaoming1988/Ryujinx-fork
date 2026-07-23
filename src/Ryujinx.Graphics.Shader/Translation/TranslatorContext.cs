@@ -297,6 +297,9 @@ namespace Ryujinx.Graphics.Shader.Translation
                         Options.TargetApi,
                         Options.TargetLanguage,
                         Definitions.Stage,
+                        Address,
+                        Size,
+                        i,
                         ref usedFeatures);
 
                     Optimizer.RunPass(context);

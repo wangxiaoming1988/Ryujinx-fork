@@ -24,6 +24,7 @@ namespace Ryujinx.Graphics.Shader
         RenderScale,
         TfeOffset,
         TfeVertexCount,
+        IndirectStorageTargets,
     }
 
     public struct SupportBuffer
@@ -42,8 +43,12 @@ namespace Ryujinx.Graphics.Shader
         public static readonly int ComputeRenderScaleOffset;
         public static readonly int TfeOffsetOffset;
         public static readonly int TfeVertexCountOffset;
+        public static readonly int IndirectStorageTargetsOffset;
 
         public const int FragmentIsBgraCount = 8;
+        public const int GraphicsStageCount = 5;
+        public const int IndirectStorageTargetsPerStage = 4;
+        public const int IndirectStorageTargetCount = GraphicsStageCount * IndirectStorageTargetsPerStage;
         // One for the render target, 64 for the textures, and 8 for the images.
         public const int RenderScaleMaxCount = 1 + 64 + 8;
 
@@ -68,6 +73,7 @@ namespace Ryujinx.Graphics.Shader
             ComputeRenderScaleOffset = GraphicsRenderScaleOffset + FieldSize;
             TfeOffsetOffset = OffsetOf(ref instance, ref instance.TfeOffset);
             TfeVertexCountOffset = OffsetOf(ref instance, ref instance.TfeVertexCount);
+            IndirectStorageTargetsOffset = OffsetOf(ref instance, ref instance.IndirectStorageTargets);
         }
 
         internal static StructureType GetStructureType()
@@ -80,8 +86,14 @@ namespace Ryujinx.Graphics.Shader
                 new StructureField(AggregateType.S32, "frag_scale_count"),
                 new StructureField(AggregateType.Array | AggregateType.Vector4 | AggregateType.FP32, "render_scale", RenderScaleMaxCount),
                 new StructureField(AggregateType.Vector4 | AggregateType.S32, "tfe_offset"),
-                new StructureField(AggregateType.S32, "tfe_vertex_count")
+                new StructureField(AggregateType.S32, "tfe_vertex_count"),
+                new StructureField(AggregateType.Array | AggregateType.Vector4 | AggregateType.U32, "indirect_storage_targets", IndirectStorageTargetCount)
             ]);
+        }
+
+        public static int GetIndirectStorageTargetIndex(int stage, int targetIndex)
+        {
+            return stage * IndirectStorageTargetsPerStage + targetIndex;
         }
 
         public Vector4<int> FragmentAlphaTest;
@@ -95,5 +107,6 @@ namespace Ryujinx.Graphics.Shader
 
         public Vector4<int> TfeOffset;
         public Vector4<int> TfeVertexCount;
+        public Array20<Vector4<uint>> IndirectStorageTargets;
     }
 }

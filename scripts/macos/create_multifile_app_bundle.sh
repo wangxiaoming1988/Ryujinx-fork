@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-if [ "$#" -ne 5 ]; then
-    echo "usage: $0 <runtime-directory> <output-directory> <entitlements> <version> <source-revision>" >&2
+if [ "$#" -lt 5 ] || [ "$#" -gt 6 ]; then
+    echo "usage: $0 <runtime-directory> <output-directory> <entitlements> <version> <source-revision> [dotnet-root]" >&2
     exit 64
 fi
 
@@ -12,6 +12,7 @@ output_directory=$2
 entitlements_path=$3
 version=$4
 source_revision=$5
+dotnet_root=${6:-}
 
 script_directory=$(cd "$(dirname "$0")" && pwd)
 repository_root=$(cd "$script_directory/../.." && pwd)
@@ -22,6 +23,7 @@ contents_directory="$app_directory/Contents"
 macos_directory="$contents_directory/MacOS"
 resources_directory="$contents_directory/Resources"
 bundled_runtime_directory="$resources_directory/runtime"
+bundled_dotnet_directory="$resources_directory/dotnet"
 
 if [ ! -x "$runtime_directory/Ryujinx" ]; then
     echo "Ryujinx runtime executable is missing: $runtime_directory/Ryujinx" >&2
@@ -32,6 +34,17 @@ rm -rf "$app_directory"
 mkdir -p "$macos_directory" "$bundled_runtime_directory" "$contents_directory/Frameworks"
 
 cp -R "$runtime_directory"/. "$bundled_runtime_directory"
+
+if [ -n "$dotnet_root" ]; then
+    if [ ! -x "$dotnet_root/dotnet" ]; then
+        echo "Bundled .NET runtime is missing: $dotnet_root/dotnet" >&2
+        exit 66
+    fi
+
+    mkdir -p "$bundled_dotnet_directory"
+    cp -R "$dotnet_root"/. "$bundled_dotnet_directory"
+fi
+
 clang -arch arm64 -Os -o "$macos_directory/Ryujinx" "$launcher_source"
 chmod u+x "$macos_directory/Ryujinx" "$bundled_runtime_directory/Ryujinx"
 

@@ -1338,6 +1338,33 @@ namespace Ryujinx.Graphics.Gpu.Image
                     $"target={info.Target}, format={formatInfo.Format}, gpuVa=0x{info.GpuAddress:X}.");
             }
 
+            if (TextureHostLayout.TryGetFoldedLinear2D(info, caps, formatInfo, scale, out TextureHostLayout foldedLayout))
+            {
+                Logger.Warning?.Print(
+                    LogClass.Gpu,
+                    $"Using folded 2D atlas for oversized linear Metal texture: guest={foldedLayout.Width}x{foldedLayout.Height}, " +
+                    $"host={foldedLayout.HostWidth}x{foldedLayout.HostHeight}, pages={foldedLayout.PageCount}, " +
+                    $"page={foldedLayout.Width}x{foldedLayout.PageHeight}, gutter={foldedLayout.GutterX}x{foldedLayout.GutterY}, " +
+                    $"format={formatInfo.Format}, gpuVa=0x{info.GpuAddress:X}.");
+
+                return new TextureCreateInfo(
+                    foldedLayout.HostWidth,
+                    foldedLayout.HostHeight,
+                    1,
+                    1,
+                    1,
+                    formatInfo.BlockWidth,
+                    formatInfo.BlockHeight,
+                    formatInfo.BytesPerPixel,
+                    formatInfo.Format,
+                    info.DepthStencilMode,
+                    Target.Texture2D,
+                    info.SwizzleR,
+                    info.SwizzleG,
+                    info.SwizzleB,
+                    info.SwizzleA);
+            }
+
             if (TextureHostLayout.TryGetPagedLinear2D(info, caps, formatInfo, scale, out TextureHostLayout pagedLayout))
             {
                 if (blockUnsafeMacOSPagedTextures)
@@ -1401,6 +1428,23 @@ namespace Ryujinx.Graphics.Gpu.Image
                     SwizzleComponent.Green,
                     SwizzleComponent.Blue,
                     SwizzleComponent.Alpha);
+            }
+
+            if (OperatingSystem.IsMacOS() &&
+                caps.Api == TargetApi.Vulkan &&
+                info.IsLinear &&
+                info.Target == Target.Texture2D &&
+                (width > TextureHostLayout.MetalMaxTexture2DDimension ||
+                 height > TextureHostLayout.MetalMaxTexture2DDimension))
+            {
+                string message =
+                    $"Blocked unsupported oversized linear Metal texture before GPU submission: " +
+                    $"guest={info.Width}x{info.Height}, stride={info.Stride}, format={formatInfo.Format}, " +
+                    $"gpuVa=0x{info.GpuAddress:X}.";
+
+                Logger.Error?.Print(LogClass.Gpu, message);
+
+                throw new MacOSGpuSafetyException(message);
             }
 
             if (scale != 1f)

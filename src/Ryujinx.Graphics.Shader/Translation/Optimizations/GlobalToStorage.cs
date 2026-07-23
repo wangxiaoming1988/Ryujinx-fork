@@ -2,6 +2,8 @@ using Ryujinx.Graphics.Shader.IntermediateRepresentation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using static Ryujinx.Graphics.Shader.IntermediateRepresentation.OperandHelper;
 
@@ -211,7 +213,11 @@ namespace Ryujinx.Graphics.Shader.Translation.Optimizations
             BasicBlock[] blocks,
             ResourceManager resourceManager,
             IGpuAccessor gpuAccessor,
-            TargetLanguage targetLanguage)
+            TargetLanguage targetLanguage,
+            ShaderStage stage,
+            ulong shaderAddress,
+            int shaderSize,
+            int functionId)
         {
             GtsContext gtsContext = new(hfm);
 
@@ -231,6 +237,10 @@ namespace Ryujinx.Graphics.Shader.Translation.Optimizations
                             resourceManager,
                             gpuAccessor,
                             targetLanguage,
+                            stage,
+                            shaderAddress,
+                            shaderSize,
+                            functionId,
                             block,
                             node);
 
@@ -301,6 +311,10 @@ namespace Ryujinx.Graphics.Shader.Translation.Optimizations
             ResourceManager resourceManager,
             IGpuAccessor gpuAccessor,
             TargetLanguage targetLanguage,
+            ShaderStage stage,
+            ulong shaderAddress,
+            int shaderSize,
+            int functionId,
             BasicBlock block,
             LinkedListNode<INode> node)
         {
@@ -359,12 +373,12 @@ namespace Ryujinx.Graphics.Shader.Translation.Optimizations
                         targetLanguage,
                         operation,
                         result,
-                        out int functionId))
+                        out int helperFunctionId))
                     {
                         return null;
                     }
 
-                    return GenerateCallStorageOp(node, operation, offset, functionId);
+                    return GenerateCallStorageOp(node, operation, offset, helperFunctionId);
                 }
             }
             else
@@ -379,14 +393,18 @@ namespace Ryujinx.Graphics.Shader.Translation.Optimizations
                     resourceManager,
                     gpuAccessor,
                     targetLanguage,
+                    stage,
+                    shaderAddress,
+                    shaderSize,
+                    functionId,
                     block,
                     operation,
-                    out int functionId))
+                    out int helperFunctionId))
                 {
                     return null;
                 }
 
-                return GenerateCallStorageOp(node, operation, null, functionId);
+                return GenerateCallStorageOp(node, operation, null, helperFunctionId);
             }
         }
 
@@ -587,9 +605,13 @@ namespace Ryujinx.Graphics.Shader.Translation.Optimizations
             ResourceManager resourceManager,
             IGpuAccessor gpuAccessor,
             TargetLanguage targetLanguage,
+            ShaderStage stage,
+            ulong shaderAddress,
+            int shaderSize,
+            int functionId,
             BasicBlock block,
             Operation operation,
-            out int functionId)
+            out int helperFunctionId)
         {
             Queue<PhiNode> phis = new();
             HashSet<PhiNode> visited = [];
@@ -655,10 +677,32 @@ namespace Ryujinx.Graphics.Shader.Translation.Optimizations
 
             if (targetCbs.Count == 0)
             {
-                gpuAccessor.Log($"Failed to find storage buffer for global memory operation \"{operation.Inst}\".");
+                if (TryFindIndirectStorageSourceBinding(operation.GetSource(0), out int sourceBinding) &&
+                    resourceManager.TryGetOrCreateIndirectStorageTargets(sourceBinding, out ResourceManager.IndirectStorageTarget[] targets) &&
+                    TryGenerateIndirectStorageOp(
+                        gtsContext,
+                        resourceManager,
+                        targetLanguage,
+                        stage,
+                        operation,
+                        targets,
+                        out helperFunctionId))
+                {
+                    return true;
+                }
+
+                LogUnresolvedGlobalMemoryOperation(
+                    resourceManager,
+                    gpuAccessor,
+                    stage,
+                    shaderAddress,
+                    shaderSize,
+                    functionId,
+                    block,
+                    operation);
             }
 
-            if (gtsContext.TryGetFunctionId(operation, isMultiTarget: true, targetCbs, out functionId))
+            if (gtsContext.TryGetFunctionId(operation, isMultiTarget: true, targetCbs, out helperFunctionId))
             {
                 return true;
             }
@@ -692,7 +736,7 @@ namespace Ryujinx.Graphics.Shader.Translation.Optimizations
 
                 Operand inRangeLow = context.ICompareLessUnsigned(offset, size);
 
-                Operand addrHighBorrowed = context.IAdd(globalAddressHigh, borrow);
+                Operand addrHighBorrowed = context.ISubtract(globalAddressHigh, borrow);
 
                 Operand inRangeHigh = context.ICompareEqual(addrHighBorrowed, baseAddrHigh);
 
@@ -733,7 +777,7 @@ namespace Ryujinx.Graphics.Shader.Translation.Optimizations
                     result,
                     out Operand resultValue))
                 {
-                    functionId = 0;
+                    helperFunctionId = 0;
                     return false;
                 }
 
@@ -769,9 +813,432 @@ namespace Ryujinx.Graphics.Shader.Translation.Optimizations
                 inArgumentsCount,
                 0);
 
-            functionId = gtsContext.AddFunction(operation, isMultiTarget: true, targetCbs, function);
+            helperFunctionId = gtsContext.AddFunction(operation, isMultiTarget: true, targetCbs, function);
 
             return true;
+        }
+
+        private static bool TryGenerateIndirectStorageOp(
+            GtsContext gtsContext,
+            ResourceManager resourceManager,
+            TargetLanguage targetLanguage,
+            ShaderStage stage,
+            Operation operation,
+            IReadOnlyList<ResourceManager.IndirectStorageTarget> targets,
+            out int helperFunctionId)
+        {
+            List<uint> targetKeys = new(targets.Count);
+
+            foreach (ResourceManager.IndirectStorageTarget target in targets)
+            {
+                targetKeys.Add(0x80000000u | (uint)target.Binding);
+            }
+
+            if (gtsContext.TryGetFunctionId(operation, isMultiTarget: true, targetKeys, out helperFunctionId))
+            {
+                return true;
+            }
+
+            int inArgumentsCount = operation.Inst switch
+            {
+                Instruction.AtomicCompareAndSwap => 4,
+                Instruction.Store => 3,
+                _ when operation.Inst.IsAtomic() => 3,
+                _ => 2,
+            };
+
+            EmitterContext context = new();
+            Operand globalAddressLow = Argument(0);
+            Operand globalAddressHigh = Argument(1);
+            int stageIndex = (int)stage - (int)ShaderStage.Vertex;
+
+            foreach (ResourceManager.IndirectStorageTarget target in targets)
+            {
+                int metadataIndex = SupportBuffer.GetIndirectStorageTargetIndex(stageIndex, target.MetadataIndex);
+                Operand baseAddrLow = context.Load(
+                    StorageKind.ConstantBuffer,
+                    SupportBuffer.Binding,
+                    Const((int)SupportBufferField.IndirectStorageTargets),
+                    Const(metadataIndex),
+                    Const(0));
+                Operand baseAddrHigh = context.Load(
+                    StorageKind.ConstantBuffer,
+                    SupportBuffer.Binding,
+                    Const((int)SupportBufferField.IndirectStorageTargets),
+                    Const(metadataIndex),
+                    Const(1));
+                Operand size = context.Load(
+                    StorageKind.ConstantBuffer,
+                    SupportBuffer.Binding,
+                    Const((int)SupportBufferField.IndirectStorageTargets),
+                    Const(metadataIndex),
+                    Const(2));
+                Operand valid = context.Load(
+                    StorageKind.ConstantBuffer,
+                    SupportBuffer.Binding,
+                    Const((int)SupportBufferField.IndirectStorageTargets),
+                    Const(metadataIndex),
+                    Const(3));
+
+                Operand offset = context.ISubtract(globalAddressLow, baseAddrLow);
+                Operand borrow = context.ICompareLessUnsigned(globalAddressLow, baseAddrLow);
+                Operand addressHighWithoutBorrow = context.ISubtract(globalAddressHigh, borrow);
+                Operand inRangeLow = context.ICompareLessUnsigned(offset, size);
+                Operand inRangeHigh = context.ICompareEqual(addressHighWithoutBorrow, baseAddrHigh);
+                Operand isValid = context.ICompareNotEqual(valid, Const(0));
+                Operand inRange = context.BitwiseAnd(isValid, context.BitwiseAnd(inRangeLow, inRangeHigh));
+
+                Operand lblSkip = Label();
+                context.BranchIfFalse(lblSkip, inRange);
+
+                Operand compare = null;
+                Operand value = null;
+
+                if (inArgumentsCount == 4)
+                {
+                    compare = Argument(2);
+                    value = Argument(3);
+                }
+                else if (inArgumentsCount == 3)
+                {
+                    value = Argument(2);
+                }
+
+                if (!TryGenerateStorageOp(
+                    targetLanguage,
+                    context,
+                    operation.Inst,
+                    operation.StorageKind,
+                    offset,
+                    compare,
+                    value,
+                    target.Binding,
+                    out Operand resultValue))
+                {
+                    helperFunctionId = 0;
+                    return false;
+                }
+
+                if (resultValue != null)
+                {
+                    context.Return(resultValue);
+                }
+                else
+                {
+                    context.Return();
+                }
+
+                context.MarkLabel(lblSkip);
+            }
+
+            bool returnsValue = operation.Dest != null;
+
+            if (returnsValue)
+            {
+                context.Return(Const(0));
+            }
+            else
+            {
+                context.Return();
+            }
+
+            Function function = new(
+                ControlFlowGraph.Create(context.GetOperations()).Blocks,
+                GetIndirectFunctionName(operation, targets),
+                returnsValue,
+                inArgumentsCount,
+                0);
+
+            helperFunctionId = gtsContext.AddFunction(operation, isMultiTarget: true, targetKeys, function);
+            return true;
+        }
+
+        private static string GetIndirectFunctionName(
+            Operation operation,
+            IReadOnlyList<ResourceManager.IndirectStorageTarget> targets)
+        {
+            StringBuilder builder = new();
+            builder.Append(operation.Inst).Append("Indirect");
+
+            foreach (ResourceManager.IndirectStorageTarget target in targets)
+            {
+                builder.Append("_b").Append(target.Binding);
+            }
+
+            return builder.ToString();
+        }
+
+        private static bool TryFindIndirectStorageSourceBinding(Operand operand, out int binding)
+        {
+            HashSet<INode> visited = [];
+            HashSet<int> bindings = [];
+
+            CollectStorageBufferBindings(operand, visited, bindings, 0);
+
+            if (bindings.Count == 1)
+            {
+                binding = bindings.First();
+                return true;
+            }
+
+            binding = 0;
+            return false;
+        }
+
+        private static void CollectStorageBufferBindings(
+            Operand operand,
+            HashSet<INode> visited,
+            HashSet<int> bindings,
+            int depth)
+        {
+            if (operand?.AsgOp is not Operation operation || depth >= 32 || !visited.Add(operation))
+            {
+                return;
+            }
+
+            if (operation.Inst == Instruction.Load &&
+                operation.StorageKind == StorageKind.StorageBuffer &&
+                operation.SourcesCount != 0 &&
+                operation.GetSource(0).Type == OperandType.Constant)
+            {
+                bindings.Add(operation.GetSource(0).Value);
+            }
+
+            for (int index = 0; index < operation.SourcesCount; index++)
+            {
+                CollectStorageBufferBindings(operation.GetSource(index), visited, bindings, depth + 1);
+            }
+        }
+
+        private static void LogUnresolvedGlobalMemoryOperation(
+            ResourceManager resourceManager,
+            IGpuAccessor gpuAccessor,
+            ShaderStage stage,
+            ulong shaderAddress,
+            int shaderSize,
+            int functionId,
+            BasicBlock block,
+            Operation operation)
+        {
+            int addressOperandsCount = GetAddressOperandsCount(operation);
+            string shaderHash = GetShaderHash(gpuAccessor, shaderAddress, shaderSize);
+            string addressLow = FormatOperandExpression(operation.GetSource(0));
+            string addressHigh = addressOperandsCount > 1
+                ? FormatOperandExpression(operation.GetSource(1))
+                : "<missing>";
+            string data = FormatDataOperands(operation, addressOperandsCount);
+            BufferDescriptor[] storageBindings = resourceManager.GetStorageBufferDescriptors();
+
+            gpuAccessor.Log(
+                $"Failed to find storage buffer for global memory operation \"{operation.Inst}\": " +
+                $"stage={stage}, shader=0x{shaderAddress:X}, shaderSize={shaderSize}, shaderHash={shaderHash}, " +
+                $"function={functionId}, block={block.Index}, storage={operation.StorageKind}, " +
+                $"storageBindings={FormatStorageBindings(storageBindings)}, " +
+                $"addressLow={addressLow}, addressHigh={addressHigh}, data={data}.");
+        }
+
+        private static string FormatStorageBindings(BufferDescriptor[] descriptors)
+        {
+            StringBuilder builder = new();
+            builder.Append(descriptors.Length).Append('[');
+
+            for (int index = 0; index < descriptors.Length; index++)
+            {
+                if (index != 0)
+                {
+                    builder.Append(", ");
+                }
+
+                BufferDescriptor descriptor = descriptors[index];
+                builder.Append("slot=")
+                    .Append(descriptor.Slot)
+                    .Append(":cbuf=")
+                    .Append(descriptor.SbCbSlot)
+                    .Append(":0x")
+                    .Append(descriptor.SbCbOffset.ToString("X"))
+                    .Append(":set=")
+                    .Append(descriptor.Set)
+                    .Append(":binding=")
+                    .Append(descriptor.Binding)
+                    .Append(":flags=")
+                    .Append(descriptor.Flags);
+            }
+
+            builder.Append(']');
+            return builder.ToString();
+        }
+
+        private static string GetShaderHash(IGpuAccessor gpuAccessor, ulong shaderAddress, int shaderSize)
+        {
+            if (shaderSize <= 0)
+            {
+                return "unavailable";
+            }
+
+            try
+            {
+                ReadOnlySpan<ulong> code = gpuAccessor.GetCode(shaderAddress, shaderSize);
+                ReadOnlySpan<byte> bytes = MemoryMarshal.AsBytes(code);
+
+                if (bytes.Length < shaderSize)
+                {
+                    return "unavailable";
+                }
+
+                return Convert.ToHexString(SHA256.HashData(bytes[..shaderSize]));
+            }
+            catch
+            {
+                return "unavailable";
+            }
+        }
+
+        private static int GetAddressOperandsCount(Operation operation)
+        {
+            int dataOperandsCount = operation.Inst switch
+            {
+                Instruction.AtomicCompareAndSwap => 2,
+                Instruction.Store => 1,
+                _ when operation.Inst.IsAtomic() => 1,
+                _ => 0,
+            };
+
+            return Math.Min(2, Math.Max(0, operation.SourcesCount - dataOperandsCount));
+        }
+
+        private static string FormatDataOperands(Operation operation, int dataStart)
+        {
+
+            if (dataStart == operation.SourcesCount)
+            {
+                return "[]";
+            }
+
+            StringBuilder builder = new();
+            builder.Append('[');
+
+            for (int index = dataStart; index < operation.SourcesCount; index++)
+            {
+                if (index != dataStart)
+                {
+                    builder.Append(", ");
+                }
+
+                builder.Append(FormatOperandExpression(operation.GetSource(index)));
+            }
+
+            builder.Append(']');
+            return builder.ToString();
+        }
+
+        private static string FormatOperandExpression(Operand operand)
+        {
+            StringBuilder builder = new();
+            HashSet<INode> visited = [];
+            int nodes = 0;
+
+            AppendOperandExpression(builder, operand, visited, ref nodes, 0);
+            return builder.ToString();
+        }
+
+        private static void AppendOperandExpression(
+            StringBuilder builder,
+            Operand operand,
+            HashSet<INode> visited,
+            ref int nodes,
+            int depth)
+        {
+            if (operand == null)
+            {
+                builder.Append("null");
+                return;
+            }
+
+            if (depth >= 6 || nodes++ >= 24)
+            {
+                builder.Append("...");
+                return;
+            }
+
+            switch (operand.Type)
+            {
+                case OperandType.Argument:
+                    builder.Append("arg").Append(operand.Value);
+                    break;
+                case OperandType.Constant:
+                    builder.Append("0x").Append(unchecked((uint)operand.Value).ToString("X8"));
+                    break;
+                case OperandType.ConstantBuffer:
+                    builder.Append("cbuf[")
+                        .Append(operand.GetCbufSlot())
+                        .Append("][0x")
+                        .Append(operand.GetCbufOffset().ToString("X"))
+                        .Append(']');
+                    break;
+                case OperandType.Register:
+                    builder.Append(operand.GetRegister().ToString());
+                    break;
+                case OperandType.LocalVariable:
+                    AppendAssignmentExpression(builder, operand.AsgOp, visited, ref nodes, depth);
+                    break;
+                case OperandType.Label:
+                    builder.Append("label");
+                    break;
+                default:
+                    builder.Append("undefined");
+                    break;
+            }
+        }
+
+        private static void AppendAssignmentExpression(
+            StringBuilder builder,
+            INode assignment,
+            HashSet<INode> visited,
+            ref int nodes,
+            int depth)
+        {
+            if (assignment == null)
+            {
+                builder.Append("local");
+                return;
+            }
+
+            if (!visited.Add(assignment))
+            {
+                builder.Append("cycle");
+                return;
+            }
+
+            builder.Append('(');
+
+            if (assignment is Operation operation)
+            {
+                builder.Append(operation.Inst & Instruction.Mask);
+
+                if (operation.StorageKind != StorageKind.None)
+                {
+                    builder.Append('[').Append(operation.StorageKind).Append(']');
+                }
+
+                for (int index = 0; index < operation.SourcesCount; index++)
+                {
+                    builder.Append(index == 0 ? ' ' : ',');
+                    AppendOperandExpression(builder, operation.GetSource(index), visited, ref nodes, depth + 1);
+                }
+            }
+            else if (assignment is PhiNode phi)
+            {
+                builder.Append("Phi");
+
+                for (int index = 0; index < phi.SourcesCount; index++)
+                {
+                    builder.Append(index == 0 ? ' ' : ',');
+                    AppendOperandExpression(builder, phi.GetSource(index), visited, ref nodes, depth + 1);
+                }
+            }
+
+            builder.Append(')');
+            visited.Remove(assignment);
         }
 
         private static uint PackCbSlotAndOffset(int cbSlot, int cbOffset)
@@ -832,6 +1299,31 @@ namespace Ryujinx.Graphics.Shader.Translation.Optimizations
             {
                 return false;
             }
+
+            return TryGenerateStorageOp(
+                targetLanguage,
+                context,
+                inst,
+                storageKind,
+                offset,
+                compare,
+                value,
+                binding,
+                out resultValue);
+        }
+
+        private static bool TryGenerateStorageOp(
+            TargetLanguage targetLanguage,
+            EmitterContext context,
+            Instruction inst,
+            StorageKind storageKind,
+            Operand offset,
+            Operand compare,
+            Operand value,
+            int binding,
+            out Operand resultValue)
+        {
+            resultValue = null;
 
             Operand wordOffset = context.ShiftRightU32(offset, Const(2));
 

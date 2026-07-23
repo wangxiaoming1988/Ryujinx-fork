@@ -13,6 +13,9 @@ namespace Ryujinx.Graphics.Gpu.Shader
         private const ResourceStages SupportBufferStages =
             ResourceStages.Compute |
             ResourceStages.Vertex |
+            ResourceStages.TessellationControl |
+            ResourceStages.TessellationEvaluation |
+            ResourceStages.Geometry |
             ResourceStages.Fragment;
 
         private const ResourceStages VtgStages =

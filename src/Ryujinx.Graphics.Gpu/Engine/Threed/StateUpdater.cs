@@ -7,8 +7,12 @@ using Ryujinx.Graphics.Gpu.Memory;
 using Ryujinx.Graphics.Gpu.Shader;
 using Ryujinx.Graphics.Shader;
 using Ryujinx.Graphics.Texture;
+using Ryujinx.Memory.Range;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Ryujinx.Graphics.Gpu.Engine.Threed
 {
@@ -29,6 +33,11 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
 
         // Vertex buffers larger than this size will be clamped to the mapped size.
         private const ulong VertexBufferSizeToMappedSizeThreshold = 256 * 1024 * 1024; // 256 MB
+        private const int IndirectGlobalStorePointerCount = 8;
+        private const int IndirectGlobalStoreScanSize = 64 * 1024;
+
+        private static readonly bool IndirectGlobalStoreDiagnosticsEnabled =
+            Environment.GetEnvironmentVariable("RYUJINX_GLOBAL_STORE_DIAGNOSTICS") == "1";
 
         private readonly GpuContext _context;
         private readonly GpuChannel _channel;
@@ -39,6 +48,7 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
         private readonly StateUpdateTracker<ThreedClassState> _updateTracker;
 
         private readonly ShaderProgramInfo[] _currentProgramInfo;
+        private readonly HashSet<ulong> _loggedIndirectGlobalStoreBuffers = [];
         private ShaderSpecializationState _shaderSpecState;
         private readonly SpecializationStateUpdater _currentSpecState;
 
@@ -377,6 +387,10 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
                     continue;
                 }
 
+                IndirectStorageBufferTarget[] indirectTargets = null;
+                ulong indirectSourceAddress = 0;
+                int indirectSourceSize = 0;
+
                 for (int index = 0; index < info.SBuffers.Count; index++)
                 {
                     BufferDescriptor sb = info.SBuffers[index];
@@ -385,6 +399,44 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
                     sbDescAddress += (ulong)sb.SbCbOffset * 4;
 
                     SbDescriptor sbDescriptor = _channel.MemoryManager.Physical.Read<SbDescriptor>(sbDescAddress);
+
+                    if (sb.Flags.HasFlag(BufferUsageFlags.Indirect))
+                    {
+                        ulong sourceAddress = sbDescriptor.PackAddress();
+                        int sourceSize = Math.Max(0, sbDescriptor.Size);
+
+                        if (indirectTargets == null ||
+                            indirectSourceAddress != sourceAddress ||
+                            indirectSourceSize != sourceSize)
+                        {
+                            indirectTargets = ResolveIndirectStorageTargets(stage, sourceAddress, sourceSize);
+                            indirectSourceAddress = sourceAddress;
+                            indirectSourceSize = sourceSize;
+                        }
+
+                        IndirectStorageBufferTarget target = sb.IndirectIndex < indirectTargets.Length
+                            ? indirectTargets[sb.IndirectIndex]
+                            : default;
+                        bool valid = target.IsValid;
+                        ulong bindAddress = valid ? target.Address : sourceAddress;
+                        ulong bindSize = valid ? target.Size : (ulong)Math.Max(sourceSize, 16);
+
+                        _channel.BufferManager.SetGraphicsStorageBuffer(
+                            stage,
+                            sb.Slot,
+                            bindAddress,
+                            bindSize,
+                            sb.Flags & ~BufferUsageFlags.Indirect);
+
+                        _context.SupportBufferUpdater.SetIndirectStorageTarget(
+                            stage,
+                            sb.IndirectIndex,
+                            valid ? target.Address : 0,
+                            valid ? (uint)Math.Min(target.Size, uint.MaxValue) : 0,
+                            valid);
+
+                        continue;
+                    }
 
                     uint size;
                     if (sb.SbCbSlot == Constants.DriverReservedUniformBuffer)
@@ -401,6 +453,75 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
                     _channel.BufferManager.SetGraphicsStorageBuffer(stage, sb.Slot, sbDescriptor.PackAddress(), size, sb.Flags);
                 }
             }
+        }
+
+        private IndirectStorageBufferTarget[] ResolveIndirectStorageTargets(int stage, ulong sourceAddress, int sourceSize)
+        {
+            IndirectStorageBufferTarget[] targets = new IndirectStorageBufferTarget[SupportBuffer.IndirectStorageTargetsPerStage];
+
+            if (sourceAddress == 0 || sourceSize < sizeof(ulong))
+            {
+                return targets;
+            }
+
+            int scanSize = Math.Min(sourceSize, IndirectGlobalStoreScanSize) & -sizeof(ulong);
+            MultiRange sourceRange = _channel.MemoryManager.GetPhysicalRegions(sourceAddress, (ulong)scanSize);
+            _channel.MemoryManager.Physical.BufferCache.SynchronizeBufferRange(sourceRange);
+
+            ReadOnlySpan<byte> bytes = _channel.MemoryManager.GetSpanMapped(sourceAddress, scanSize);
+            bytes = bytes[..(bytes.Length & -sizeof(ulong))];
+            ReadOnlySpan<ulong> pointers = MemoryMarshal.Cast<byte, ulong>(bytes);
+
+            int targetCount = IndirectStorageBufferResolver.Resolve(
+                pointers,
+                targets,
+                address => _channel.MemoryManager.GetMappedSize(address, Constants.MaxUnknownStorageSize),
+                (ulong)_context.Capabilities.StorageBufferOffsetAlignment,
+                out bool truncated);
+
+            if (IndirectGlobalStoreDiagnosticsEnabled && _loggedIndirectGlobalStoreBuffers.Add(sourceAddress))
+            {
+                int pointerCount = Math.Min(IndirectGlobalStorePointerCount, pointers.Length);
+                StringBuilder message = new();
+                message.Append("Indirect global-store pointer table: stage=")
+                    .Append(stage)
+                    .Append(", source=0x")
+                    .Append(sourceAddress.ToString("X"))
+                    .Append(", size=0x")
+                    .Append(sourceSize.ToString("X"))
+                    .Append(", pointers=[");
+
+                for (int index = 0; index < pointerCount; index++)
+                {
+                    if (index != 0)
+                    {
+                        message.Append(", ");
+                    }
+
+                    message.Append(index).Append(":0x").Append(pointers[index].ToString("X"));
+                }
+
+                message.Append("], resolved=[");
+
+                for (int index = 0; index < targetCount; index++)
+                {
+                    if (index != 0)
+                    {
+                        message.Append(", ");
+                    }
+
+                    message.Append(index)
+                        .Append(":0x")
+                        .Append(targets[index].Address.ToString("X"))
+                        .Append("/0x")
+                        .Append(targets[index].Size.ToString("X"));
+                }
+
+                message.Append("], truncated=").Append(truncated).Append(']');
+                Logger.Warning?.Print(LogClass.Gpu, message.ToString());
+            }
+
+            return targets;
         }
 
         /// <summary>

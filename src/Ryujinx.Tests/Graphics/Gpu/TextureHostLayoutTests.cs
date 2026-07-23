@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using Ryujinx.Common.Memory;
 using Ryujinx.Graphics.GAL;
 using Ryujinx.Graphics.Gpu;
 using Ryujinx.Graphics.Gpu.Image;
@@ -10,7 +11,7 @@ namespace Ryujinx.Tests.Graphics.Gpu
     public class TextureHostLayoutTests
     {
         [Test]
-        public void OversizedLinearR8TexturePagedLayoutUsesTwoPages()
+        public void OversizedLinearR8TextureUsesSafeFoldedAtlas()
         {
             if (!OperatingSystem.IsMacOS())
             {
@@ -37,33 +38,32 @@ namespace Ryujinx.Tests.Graphics.Gpu
             Capabilities caps = CreateVulkanCapabilities();
 
             Assert.That(
-                TextureHostLayout.TryGetPagedLinear2D(info, caps, formatInfo, 1f, out TextureHostLayout layout),
+                TextureHostLayout.TryGetFoldedLinear2D(info, caps, formatInfo, 1f, out TextureHostLayout layout),
                 Is.True);
             Assert.That(layout.Width, Is.EqualTo(1024));
             Assert.That(layout.Height, Is.EqualTo(32768));
             Assert.That(layout.Stride, Is.EqualTo(1024));
             Assert.That(layout.TexelCount, Is.EqualTo(33554432));
-
-            Assert.That(
-                () => TextureCache.GetCreateInfo(
-                    info,
-                    caps,
-                    1f,
-                    blockUnsafeMacOSPagedTextures: true),
-                Throws.TypeOf<MacOSGpuSafetyException>());
+            Assert.That(layout.PageHeight, Is.EqualTo(8192));
+            Assert.That(layout.PageCount, Is.EqualTo(4));
+            Assert.That(layout.HostWidth, Is.EqualTo(4104));
+            Assert.That(layout.HostHeight, Is.EqualTo(8194));
+            Assert.That(layout.GutterX, Is.EqualTo(1));
+            Assert.That(layout.GutterY, Is.EqualTo(1));
+            Assert.That(TextureHostLayout.TryGetBufferBackedLinear2D(info, caps, formatInfo, 1f, out _), Is.False);
 
             TextureCreateInfo createInfo = TextureCache.GetCreateInfo(
                 info,
                 caps,
                 1f,
-                blockUnsafeMacOSPagedTextures: false);
+                blockUnsafeMacOSPagedTextures: true);
 
-            Assert.That(createInfo.Target, Is.EqualTo(Target.Texture2DArray));
-            Assert.That(createInfo.Width, Is.EqualTo(1024));
-            Assert.That(createInfo.Height, Is.EqualTo(TextureHostLayout.MetalMaxTexture2DDimension));
-            Assert.That(createInfo.Depth, Is.EqualTo(2));
+            Assert.That(createInfo.Target, Is.EqualTo(Target.Texture2D));
+            Assert.That(createInfo.Width, Is.EqualTo(4104));
+            Assert.That(createInfo.Height, Is.EqualTo(8194));
+            Assert.That(createInfo.Depth, Is.EqualTo(1));
 
-            Assert.That(layout.IsPaged, Is.True);
+            Assert.That(layout.IsFolded, Is.True);
         }
 
         [TestCase(true, null, true)]
@@ -82,7 +82,7 @@ namespace Ryujinx.Tests.Graphics.Gpu
         }
 
         [Test]
-        public void OversizedLinearR8TextureUsesPagedHostLayout()
+        public void OversizedLinearR8TextureUsesFourFoldedPages()
         {
             if (!OperatingSystem.IsMacOS())
             {
@@ -107,10 +107,10 @@ namespace Ryujinx.Tests.Graphics.Gpu
                 formatInfo);
 
             Assert.That(
-                TextureHostLayout.TryGetPagedLinear2D(info, CreateVulkanCapabilities(), formatInfo, 1f, out TextureHostLayout layout),
+                TextureHostLayout.TryGetFoldedLinear2D(info, CreateVulkanCapabilities(), formatInfo, 1f, out TextureHostLayout layout),
                 Is.True);
-            Assert.That(layout.PageHeight, Is.EqualTo(TextureHostLayout.MetalMaxTexture2DDimension));
-            Assert.That(layout.PageCount, Is.EqualTo(2));
+            Assert.That(layout.PageHeight, Is.EqualTo(8192));
+            Assert.That(layout.PageCount, Is.EqualTo(4));
             Assert.That(layout.TexelCount, Is.EqualTo(33554432));
         }
 
@@ -143,7 +143,7 @@ namespace Ryujinx.Tests.Graphics.Gpu
         }
 
         [Test]
-        public void OversizedLinearR8DescriptorEntersBufferBackedShaderState()
+        public void FoldedLinearR8DescriptorDoesNotEnterBufferBackedShaderState()
         {
             if (!OperatingSystem.IsMacOS())
             {
@@ -154,11 +154,27 @@ namespace Ryujinx.Tests.Graphics.Gpu
 
             Assert.That(
                 TextureHostLayout.GetBufferBackedLinear2DState(descriptor, isVulkan: true, bufferBackedEnabled: true),
+                Is.Zero);
+        }
+
+        [Test]
+        public void NonFoldedOversizedLinearR8DescriptorEntersBufferBackedShaderState()
+        {
+            if (!OperatingSystem.IsMacOS())
+            {
+                Assert.Ignore("Metal oversized linear texture fallback is macOS-specific.");
+            }
+
+            TextureDescriptor descriptor = CreateLinearR8Descriptor(16384, 32768, 16384);
+
+            Assert.That(TextureHostLayout.IsFoldedLinear2DDescriptor(descriptor), Is.False);
+            Assert.That(
+                TextureHostLayout.GetBufferBackedLinear2DState(descriptor, isVulkan: true, bufferBackedEnabled: true),
                 Is.EqualTo(8193));
         }
 
         [Test]
-        public void OversizedLinearR8DescriptorEntersPagedShaderState()
+        public void FoldedLinearR8DescriptorDoesNotEnterPagedShaderState()
         {
             if (!OperatingSystem.IsMacOS())
             {
@@ -168,8 +184,9 @@ namespace Ryujinx.Tests.Graphics.Gpu
             TextureDescriptor descriptor = CreateLinearR8Descriptor(1024, 32768, 1024);
             int state = TextureHostLayout.GetPagedLinear2DState(descriptor, isVulkan: true);
 
-            Assert.That(TextureHostLayout.IsPagedLinear2DState(state), Is.True);
-            Assert.That(state, Is.GreaterThan(0));
+            Assert.That(TextureHostLayout.IsFoldedLinear2DDescriptor(descriptor), Is.True);
+            Assert.That(TextureHostLayout.IsPagedLinear2DState(state), Is.False);
+            Assert.That(state, Is.Zero);
         }
 
         [Test]
@@ -318,13 +335,13 @@ namespace Ryujinx.Tests.Graphics.Gpu
             FormatInfo formatInfo = new(Format.R8Unorm, 1, 1, 1, 1);
             TextureInfo info = new(
                 gpuAddress: 0x1000,
-                width: 1024,
+                width: TextureHostLayout.MetalMaxTexture2DDimension,
                 height: TextureHostLayout.MetalMaxTexture2DDimension + 1,
                 depthOrLayers: 1,
                 levels: 1,
                 samplesInX: 1,
                 samplesInY: 1,
-                stride: 1024,
+                stride: TextureHostLayout.MetalMaxTexture2DDimension,
                 isLinear: true,
                 gobBlocksInY: 1,
                 gobBlocksInZ: 1,
@@ -332,9 +349,83 @@ namespace Ryujinx.Tests.Graphics.Gpu
                 target: Target.Texture2D,
                 formatInfo);
 
-            TextureCreateInfo createInfo = TextureCache.GetCreateInfo(info, CreateVulkanCapabilities(), 1f);
+            Assert.That(
+                () => TextureCache.GetCreateInfo(info, CreateVulkanCapabilities(), 1f),
+                Throws.TypeOf<MacOSGpuSafetyException>());
+        }
 
-            Assert.That(createInfo.Height, Is.EqualTo(TextureHostLayout.MetalMaxTexture2DDimension + 1));
+        [Test]
+        public void FoldedAtlasRoundTripPreservesRowsAndPageGutters()
+        {
+            if (!OperatingSystem.IsMacOS())
+            {
+                Assert.Ignore("Metal oversized linear texture fallback is macOS-specific.");
+            }
+
+            const int width = 4;
+            const int height = 32768;
+            FormatInfo formatInfo = new(Format.R8Unorm, 1, 1, 1, 1);
+            TextureInfo info = new(
+                gpuAddress: 0x2ea930000,
+                width,
+                height,
+                depthOrLayers: 1,
+                levels: 1,
+                samplesInX: 1,
+                samplesInY: 1,
+                stride: width,
+                isLinear: true,
+                gobBlocksInY: 1,
+                gobBlocksInZ: 1,
+                gobBlocksInTileX: 1,
+                target: Target.Texture2D,
+                formatInfo);
+
+            Assert.That(
+                TextureHostLayout.TryGetFoldedLinear2D(
+                    info,
+                    CreateVulkanCapabilities(),
+                    formatInfo,
+                    1f,
+                    out TextureHostLayout layout),
+                Is.True);
+
+            byte[] expected = new byte[width * height];
+
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    expected[y * width + x] = (byte)((y * 7 + x * 29) & 0xff);
+                }
+            }
+
+            using MemoryOwner<byte> folded = Texture.FoldLinearTexture(
+                MemoryOwner<byte>.RentCopy(expected),
+                layout,
+                bytesPerPixel: 1);
+
+            int hostStride = layout.HostWidth;
+            int secondPageX = layout.PageStrideWidth;
+            int lastRowFirstPage = layout.PageHeight - 1;
+            int firstRowSecondPage = layout.PageHeight;
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(
+                    folded.Span[secondPageX],
+                    Is.EqualTo(expected[lastRowFirstPage * width]));
+                Assert.That(
+                    folded.Span[hostStride + secondPageX],
+                    Is.EqualTo(expected[firstRowSecondPage * width]));
+                Assert.That(
+                    folded.Span[hostStride + secondPageX + layout.GutterX + width],
+                    Is.EqualTo(expected[firstRowSecondPage * width + width - 1]));
+            });
+
+            using MemoryOwner<byte> unfolded = Texture.UnfoldLinearTexture(folded.Span, layout, bytesPerPixel: 1);
+
+            Assert.That(unfolded.Span[..expected.Length].SequenceEqual(expected), Is.True);
         }
 
         [Test]

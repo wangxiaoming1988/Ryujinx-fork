@@ -1,3 +1,4 @@
+using Ryujinx.Common.Logging;
 using Ryujinx.Graphics.GAL;
 using Ryujinx.Graphics.Gpu.Engine.Types;
 using Ryujinx.Graphics.Gpu.Memory;
@@ -17,6 +18,9 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// Minimum timestamp delta until texture array can be removed from the cache.
         /// </summary>
         private const int MinDeltaForRemoval = 20000;
+        private static readonly bool FoldedTextureDiagnostics =
+            string.Equals(Environment.GetEnvironmentVariable("RYUJINX_FOLDED_DIAGNOSTICS"), "1", StringComparison.Ordinal);
+        private static readonly HashSet<string> FoldedTextureDiagnosticKeys = [];
 
         private readonly GpuContext _context;
         private readonly GpuChannel _channel;
@@ -614,9 +618,10 @@ namespace Ryujinx.Graphics.Gpu.Image
             int stageIndex,
             int textureBufferIndex,
             SamplerIndex samplerIndex,
-            in TextureBindingInfo bindingInfo)
+            in TextureBindingInfo bindingInfo,
+            int scaleIndex)
         {
-            Update(texturePool, samplerPool, stage, stageIndex, textureBufferIndex, isImage: false, samplerIndex, bindingInfo);
+            Update(texturePool, samplerPool, stage, stageIndex, textureBufferIndex, isImage: false, samplerIndex, bindingInfo, scaleIndex);
         }
 
         /// <summary>
@@ -627,9 +632,9 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <param name="stageIndex">Shader stage index where the array is used</param>
         /// <param name="textureBufferIndex">Texture constant buffer index</param>
         /// <param name="bindingInfo">Array binding information</param>
-        public void UpdateImageArray(TexturePool texturePool, ShaderStage stage, int stageIndex, int textureBufferIndex, in TextureBindingInfo bindingInfo)
+        public void UpdateImageArray(TexturePool texturePool, ShaderStage stage, int stageIndex, int textureBufferIndex, in TextureBindingInfo bindingInfo, int scaleIndex)
         {
-            Update(texturePool, null, stage, stageIndex, textureBufferIndex, isImage: true, SamplerIndex.ViaHeaderIndex, bindingInfo);
+            Update(texturePool, null, stage, stageIndex, textureBufferIndex, isImage: true, SamplerIndex.ViaHeaderIndex, bindingInfo, scaleIndex);
         }
 
         /// <summary>
@@ -651,15 +656,16 @@ namespace Ryujinx.Graphics.Gpu.Image
             int textureBufferIndex,
             bool isImage,
             SamplerIndex samplerIndex,
-            in TextureBindingInfo bindingInfo)
+            in TextureBindingInfo bindingInfo,
+            int scaleIndex)
         {
             if (IsDirectHandleType(bindingInfo.Handle))
             {
-                UpdateFromPool(texturePool, samplerPool, stage, isImage, bindingInfo);
+                UpdateFromPool(texturePool, samplerPool, stage, isImage, bindingInfo, scaleIndex);
             }
             else
             {
-                UpdateFromBuffer(texturePool, samplerPool, stage, stageIndex, textureBufferIndex, isImage, samplerIndex, bindingInfo);
+                UpdateFromBuffer(texturePool, samplerPool, stage, stageIndex, textureBufferIndex, isImage, samplerIndex, bindingInfo, scaleIndex);
             }
         }
 
@@ -671,7 +677,13 @@ namespace Ryujinx.Graphics.Gpu.Image
         /// <param name="stage">Shader stage where the array is used</param>
         /// <param name="isImage">Whether the array is a image or texture array</param>
         /// <param name="bindingInfo">Array binding information</param>
-        private void UpdateFromPool(TexturePool texturePool, SamplerPool samplerPool, ShaderStage stage, bool isImage, in TextureBindingInfo bindingInfo)
+        private void UpdateFromPool(
+            TexturePool texturePool,
+            SamplerPool samplerPool,
+            ShaderStage stage,
+            bool isImage,
+            in TextureBindingInfo bindingInfo,
+            int scaleIndex)
         {
             CacheEntry entry = GetOrAddEntry(texturePool, samplerPool, bindingInfo, isImage, out bool isNewEntry);
 
@@ -679,6 +691,7 @@ namespace Ryujinx.Graphics.Gpu.Image
             bool poolModified = isSampler ? entry.SamplerPoolModified() : entry.TexturePoolModified();
             bool isStore = bindingInfo.Flags.HasFlag(TextureUsageFlags.ImageStore);
             bool resScaleUnsupported = bindingInfo.Flags.HasFlag(TextureUsageFlags.ResScaleUnsupported);
+            Texture[] sourceTextures = new Texture[bindingInfo.ArrayLength];
 
             if (!poolModified && !isNewEntry && entry.ValidateTextures())
             {
@@ -720,6 +733,7 @@ namespace Ryujinx.Graphics.Gpu.Image
                 else
                 {
                     ref readonly TextureDescriptor descriptor = ref texturePool.GetForBinding(index, bindingInfo.FormatInfo, out texture);
+                    sourceTextures[index] = texture;
 
                     if (texture != null)
                     {
@@ -741,6 +755,8 @@ namespace Ryujinx.Graphics.Gpu.Image
 
                 ITexture hostTexture = texture?.GetTargetTexture(bindingInfo.Target);
                 ISampler hostSampler = sampler?.GetHostSampler(texture);
+
+                LogFoldedTextureBinding(texture, hostTexture, stage, bindingInfo, index, isImage ? "image-array" : "texture-array");
 
                 if (hostTexture != null && (texture.Target == Target.TextureBuffer || texture.IsBufferBacked))
                 {
@@ -782,6 +798,8 @@ namespace Ryujinx.Graphics.Gpu.Image
 
                 SetTextureArray(stage, bindingInfo, entry.TextureArray);
             }
+
+            UpdateArrayScale(scaleIndex, sourceTextures);
         }
 
         /// <summary>
@@ -803,7 +821,8 @@ namespace Ryujinx.Graphics.Gpu.Image
             int textureBufferIndex,
             bool isImage,
             SamplerIndex samplerIndex,
-            in TextureBindingInfo bindingInfo)
+            in TextureBindingInfo bindingInfo,
+            int scaleIndex)
         {
             (textureBufferIndex, int samplerBufferIndex) = TextureHandle.UnpackSlots(bindingInfo.CbufSlot, textureBufferIndex);
 
@@ -824,6 +843,7 @@ namespace Ryujinx.Graphics.Gpu.Image
             bool poolsModified = entry.PoolsModified();
             bool isStore = bindingInfo.Flags.HasFlag(TextureUsageFlags.ImageStore);
             bool resScaleUnsupported = bindingInfo.Flags.HasFlag(TextureUsageFlags.ResScaleUnsupported);
+            Texture[] sourceTextures = new Texture[bindingInfo.ArrayLength];
 
             ReadOnlySpan<int> cachedTextureBuffer;
             ReadOnlySpan<int> cachedSamplerBuffer;
@@ -918,6 +938,7 @@ namespace Ryujinx.Graphics.Gpu.Image
                 }
 
                 ref readonly TextureDescriptor descriptor = ref texturePool.GetForBinding(textureId, bindingInfo.FormatInfo, out Texture texture);
+                sourceTextures[index] = texture;
 
                 if (texture != null)
                 {
@@ -940,6 +961,8 @@ namespace Ryujinx.Graphics.Gpu.Image
 
                 ITexture hostTexture = texture?.GetTargetTexture(bindingInfo.Target);
                 ISampler hostSampler = null;
+
+                LogFoldedTextureBinding(texture, hostTexture, stage, bindingInfo, index, isImage ? "image-array-buffer" : "texture-array-buffer");
 
                 if (!isImage && bindingInfo.Target != Target.TextureBuffer)
                 {
@@ -990,6 +1013,8 @@ namespace Ryujinx.Graphics.Gpu.Image
 
                 SetTextureArray(stage, bindingInfo, entry.TextureArray);
             }
+
+            UpdateArrayScale(scaleIndex, sourceTextures);
         }
 
         /// <summary>
@@ -1008,6 +1033,167 @@ namespace Ryujinx.Graphics.Gpu.Image
             {
                 _context.Renderer.Pipeline.SetTextureArray(stage, bindingInfo.Binding, array);
             }
+        }
+
+        private static void LogFoldedTextureBinding(
+            Texture texture,
+            ITexture hostTexture,
+            ShaderStage stage,
+            in TextureBindingInfo bindingInfo,
+            int arrayIndex,
+            string kind)
+        {
+            if (!FoldedTextureDiagnostics ||
+                texture == null ||
+                !texture.TryGetFoldedLayout(out TextureHostLayout foldedLayout))
+            {
+                return;
+            }
+
+            string key = $"array:{kind}:{stage}:{bindingInfo.Binding}:{arrayIndex}:{bindingInfo.Target}:{hostTexture != null}:0x{texture.Info.GpuAddress:X}";
+
+            if (FoldedTextureDiagnosticKeys.Add(key))
+            {
+                string hostTextureSize = hostTexture != null ? $"{hostTexture.Width}x{hostTexture.Height}" : "null";
+
+                Logger.Warning?.Print(
+                    LogClass.Gpu,
+                    $"Folded diagnostic array binding: kind={kind}, stage={stage}, binding={bindingInfo.Binding}, set={bindingInfo.Set}, " +
+                    $"arrayIndex={arrayIndex}, arrayLength={bindingInfo.ArrayLength}, bindingTarget={bindingInfo.Target}, " +
+                    $"textureTarget={texture.Target}, cbufSlot={bindingInfo.CbufSlot}, handle={bindingInfo.Handle}, " +
+                    $"hostTextureNull={hostTexture == null}, hostTextureSize={hostTextureSize}, guest={foldedLayout.Width}x{foldedLayout.Height}, " +
+                    $"host={foldedLayout.HostWidth}x{foldedLayout.HostHeight}, pages={foldedLayout.PageCount}, " +
+                    $"pageHeight={foldedLayout.PageHeight}, gpuVa=0x{texture.Info.GpuAddress:X}.");
+            }
+        }
+
+        private void UpdateArrayScale(int scaleIndex, Texture[] textures)
+        {
+            Vector4<float> result = new() { X = 1f };
+            bool hasCommonFoldedLayout = TryGetCommonFoldedLayout(textures, out TextureHostLayout foldedLayout);
+
+            if (hasCommonFoldedLayout)
+            {
+                result.Y = -foldedLayout.PageCount;
+                result.Z = foldedLayout.Width;
+                result.W = foldedLayout.PageHeight;
+            }
+
+            LogFoldedArrayScale(scaleIndex, textures, hasCommonFoldedLayout, foldedLayout, result);
+
+            _context.SupportBufferUpdater.UpdateRenderScale(scaleIndex, result);
+        }
+
+        private static void LogFoldedArrayScale(
+            int scaleIndex,
+            Texture[] textures,
+            bool hasCommonFoldedLayout,
+            TextureHostLayout commonFoldedLayout,
+            Vector4<float> renderScale)
+        {
+            if (!FoldedTextureDiagnostics)
+            {
+                return;
+            }
+
+            int nonNullCount = 0;
+            int foldedCount = 0;
+            Texture firstFoldedTexture = null;
+            TextureHostLayout firstFoldedLayout = default;
+
+            for (int index = 0; index < textures.Length; index++)
+            {
+                Texture texture = textures[index];
+
+                if (texture == null)
+                {
+                    continue;
+                }
+
+                nonNullCount++;
+
+                if (texture.TryGetFoldedLayout(out TextureHostLayout currentLayout))
+                {
+                    foldedCount++;
+
+                    firstFoldedTexture ??= texture;
+                    firstFoldedLayout = firstFoldedTexture == texture ? currentLayout : firstFoldedLayout;
+                }
+            }
+
+            if (foldedCount == 0 && renderScale.Y == 0f)
+            {
+                return;
+            }
+
+            string firstFoldedAddress = firstFoldedTexture != null ? $"0x{firstFoldedTexture.Info.GpuAddress:X}" : "none";
+            string key = $"array-scale:{scaleIndex}:{nonNullCount}:{foldedCount}:{hasCommonFoldedLayout}:{FormatRenderScale(renderScale)}:{firstFoldedAddress}";
+
+            if (FoldedTextureDiagnosticKeys.Add(key))
+            {
+                string commonLayoutText = hasCommonFoldedLayout
+                    ? $"commonGuest={commonFoldedLayout.Width}x{commonFoldedLayout.Height}, commonHost={commonFoldedLayout.HostWidth}x{commonFoldedLayout.HostHeight}, commonPages={commonFoldedLayout.PageCount}, commonPageHeight={commonFoldedLayout.PageHeight}"
+                    : "commonGuest=none, commonHost=none, commonPages=0, commonPageHeight=0";
+                string firstLayoutText = firstFoldedTexture != null
+                    ? $"firstFoldedGpuVa={firstFoldedAddress}, firstGuest={firstFoldedLayout.Width}x{firstFoldedLayout.Height}, firstHost={firstFoldedLayout.HostWidth}x{firstFoldedLayout.HostHeight}, firstPages={firstFoldedLayout.PageCount}, firstPageHeight={firstFoldedLayout.PageHeight}"
+                    : "firstFoldedGpuVa=none";
+
+                Logger.Warning?.Print(
+                    LogClass.Gpu,
+                    $"Folded diagnostic array render_scale: scaleIndex={scaleIndex}, textures={nonNullCount}/{textures.Length}, " +
+                    $"foldedTextures={foldedCount}, commonFolded={hasCommonFoldedLayout}, renderScale={FormatRenderScale(renderScale)}, " +
+                    $"{commonLayoutText}, {firstLayoutText}.");
+            }
+        }
+
+        private static string FormatRenderScale(Vector4<float> renderScale)
+        {
+            return $"({renderScale.X:R},{renderScale.Y:R},{renderScale.Z:R},{renderScale.W:R})";
+        }
+
+        private static bool TryGetCommonFoldedLayout(Texture[] textures, out TextureHostLayout layout)
+        {
+            layout = default;
+            bool hasLayout = false;
+
+            for (int index = 0; index < textures.Length; index++)
+            {
+                Texture texture = textures[index];
+
+                if (texture == null)
+                {
+                    continue;
+                }
+
+                if (!texture.TryGetFoldedLayout(out TextureHostLayout currentLayout))
+                {
+                    return false;
+                }
+
+                if (!hasLayout)
+                {
+                    layout = currentLayout;
+                    hasLayout = true;
+                }
+                else if (!AreSameFoldedLayout(layout, currentLayout))
+                {
+                    return false;
+                }
+            }
+
+            return hasLayout;
+        }
+
+        private static bool AreSameFoldedLayout(TextureHostLayout left, TextureHostLayout right)
+        {
+            return left.Width == right.Width &&
+                left.Height == right.Height &&
+                left.PageHeight == right.PageHeight &&
+                left.PageCount == right.PageCount &&
+                left.HostWidth == right.HostWidth &&
+                left.HostHeight == right.HostHeight &&
+                left.GutterX == right.GutterX &&
+                left.GutterY == right.GutterY;
         }
 
         /// <summary>
