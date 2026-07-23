@@ -1024,10 +1024,21 @@ namespace Ryujinx.Ava.Systems
             if (OperatingSystem.IsMacOS())
                 availableBackends.Insert(0, AudioBackend.AudioToolbox);
 
-            AudioBackend preferredBackend = ConfigurationState.Instance.System.AudioBackend.Value;
+            AudioBackend requestedBackend = ConfigurationState.Instance.System.AudioBackend.Value;
+            AudioBackend preferredBackend = requestedBackend;
 
             if (preferredBackend is AudioBackend.SDL2)
                 preferredBackend = AudioBackend.SDL3;
+
+            if (preferredBackend == AudioBackend.Dummy && !IsDummyAudioExplicitlyRequested())
+            {
+                preferredBackend = OperatingSystem.IsMacOS() ? AudioBackend.AudioToolbox : AudioBackend.SDL3;
+
+                Logger.Warning?.Print(
+                    LogClass.Audio,
+                    $"Dummy audio backend disables game sound; using {preferredBackend} instead. " +
+                    "Set RYUJINX_ALLOW_DUMMY_AUDIO=1 to force Dummy.");
+            }
 
             for (int i = 0; i < availableBackends.Count; i++)
             {
@@ -1038,6 +1049,11 @@ namespace Ryujinx.Ava.Systems
                     break;
                 }
             }
+
+            Logger.Info?.Print(
+                LogClass.Audio,
+                $"Initializing audio backend: requested={requestedBackend}, preferred={preferredBackend}, " +
+                $"volume={ConfigurationState.Instance.System.AudioVolume.Value:0.###}.");
 
             static IHardwareDeviceDriver InitializeAudioBackend<T>(AudioBackend backend, AudioBackend nextBackend) where T : IHardwareDeviceDriver, new()
             {
@@ -1072,6 +1088,9 @@ namespace Ryujinx.Ava.Systems
                 if (deviceDriver != null)
                 {
                     ConfigurationState.Instance.System.AudioBackend.Value = currentBackend;
+
+                    Logger.Notice.Print(LogClass.Audio, $"Audio backend initialized: {currentBackend}.");
+
                     break;
                 }
             }
@@ -1079,6 +1098,17 @@ namespace Ryujinx.Ava.Systems
             MainWindowViewModel.SaveConfig();
 
             return deviceDriver;
+        }
+
+        private static bool IsDummyAudioExplicitlyRequested()
+        {
+            string value = Environment.GetEnvironmentVariable("RYUJINX_ALLOW_DUMMY_AUDIO");
+
+            return value is not null && (
+                value.Equals("1", StringComparison.OrdinalIgnoreCase) ||
+                value.Equals("true", StringComparison.OrdinalIgnoreCase) ||
+                value.Equals("yes", StringComparison.OrdinalIgnoreCase) ||
+                value.Equals("on", StringComparison.OrdinalIgnoreCase));
         }
 
         private void Window_BoundsChanged(object sender, Size e)

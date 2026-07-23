@@ -542,7 +542,14 @@ namespace Ryujinx.Ava.Systems.Configuration
                     if (cff.AudioBackend is AudioBackend.SDL2)
                         cff.AudioBackend = AudioBackend.SDL3;
                 }),
-                (72, static cff => cff.GCLowLatency = false)
+                (72, static cff => cff.GCLowLatency = false),
+                (74, static cff =>
+                {
+                    if (cff.AudioBackend == AudioBackend.Dummy && cff.AudioVolume > 0)
+                    {
+                        cff.AudioBackend = OperatingSystem.IsMacOS() ? AudioBackend.AudioToolbox : AudioBackend.SDL3;
+                    }
+                })
             );
     }
 }
